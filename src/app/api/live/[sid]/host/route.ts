@@ -18,6 +18,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ sid: st
       await saveState(sid, emptyState());
       // Demo convenience: a full reset also clears the permanent-ban list so the walkthrough can be repeated.
       await db().from("live_sessions").delete().eq("id", "bans");
+      await db().from("applications").update({ status: "verified" }).eq("party_id", "profile").eq("status", "banned");
       return NextResponse.json({ ok: true });
     }
     // "open" starts the party; pressing it again re-matches the room to include late arrivals.

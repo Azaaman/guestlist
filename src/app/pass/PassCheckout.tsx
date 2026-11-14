@@ -72,6 +72,11 @@ export default function PassCheckout({ price, season, weeks }: { price: number; 
           <p className="mt-4 text-white/80">Create your profile first. The pass is attached to it, so you never enter your details again.</p>
           <Link href="/profile?next=/pass" className="btn btn-primary mt-4 w-full">Create my profile</Link>
         </>
+      ) : profile.status !== "verified" ? (
+        <>
+          <p className="mt-4 text-white/80">Your profile needs to be verified before you can buy a pass.</p>
+          <Link href="/profile?next=/pass" className="btn btn-primary mt-4 w-full">Go to my profile</Link>
+        </>
       ) : !secret ? (
         <>
           {err && <div className="mt-3 text-sm text-hot">{err}</div>}

@@ -11,13 +11,14 @@ export interface LiveData {
     vibeCount: number;
     met: number;
     reports: { id: string; name: string; count: number; reasons: string[] }[];
-    banned: { id: string; name: string }[];
+    banned: { id: string; name: string; pass: boolean; refund: number; fee: number }[];
     partyRating: number | null;
     hostRating: number | null;
     ratingCount: number;
   };
   me: {
     banned: boolean;
+    ban: { pass: boolean; refund: number; fee: number } | null;
     inRoom: boolean;
     intros: { id: string; name: string; why: string; icebreaker: string }[];
     met: string[];

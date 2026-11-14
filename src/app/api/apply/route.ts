@@ -1,109 +1,62 @@
 import { NextResponse } from "next/server";
-import { generateJson } from "@/lib/ai";
 import { db } from "@/lib/db";
-import { getParty, MEMBERS } from "@/lib/data";
-import { isBanned } from "@/lib/live";
-import type { AIProfile, ApplicationForm, Trust, Vote } from "@/lib/types";
+import { genderCap, getParty } from "@/lib/data";
+import { PROFILE, profileStatus, type ApplicationRow, type BookingMeta } from "@/lib/types";
 
-export const maxDuration = 60;
-
-const SYSTEM = `You are the screening engine of Nestly, an invite-only party club in Austin for adults 25-45.
-There are no games or contests: the club simply brings screened people together.
-Guests apply to a specific party. Existing members of the opposite gender vote on each application.
-You (1) turn the application into a short, flattering-but-honest profile card and
-(2) role-play each voting member, deciding YES or NO strictly from their personality and the application.
-Be realistic: generic or low-effort applications get mixed votes; anything disrespectful, aggressive,
-sexual, or unsafe gets NO from everyone and must be listed in redFlags. Never invent facts about the applicant.
-Write in English.`;
-
+// Book a place at a party with a verified profile.
+// Order of checks: verified → not already booked → room left overall → 60/40 balance for this guest's gender.
+// A Season Pass holder pays nothing and goes to the front of any waitlist.
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as { partyId: string; profileId: string };
     const party = getParty(body.partyId);
     if (!party) return NextResponse.json({ error: "Party not found" }, { status: 404 });
-    const { data: prof } = await db().from("applications").select("form,status").eq("id", body.profileId ?? "").eq("party_id", "profile").maybeSingle();
+    const { data: p } = await db().from("applications").select("*").eq("id", body.profileId ?? "").eq("party_id", PROFILE).maybeSingle();
+    const prof = p as ApplicationRow | null;
     if (!prof) return NextResponse.json({ error: "Create your profile first." }, { status: 400 });
-    const hasPass = prof.status === "pass";
-    const f = prof.form as ApplicationForm;
+    const status = profileStatus(prof.status);
+    if (status === "banned") return NextResponse.json({ error: "This profile is permanently banned." }, { status: 403 });
+    if (status !== "verified") return NextResponse.json({ error: "Your profile has not been verified yet." }, { status: 403 });
+    const f = prof.form;
+    const hasPass = !!f.pass || prof.status === "pass";
 
-    if (await isBanned(f.name))
-      return NextResponse.json({ error: "This guest was permanently banned after reports at a previous party and cannot apply." }, { status: 403 });
+    const { data: rows } = await db().from("applications").select("id,form,status,created_at").eq("party_id", party.id).in("status", ["approved", "waitlist", "reviewed"]);
+    const bookings = (rows ?? []) as Pick<ApplicationRow, "id" | "form" | "status" | "created_at">[];
+    const mine = bookings.find((b) => b.form.profileId === prof.id);
+    if (mine) return NextResponse.json({ id: mine.id });
 
-    const voters = MEMBERS.filter((m) => m.gender !== f.gender).slice(0, 5);
+    const booked = bookings.filter((b) => b.status === "approved");
+    const men = party.men + booked.filter((b) => b.form.gender === "man").length;
+    const women = party.women + booked.filter((b) => b.form.gender === "woman").length;
+    const full = men + women >= party.spots;
+    const sameGender = f.gender === "man" ? men : women;
+    const balanceFull = sameGender >= genderCap(party);
 
-    const prompt = `PARTY: "${party.title}" — ${party.theme}. Vibe: ${party.vibes.join(", ")}.
-
-APPLICATION:
-- Name: ${f.name}
-- Age: ${f.age}, ${f.gender}
-- Into: ${f.into ?? f.skill ?? "not said"}
-- Looking for: ${f.lookingFor}
-- About: ${f.about}
-- Instagram provided: ${f.instagram ? "yes" : "no"}
-- Invited by a member: ${f.inviteCode ? "yes" : "no"}
-
-VOTING MEMBERS:
-${voters.map((v) => `- id=${v.id} ${v.name}, ${v.age}, ${v.job}. Judging style: ${v.personality}`).join("\n")}
-
-Return JSON exactly in this shape:
-{
-  "profile": {
-    "headline": "max 8 words",
-    "bio": "2 sentences, third person",
-    "strengths": ["3 short things that make them good company at a party"],
-    "vibe": "2-4 words",
-    "icebreaker": "one fun question other guests could ask them"
-  },
-  "redFlags": ["empty array if none"],
-  "trustScore": 0-100 integer (quality, sincerity and safety of the application),
-  "votes": [ { "voterId": "id from list", "vote": "yes" | "no", "reason": "one short sentence in the member's voice" } ]
-}
-Include exactly one vote for each of the ${voters.length} members.`;
-
-    const ai = await generateJson<{ profile: AIProfile; redFlags?: string[]; trustScore?: number; votes: Vote[] }>(
-      SYSTEM,
-      prompt,
-    );
-
-    const votes: Vote[] = voters.map((v) => {
-      const found = ai.votes?.find((x) => x.voterId === v.id) ?? ai.votes?.find((x) => x.voter === v.name);
-      return {
-        voterId: v.id,
-        voter: v.name,
-        vote: found?.vote === "no" ? "no" : found ? "yes" : "no",
-        reason: found?.reason ?? "Didn't get a clear sense of you yet.",
+    const form = { ...f, pass: hasPass, profileId: prof.id };
+    let bookingStatus: string;
+    let meta: BookingMeta | null = null;
+    if (full || balanceFull) {
+      const waiting = bookings.filter((b) => b.status === "waitlist" && (balanceFull && !full ? b.form.gender === f.gender : true));
+      // Pass holders queue ahead of everyone without a pass.
+      const ahead = hasPass ? waiting.filter((b) => b.form.pass).length : waiting.length + party.waitlist;
+      bookingStatus = "waitlist";
+      meta = {
+        position: ahead + 1,
+        reason: full ? "The party is full." : `Places for ${f.gender === "man" ? "men" : "women"} are full: the 60/40 balance rule caps each at ${genderCap(party)} of ${party.spots}.`,
       };
-    });
-
-    const redFlags = Array.isArray(ai.redFlags) ? ai.redFlags.filter(Boolean) : [];
-    let score = Math.max(0, Math.min(100, Math.round(Number(ai.trustScore) || 50)));
-    if (f.inviteCode) score = Math.min(100, score + 10);
-    if (f.instagram) score = Math.min(100, score + 5);
-    if (redFlags.length) score = Math.min(score, 30);
-
-    const trust: Trust = {
-      score,
-      redFlags,
-      badges: [
-        { label: hasPass ? "Season Pass holder" : "Card holder name matches", ok: true, note: hasPass ? undefined : "checked at payment" },
-        { label: "Invited by a member", ok: !!f.inviteCode },
-        { label: "Social profile linked", ok: !!f.instagram },
-        { label: "Government ID", ok: false, note: "Stripe Identity — before first party" },
-        { label: "Code of conduct accepted", ok: true },
-      ],
-    };
+    } else {
+      bookingStatus = hasPass ? "approved" : "reviewed"; // without a pass, the ticket is paid next
+    }
 
     const { data, error } = await db()
       .from("applications")
-      // Pass holders have already paid, so their application goes straight to the members' vote.
-      .insert({ party_id: party.id, form: { ...f, pass: hasPass }, profile: ai.profile, votes, trust, status: hasPass ? "held" : "reviewed" })
+      .insert({ party_id: party.id, form, profile: prof.profile, trust: prof.trust, votes: meta, status: bookingStatus })
       .select("id")
       .single();
     if (error) throw error;
     return NextResponse.json({ id: data.id });
   } catch (e) {
     console.error(e);
-    const msg = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: `Could not process the application: ${msg}` }, { status: 500 });
+    return NextResponse.json({ error: e instanceof Error ? e.message : "The booking could not be made." }, { status: 500 });
   }
 }

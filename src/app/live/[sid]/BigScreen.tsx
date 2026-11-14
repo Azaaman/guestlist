@@ -147,7 +147,11 @@ function Running({ data, busy, host }: { data: LiveData; busy: string; host: (ac
         {r.banned.length > 0 && (
           <div className="mt-6 border-t border-line pt-4">
             <div className="font-semibold text-hot">Banned for good</div>
-            <p className="mt-1 text-white/75">{r.banned.map((b) => b.name).join(", ")}. Removed tonight and blocked from applying again.</p>
+            <ul className="mt-1 text-white/75">
+              {r.banned.map((b) => (
+                <li key={b.id}>{b.name}: removed and blocked from booking again.{b.pass ? ` Season Pass cancelled, $${b.refund} refunded, $${b.fee} conduct fee kept.` : ""}</li>
+              ))}
+            </ul>
           </div>
         )}
       </div>

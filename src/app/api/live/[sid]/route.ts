@@ -41,7 +41,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ sid: str
       vibeCount: pulses.length,
       met: acts.filter((a) => a.kind === "met").length,
       reports,
-      banned: state.banned.map((id) => ({ id, name: nameOf(id) })),
+      banned: state.banned.map((id) => ({ id, name: nameOf(id), ...(state.banInfo[id] ?? { pass: false, refund: 0, fee: 0 }) })),
       partyRating: avg(partyRatings),
       hostRating: avg(hostRatings),
       ratingCount: hostRatings.length,
@@ -63,6 +63,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ sid: str
         .map((x) => ({ id: x.id, name: x.name, demo: x.demo }));
       me = {
         banned: state.banned.includes(playerId),
+        ban: state.banInfo[playerId] ?? null,
         inRoom: state.people.some((p) => p.id === playerId),
         intros: (state.intros[playerId] ?? [])
           .filter((i) => !state.banned.includes(i.id))

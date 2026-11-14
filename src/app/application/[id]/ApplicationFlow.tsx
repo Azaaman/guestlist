@@ -1,34 +1,33 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import QRCode from "qrcode";
-import { Avatar } from "@/components/ui";
-import { APPROVALS_NEEDED, type ApplicationRow } from "@/lib/types";
 
-type App = ApplicationRow & { reveal: { address: string; dressCode: string } | null };
+interface Booking {
+  id: string;
+  party_id: string;
+  status: "reviewed" | "approved" | "waitlist";
+  form: { name: string; pass: boolean };
+  meta: { position?: number; reason?: string } | null;
+  reveal: { address: string; dressCode: string } | null;
+}
 
 const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = pk ? loadStripe(pk) : null;
-export const stripeAppearance = {
-  theme: "night" as const,
-  variables: { colorPrimary: "#8f7dff", colorBackground: "#0f0a3d", colorText: "#ffffff", colorTextPlaceholder: "#cfc7ff", borderRadius: "10px" },
-};
-
-const STEPS = ["Profile", "Card hold", "Members vote", "Ticket"];
-const PASS_STEPS = ["Profile", "Season Pass", "Members vote", "Ticket"];
+const appearance = { theme: "night" as const, variables: { colorPrimary: "#8f7dff", colorBackground: "#0f0a3d", colorText: "#ffffff", colorTextPlaceholder: "#cfc7ff", borderRadius: "10px" } };
 
 export default function ApplicationFlow({ id, partyTitle, partyId, partyWhen, price, live }: { id: string; partyTitle: string; partyId: string; partyWhen: string; price: number; live: boolean }) {
-  const [app, setApp] = useState<App | null>(null);
+  const [b, setB] = useState<Booking | null>(null);
   const [err, setErr] = useState("");
 
   const load = useCallback(async () => {
     try {
       const res = await fetch(`/api/application/${id}`, { cache: "no-store" });
       const data = await res.json();
-      if (!res.ok) setErr(data.error || "This application could not be loaded.");
-      else setApp(data);
+      if (!res.ok) setErr(data.error || "This booking could not be loaded.");
+      else setB(data);
     } catch {
       setErr("No connection. Reload the page to try again.");
     }
@@ -37,66 +36,18 @@ export default function ApplicationFlow({ id, partyTitle, partyId, partyWhen, pr
   useEffect(() => { load(); }, [load]);
 
   if (err) return <div className="mt-8 rounded-xl bg-hot/15 p-4">{err}</div>;
-  if (!app) return <div className="mt-8 text-white/60">Loading your application…</div>;
+  if (!b) return <div className="mt-8 text-white/60">Loading your booking…</div>;
 
-  const step = app.status === "reviewed" ? 1 : app.status === "held" ? 2 : 3;
   return (
     <div className="mt-6 space-y-6">
-      <ol className="flex gap-1 text-sm font-semibold">
-        {(app.form.pass ? PASS_STEPS : STEPS).map((s, i) => (
-          <li key={s} className={`flex-1 border-t-2 pt-2 ${i <= step ? "border-brand-2 text-white" : "border-line text-white/40"}`}>{s}</li>
-        ))}
-      </ol>
-      {app.status === "approved" && <Ticket app={app} partyTitle={partyTitle} partyId={partyId} partyWhen={partyWhen} live={live} />}
-      {app.status === "rejected" && <Rejected app={app} />}
-      {app.status === "held" && <VotingStep app={app} onDecided={load} />}
-      {app.status === "reviewed" && <PayStep id={id} price={price} onHeld={load} />}
-      <ProfileCard app={app} />
+      {b.status === "approved" && <Ticket b={b} partyTitle={partyTitle} partyId={partyId} partyWhen={partyWhen} live={live} />}
+      {b.status === "reviewed" && <PayStep id={id} price={price} onPaid={load} />}
+      {b.status === "waitlist" && <Waitlist b={b} />}
     </div>
   );
 }
 
-function ProfileCard({ app }: { app: App }) {
-  const p = app.profile;
-  const t = app.trust;
-  if (!p) return null;
-  return (
-    <div className="paper p-5">
-      <div className="label">Your card, written by AI from your profile. This is what members read.</div>
-      <div className="mt-3 flex items-center gap-3">
-        <Avatar name={app.form.name} size={56} />
-        <div>
-          <div className="display text-2xl">{app.form.name}, {app.form.age}</div>
-          <div className="font-semibold text-[#b0283f]">{p.headline}</div>
-        </div>
-      </div>
-      <p className="mt-3">{p.bio}</p>
-      <p className="mt-2 text-sm text-paper-ink/75">{p.vibe}. {p.strengths?.join(", ")}.</p>
-      <p className="mt-2 text-sm text-paper-ink/65">Ask them: “{p.icebreaker}”</p>
-      {t && (
-        <div className="rule mt-4 pt-4">
-          <div className="flex items-baseline justify-between">
-            <div className="font-bold">Trust score</div>
-            <div className="display text-3xl" style={{ color: t.score >= 70 ? "#1f8a5b" : t.score >= 45 ? "#a8690a" : "#b0283f" }}>{t.score} / 100</div>
-          </div>
-          <ul className="mt-2 grid gap-1 text-sm">
-            {t.badges.map((b) => (
-              <li key={b.label} className="flex items-baseline gap-2">
-                <span className={`w-16 shrink-0 font-bold ${b.ok ? "text-[#1f8a5b]" : "text-paper-ink/45"}`}>{b.ok ? "Done" : "Pending"}</span>
-                <span className={b.ok ? "" : "text-paper-ink/60"}>{b.label}{b.note ? `, ${b.note}` : ""}</span>
-              </li>
-            ))}
-          </ul>
-          {t.redFlags.length > 0 && (
-            <div className="mt-3 rounded bg-[#b0283f]/10 p-3 text-sm font-semibold text-[#8f1f33]">Flagged by screening: {t.redFlags.join("; ")}</div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function PayStep({ id, price, onHeld }: { id: string; price: number; onHeld: () => void }) {
+function PayStep({ id, price, onPaid }: { id: string; price: number; onPaid: () => void }) {
   const [secret, setSecret] = useState<string | null>(null);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
@@ -120,24 +71,25 @@ function PayStep({ id, price, onHeld }: { id: string; price: number; onHeld: () 
 
   return (
     <div className="card p-5">
-      <h2 className="text-2xl">Hold <span className="price">${price}</span> to send your application</h2>
-      <p className="mt-2 text-white/70">This is a hold, not a charge. If {APPROVALS_NEEDED} or more members approve you, the ${price} is charged and the address unlocks. If they don&apos;t, the hold is released and you pay $0.</p>
+      <h2 className="text-2xl">A place is free. Pay <span className="price">${price}</span> to book it</h2>
+      <p className="mt-2 text-white/75">The address unlocks as soon as the payment goes through. The price rises as the party fills up.</p>
       {!secret ? (
         <>
           {err && <div className="mt-3 text-sm text-hot">{err}</div>}
-          <button className="btn btn-primary mt-4 w-full" onClick={start} disabled={busy}>{busy ? "Preparing…" : `Hold $${price} and send to members`}</button>
+          <button className="btn btn-primary mt-4 w-full" onClick={start} disabled={busy}>{busy ? "Preparing…" : `Pay $${price}`}</button>
         </>
       ) : (
-        <Elements stripe={stripePromise} options={{ clientSecret: secret, appearance: stripeAppearance }}>
-          <CardForm id={id} price={price} onHeld={onHeld} />
+        <Elements stripe={stripePromise} options={{ clientSecret: secret, appearance }}>
+          <CardForm id={id} price={price} onPaid={onPaid} />
         </Elements>
       )}
-      <p className="mt-3 text-sm text-white/50">Test mode. Use card 4242 4242 4242 4242, any future date, any CVC.</p>
+      <p className="mt-3 text-sm text-white/55">Test mode. Use card 4242 4242 4242 4242, any future date, any CVC.</p>
+      <p className="mt-2 text-sm text-white/55">With a <Link href="/pass" className="font-semibold text-brand-2 hover:underline">Season Pass</Link> every party is already paid for.</p>
     </div>
   );
 }
 
-function CardForm({ id, price, onHeld }: { id: string; price: number; onHeld: () => void }) {
+function CardForm({ id, price, onPaid }: { id: string; price: number; onPaid: () => void }) {
   const stripe = useStripe();
   const elements = useElements();
   const [busy, setBusy] = useState(false);
@@ -157,118 +109,65 @@ function CardForm({ id, price, onHeld }: { id: string; price: number; onHeld: ()
     const res = await fetch("/api/hold", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ applicationId: id }) });
     const data = await res.json();
     if (!res.ok) {
-      setErr(data.error || "The hold was not confirmed. Try again.");
+      setErr(data.error || "The payment was not confirmed. Try again.");
       setBusy(false);
       return;
     }
-    onHeld();
+    onPaid();
   }
 
   return (
     <form onSubmit={pay} className="mt-4 space-y-3">
       <PaymentElement />
       {err && <div className="text-sm text-hot">{err}</div>}
-      <button className="btn btn-primary w-full" disabled={busy || !stripe}>{busy ? "Placing the hold…" : `Hold $${price}`}</button>
+      <button className="btn btn-primary w-full" disabled={busy || !stripe}>{busy ? "Paying…" : `Pay $${price}`}</button>
     </form>
   );
 }
 
-function VotingStep({ app, onDecided }: { app: App; onDecided: () => void }) {
-  const votes = useMemo(() => app.votes ?? [], [app.votes]);
-  const [shown, setShown] = useState(0);
-  const [err, setErr] = useState("");
-
-  useEffect(() => {
-    if (shown < votes.length) {
-      const t = setTimeout(() => setShown((s) => s + 1), 1400);
-      return () => clearTimeout(t);
-    }
-    const t = setTimeout(async () => {
-      try {
-        const res = await fetch("/api/decide", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ applicationId: app.id }) });
-        const data = await res.json();
-        if (!res.ok) setErr(data.error || "The result could not be saved. Reload the page.");
-        else onDecided();
-      } catch {
-        setErr("No connection. Reload the page.");
-      }
-    }, 1200);
-    return () => clearTimeout(t);
-  }, [shown, votes.length, app.id, onDecided]);
-
-  const yes = votes.slice(0, shown).filter((v) => v.vote === "yes").length;
+function Waitlist({ b }: { b: Booking }) {
   return (
     <div className="card p-5">
-      <div className="flex items-baseline justify-between gap-4">
-        <h2 className="text-2xl">Members are voting</h2>
-        <div className="display shrink-0 text-xl text-brand-2">{yes} of {APPROVALS_NEEDED} needed</div>
+      <h2 className="text-2xl">You are on the waitlist</h2>
+      <div className="mt-3 flex items-baseline gap-3">
+        <span className="display price text-6xl">{b.meta?.position ?? 1}</span>
+        <span className="text-lg text-white/85">your place in the queue</span>
       </div>
-      <p className="mt-1 text-sm text-white/60">Each member is played by AI in this demo, reading your card in their own voice.</p>
-      <ul className="mt-3">
-        {votes.map((v, i) => (
-          <li key={v.voterId} className={`flex items-start gap-3 border-t border-line py-3 ${i < shown ? "pop" : "opacity-30"}`}>
-            <Avatar name={v.voter} size={38} />
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <span className="font-bold">{v.voter}</span>
-                {i < shown ? (
-                  <span className={`rounded-full px-3 py-0.5 text-sm font-bold ${v.vote === "yes" ? "bg-mint/20 text-mint" : "bg-hot/20 text-hot"}`}>{v.vote === "yes" ? "Let them in" : "Not this time"}</span>
-                ) : (
-                  <span className="text-sm text-white/40">reading…</span>
-                )}
-              </div>
-              {i < shown && <p className="text-white/75">“{v.reason}”</p>}
-            </div>
-          </li>
-        ))}
-      </ul>
-      {err && <div className="mt-3 text-sm text-hot">{err}</div>}
+      <p className="mt-3 text-white/80">{b.meta?.reason}</p>
+      <p className="mt-2 text-white/75">Nothing has been charged. When a place opens for you, you get it automatically{b.form.pass ? "." : " and are asked to pay."}</p>
+      {b.form.pass ? (
+        <p className="mt-4 rounded-xl border border-line p-3 text-sm">Your Season Pass puts you ahead of everyone without one.</p>
+      ) : (
+        <p className="mt-4 rounded-xl border border-line p-3 text-sm">Season Pass holders go to the front of every waitlist. <Link href="/pass" className="font-semibold text-brand-2 hover:underline">Get a Season Pass</Link></p>
+      )}
+      <Link href="/parties" className="btn btn-ghost mt-4 w-full sm:w-auto">Look at other parties</Link>
     </div>
   );
 }
 
-function Ticket({ app, partyTitle, partyId, partyWhen, live }: { app: App; partyTitle: string; partyId: string; partyWhen: string; live: boolean }) {
+function Ticket({ b, partyTitle, partyId, partyWhen, live }: { b: Booking; partyTitle: string; partyId: string; partyWhen: string; live: boolean }) {
   const [qr, setQr] = useState("");
-  const path = `/play/${partyId}?ticket=${app.id}`;
+  const path = `/play/${partyId}?ticket=${b.id}`;
   useEffect(() => {
     QRCode.toDataURL(`${window.location.origin}${path}`, { margin: 0, width: 240, color: { dark: "#17103f", light: "#f2f2f2" } }).then(setQr);
   }, [path]);
   return (
     <div className="paper pop grid sm:grid-cols-[1fr_auto]">
       <div className="p-6">
-        <div className="font-semibold text-[#1f8a5b]">Approved. You&apos;re on the list.</div>
+        <div className="font-semibold text-[#1f8a5b]">Booked. You&apos;re on the list.</div>
         <div className="display mt-1 text-4xl">{partyTitle}</div>
         <div className="mt-1 font-semibold">{partyWhen}</div>
         <dl className="rule mt-4 space-y-3 pt-4">
-          <div><dt className="label">Address, now unlocked</dt><dd className="text-lg font-bold">{app.reveal?.address}</dd></div>
-          <div><dt className="label">Dress code</dt><dd>{app.reveal?.dressCode}</dd></div>
-          <div><dt className="label">Admit one</dt><dd>{app.form.name}. {app.form.pass ? "Covered by your Season Pass." : "Your card has been charged."}</dd></div>
+          <div><dt className="label">Address, now unlocked</dt><dd className="text-lg font-bold">{b.reveal?.address}</dd></div>
+          <div><dt className="label">Dress code</dt><dd>{b.reveal?.dressCode}</dd></div>
+          <div><dt className="label">Admit one</dt><dd>{b.form.name}. {b.form.pass ? "Covered by your Season Pass." : "Ticket paid."}</dd></div>
         </dl>
-        {live && <Link href={path} className="btn btn-paper mt-5 w-full sm:w-auto">Check in and open Party Mode</Link>}
+        {live && <Link href={path} className="btn btn-paper mt-5 w-full sm:w-auto">Check in at the party</Link>}
       </div>
       <div className="flex flex-col items-center justify-center gap-2 border-t border-dashed border-paper-ink/30 p-6 sm:border-l sm:border-t-0">
         {qr && <img src={qr} alt="Check-in QR code" className="h-40 w-40" />}
         <div className="text-center text-sm text-paper-ink/70">Scan at the door<br />to check in</div>
       </div>
-    </div>
-  );
-}
-
-function Rejected({ app }: { app: App }) {
-  const yes = (app.votes ?? []).filter((v) => v.vote === "yes").length;
-  return (
-    <div className="card p-5">
-      <h2 className="text-2xl">Not approved this time</h2>
-      <p className="mt-2 text-white/75">{yes} of the {APPROVALS_NEEDED} approvals needed. {app.form.pass ? "Your Season Pass is untouched." : "The hold on your card was released, so you paid $0."} Read what members said, edit your profile and apply to another night.</p>
-      <ul className="mt-3">
-        {(app.votes ?? []).map((v) => (
-          <li key={v.voterId} className="border-t border-line py-2 text-white/75">
-            <span className={`mr-2 font-bold ${v.vote === "yes" ? "text-mint" : "text-hot"}`}>{v.vote === "yes" ? "Yes" : "No"}</span>
-            {v.voter}: “{v.reason}”
-          </li>
-        ))}
-      </ul>
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row"><Link href="/profile" className="btn btn-primary">Edit my profile</Link><Link href="/parties" className="btn btn-ghost">Browse other parties</Link></div>
     </div>
   );
 }

@@ -9,9 +9,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   if (error || !data) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const row = data as ApplicationRow;
   const party = getParty(row.party_id);
-  // The address is only revealed once the guest is approved and paid.
+  // The address is only shown once the place is booked.
   const reveal = row.status === "approved" && party ? { address: party.address, dressCode: party.dressCode } : null;
-  // Votes are only shown after the payment hold exists (that's when voting "happens").
-  const showVotes = row.status !== "reviewed";
-  return NextResponse.json({ ...row, votes: showVotes ? row.votes : null, reveal });
+  return NextResponse.json({ id: row.id, party_id: row.party_id, status: row.status, form: { name: row.form.name, pass: !!row.form.pass }, meta: row.votes, reveal });
 }

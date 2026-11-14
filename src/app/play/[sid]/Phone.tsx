@@ -124,7 +124,10 @@ function Room({ sid, title, hostName, playerId, onLeave }: { sid: string; title:
     return (
       <div className="mx-auto max-w-md px-5 py-16 text-center">
         <h1 className="text-4xl text-hot">You have been removed</h1>
-        <p className="mt-4 text-white/80">Other guests reported your behaviour and the report was upheld. This ban is permanent and tied to your ID, so you can&apos;t apply to Nestly parties again.</p>
+        <p className="mt-4 text-white/80">Other guests reported your behaviour and the report was upheld. This ban is permanent and tied to your ID, so you can&apos;t book Nestly parties again.</p>
+        {data.me.ban?.pass && (
+          <p className="mt-4 rounded-xl border border-line p-4 text-left text-white/85">Your Season Pass was cancelled. <span className="price font-semibold">${data.me.ban.refund}</span> for the unused parties has been refunded to your card. A ${data.me.ban.fee} conduct fee was kept, as set out in the house rules.</p>
+        )}
       </div>
     );
   }

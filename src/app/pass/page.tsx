@@ -2,8 +2,8 @@ import { SEASON } from "@/lib/data";
 import PassCheckout from "./PassCheckout";
 
 const perks = [
-  ["A seat at every party", `All ${SEASON.weeks} nights of the season, no fighting for the last spots.`],
-  ["Priority approval", "Pass holders are reviewed first, and most are approved once for the whole season."],
+  ["Every party is paid for", `All ${SEASON.weeks} nights of the season. You book in one tap and pay nothing more.`],
+  ["Front of every waitlist", "When a party is full for you, pass holders are placed ahead of everyone without a pass."],
   ["Entered to win a trip", "Every pass holder is in the finale prize draw for Europe, Hawaii and the Wild West."],
   ["Food, drinks and the house", "Included every night. Per party it works out cheaper than single tickets at peak price."],
 ];

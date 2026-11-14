@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui";
 import { fetchProfile, type SavedProfile } from "@/lib/profile";
 
-// Applying is one tap: the saved profile is what members read.
-export default function ApplyStart({ partyId, price }: { partyId: string; price: number }) {
+// Booking is one tap for a verified guest: no form, no vote.
+export default function ApplyStart({ partyId, price, menLeft, womenLeft, left }: { partyId: string; price: number; menLeft: number; womenLeft: number; left: number }) {
   const router = useRouter();
   const [profile, setProfile] = useState<SavedProfile | null>(null);
   const [busy, setBusy] = useState(false);
@@ -19,23 +19,37 @@ export default function ApplyStart({ partyId, price }: { partyId: string; price:
     });
   }, [partyId, router]);
 
-  async function apply() {
+  async function book() {
     if (!profile) return;
     setBusy(true);
     setErr("");
     try {
       const res = await fetch("/api/apply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ partyId, profileId: profile.id }) });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "The application could not be sent. Try again.");
+      if (!res.ok) throw new Error(data.error || "The booking could not be made. Try again.");
       router.push(`/application/${data.id}`);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "The application could not be sent. Try again.");
+      setErr(e instanceof Error ? e.message : "The booking could not be made. Try again.");
       setBusy(false);
     }
   }
 
   if (!profile) return <p className="mt-8 text-white/60">Loading your profile…</p>;
   const f = profile.form;
+  const mine = f.gender === "man" ? menLeft : womenLeft;
+  const open = left > 0 && mine > 0;
+
+  if (profile.status !== "verified")
+    return (
+      <div className="card mt-8 p-5">
+        <div className="text-lg font-semibold">
+          {profile.status === "pending" ? "Your profile is waiting for a moderator" : profile.status === "banned" ? "This profile is permanently banned" : "Your profile was not accepted"}
+        </div>
+        <p className="mt-1 text-white/75">Only verified guests can book a party.</p>
+        <Link href={`/profile?next=/apply/${partyId}`} className="btn btn-primary mt-4">Go to my profile</Link>
+      </div>
+    );
+
   return (
     <div className="mt-8 space-y-5">
       <div className="paper p-5">
@@ -43,20 +57,23 @@ export default function ApplyStart({ partyId, price }: { partyId: string; price:
           <Avatar name={f.name} size={52} />
           <div className="min-w-0 flex-1">
             <div className="display text-2xl">{f.name}, {f.age}</div>
-            <div className="text-sm text-paper-ink/70">Into {f.into?.toLowerCase()}. Looking for: {f.lookingFor}</div>
+            <div className="text-sm font-semibold text-[#1f8a5b]">Verified guest{profile.pass ? ", Season Pass holder" : ""}</div>
           </div>
-          <Link href={`/profile?next=/apply/${partyId}`} className="shrink-0 text-sm font-semibold text-[#4a33c9] hover:underline">Edit</Link>
+          <Link href="/profile" className="shrink-0 text-sm font-semibold text-[#4a33c9] hover:underline">Edit</Link>
         </div>
-        <p className="rule mt-3 pt-3">{f.about}</p>
       </div>
-      <p className="text-white/75">
-        {profile.pass
-          ? "You hold a Season Pass, so there is nothing to pay. Members vote and, if approved, the address unlocks."
-          : `Next you place a $${price} hold on your card. If members approve you it is charged; if not, it is released.`}
+      <p className="text-white/80">
+        {open
+          ? profile.pass
+            ? "A place is free and your Season Pass covers it. Nothing to pay."
+            : `A place is free. You pay $${price} and the address unlocks straight away.`
+          : left <= 0
+            ? `The party is full. You can join the waitlist${profile.pass ? " at the front, ahead of guests without a pass." : "."}`
+            : `Places for ${f.gender === "man" ? "men" : "women"} are full under the 60/40 balance rule. You can join the waitlist${profile.pass ? " at the front, ahead of guests without a pass." : "."}`}
       </p>
       {err && <div className="rounded-xl bg-hot/15 p-3 text-sm">{err}</div>}
-      <button className="btn btn-primary w-full text-lg" onClick={apply} disabled={busy}>
-        {busy ? "AI is reading your profile…" : "Send my application"}
+      <button className="btn btn-primary w-full text-lg" onClick={book} disabled={busy}>
+        {busy ? "Booking…" : open ? (profile.pass ? "Book with my Season Pass" : `Book and pay $${price}`) : "Join the waitlist"}
       </button>
     </div>
   );

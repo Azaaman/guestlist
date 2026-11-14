@@ -13,14 +13,14 @@ function when(iso: string, live?: boolean) {
 }
 
 const how = [
-  { t: "Pick a night", d: "A different house in Austin every week. You see the theme and the vibe, not the address." },
-  { t: "Members vote you in", d: "You fill in your profile once. Members read it and vote. Your card is only held, and a no costs you nothing." },
+  { t: "Get verified once", d: "Create a profile. AI screens it and a moderator approves it. After that you never fill anything in again." },
+  { t: "Book a night", d: "Pick any party with a free place. Prices rise as it fills, and men and women are always kept within 60/40." },
   { t: "Meet the right people", d: "When you check in, AI gives you three people to meet and a line to open with. After the party, mutual picks become matches." },
   { t: "Everyone stays accountable", d: "You rate the host and can report a guest. Three reports, or one the host confirms, is a permanent ban." },
 ];
 
 const tryIt = [
-  { t: "Create a profile and apply", href: "/apply/tonight" },
+  { t: "Get verified and book", href: "/apply/tonight" },
   { t: "Open the big screen", href: "/live/tonight" },
   { t: "Join from a phone", href: "/play/tonight" },
 ];
@@ -55,7 +55,7 @@ export default function Home() {
           <div className="reveal">
             <h2 className="text-3xl sm:text-4xl">Season Pass</h2>
             <div className="display price mt-3 text-6xl">${SEASON.passPrice}</div>
-            <p className="mt-3 text-white/80">A seat at all {SEASON.weeks} parties, about ${Math.round(SEASON.passPrice / SEASON.weeks)} a night. Every pass holder is entered to win one of three trips at the season finale.</p>
+            <p className="mt-3 text-white/80">A seat at all {SEASON.weeks} parties, about ${Math.round(SEASON.passPrice / SEASON.weeks)} a night. Pass holders go to the front of every waitlist and are entered to win one of three trips.</p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link href="/pass" className="btn btn-primary">Get the Season Pass</Link>
               <Link href="/season" className="btn btn-ghost">How the prizes work</Link>

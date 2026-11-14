@@ -17,7 +17,7 @@ async function tonightStats() {
     const { data } = await db().from("applications").select("status").eq("party_id", "tonight");
     const rows = data ?? [];
     const count = (s: string) => rows.filter((r) => r.status === s).length;
-    return { total: rows.length, approved: count("approved"), rejected: count("rejected"), waiting: count("reviewed") + count("held") };
+    return { total: rows.length, approved: count("approved"), waitlist: count("waitlist"), unpaid: count("reviewed") };
   } catch {
     return null;
   }
@@ -42,15 +42,15 @@ export default async function HostPage() {
       <h2 className="mt-12 text-2xl">Tonight at {tonight.title}</h2>
       {stats ? (
         <dl className="mt-4 grid grid-cols-2 divide-line border-y border-line py-4 text-center sm:grid-cols-4 sm:divide-x">
-          <div><dt className="label">Applications received</dt><dd className="display mt-1 text-4xl">{stats.total}</dd></div>
-          <div><dt className="label">Approved and charged</dt><dd className="display mt-1 text-4xl text-mint">{stats.approved}</dd></div>
-          <div><dt className="label">Turned down, $0 charged</dt><dd className="display mt-1 text-4xl text-hot">{stats.rejected}</dd></div>
+          <div><dt className="label">Tickets booked on this site</dt><dd className="display mt-1 text-4xl text-mint">{stats.approved}</dd></div>
+          <div><dt className="label">On the waitlist</dt><dd className="display mt-1 text-4xl">{stats.waitlist}</dd></div>
+          <div><dt className="label">Waiting to pay</dt><dd className="display mt-1 text-4xl">{stats.unpaid}</dd></div>
           <div><dt className="label">Host share from these tickets</dt><dd className="display price mt-1 text-4xl">${Math.round(stats.approved * price * 0.75)}</dd></div>
         </dl>
       ) : (
         <p className="mt-4 text-white/60">Live numbers are unavailable right now. Reload to try again.</p>
       )}
-      <p className="mt-2 text-sm text-white/50">These numbers come from real applications made on this site.</p>
+      <p className="mt-2 text-sm text-white/50">These numbers come from real bookings made on this site.</p>
 
       <h2 className="mt-12 text-2xl">Host dashboards</h2>
       <div className="mt-4 grid gap-4 lg:grid-cols-3">

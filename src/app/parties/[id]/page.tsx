@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { dynamicPrice, getHost, getParty, MEMBERS, spotsLeft } from "@/lib/data";
+import { dynamicPrice, genderCap, getHost, getParty, MEMBERS, spotsLeft } from "@/lib/data";
 import { Avatar, Superhost, fmtDate } from "@/components/ui";
 import PartyPhoto from "@/components/PartyPhoto";
 
@@ -12,6 +12,7 @@ export default async function PartyPage({ params }: { params: Promise<{ id: stri
   const going = MEMBERS.slice(0, 8);
   const price = dynamicPrice(p);
   const left = spotsLeft(p);
+  const cap = genderCap(p);
   return (
     <div className="glow">
       <div className="mx-auto max-w-3xl px-4 pb-28 pt-8">
@@ -20,13 +21,27 @@ export default async function PartyPage({ params }: { params: Promise<{ id: stri
         <h1 className="mt-2 text-5xl sm:text-6xl">{p.title}</h1>
         <p className="mt-4 text-lg text-white/85">{p.theme}.</p>
         <PartyPhoto src={p.photo} alt={`Example of a venue like the one for ${p.title}`} className="mt-6 aspect-[16/9] w-full rounded-2xl" />
-        <p className="mt-2 text-sm text-white/50">Example photo. The real house and its address are shown only to approved guests.</p>
+        <p className="mt-2 text-sm text-white/50">Example photo. The real house and its address are shown only to guests with a ticket.</p>
 
         <dl className="mt-8 grid grid-cols-3 divide-x divide-line border-y border-line py-4 text-center">
           <div><dt className="label">Price right now</dt><dd className="display price mt-1 text-3xl">${price}</dd><dd className="text-xs text-white/55">from ${p.basePriceUsd}, rises as it fills</dd></div>
-          <div><dt className="label">Spots left</dt><dd className={`display mt-1 text-3xl ${left <= 3 ? "text-hot" : ""}`}>{left}</dd><dd className="text-xs text-white/55">of {p.spots}</dd></div>
-          <div><dt className="label">Address</dt><dd className="display mt-1 text-3xl">Hidden</dd><dd className="text-xs text-white/55">unlocks when you&apos;re approved</dd></div>
+          <div><dt className="label">Places left</dt><dd className={`display mt-1 text-3xl ${left <= 3 ? "text-hot" : ""}`}>{left}</dd><dd className="text-xs text-white/55">of {p.spots}</dd></div>
+          <div><dt className="label">Address</dt><dd className="display mt-1 text-3xl">Hidden</dd><dd className="text-xs text-white/55">shown once you book</dd></div>
         </dl>
+
+        <h2 className="reveal mt-12 text-2xl">Balance of men and women</h2>
+        <p className="mt-1 text-sm text-white/65">Kept between 40/60 and 60/40: each group can take at most {cap} of the {p.spots} places.</p>
+        <div className="mt-4 space-y-3">
+          {([["Men", p.men], ["Women", p.women]] as const).map(([label, n]) => {
+            const free = Math.max(0, cap - n);
+            return (
+              <div key={label}>
+                <div className="flex justify-between text-sm font-semibold"><span>{label}: {n} booked</span><span className={free === 0 ? "text-hot" : "text-mint"}>{free === 0 ? "waitlist only" : `${Math.min(free, left)} ${Math.min(free, left) === 1 ? "place" : "places"} open`}</span></div>
+                <div className="mt-1.5 h-2 rounded-full bg-night"><div className={`h-2 rounded-full ${free === 0 ? "bg-hot" : "bg-brand"}`} style={{ width: `${Math.min(100, (n / cap) * 100)}%` }} /></div>
+              </div>
+            );
+          })}
+        </div>
 
         <h2 className="reveal mt-12 text-2xl">The vibe</h2>
         <ul className="mt-3 flex flex-wrap gap-2">
@@ -61,8 +76,8 @@ export default async function PartyPage({ params }: { params: Promise<{ id: stri
 
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-ink/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-3">
-          <p className="hidden text-sm text-white/65 sm:block">Your card is only held. Not approved means you pay nothing.</p>
-          <Link href={`/apply/${p.id}`} className="btn btn-primary w-full sm:w-auto">Apply for a spot, ${price}</Link>
+          <p className="hidden text-sm text-white/65 sm:block">Verified guests book in one tap. Season Pass holders pay nothing.</p>
+          <Link href={`/apply/${p.id}`} className="btn btn-primary w-full sm:w-auto">Book a place, ${price}</Link>
         </div>
       </div>
     </div>

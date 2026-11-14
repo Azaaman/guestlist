@@ -7,7 +7,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 export const metadata: Metadata = {
   title: "Nestly — Secret house parties in Austin",
   description:
-    "Invite-only parties for adults 30–40. Members approve every guest. AI introduces you to three people. Bad behaviour means a permanent ban.",
+    "Invite-only parties for adults 30–40. Every guest is verified. AI introduces you to three people. Bad behaviour means a permanent ban.",
 };
 
 export const viewport: Viewport = { themeColor: "#150f4f", width: "device-width", initialScale: 1 };
@@ -24,6 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <span>Nestly, Season 1 in Austin. A Business Cup 2.0 demo: payments run in Stripe test mode.</span>
             <Link href="/host" className="hover:text-white">For hosts</Link>
             <Link href="/season" className="hover:text-white">Prizes</Link>
+            <Link href="/policy" className="hover:text-white">House rules</Link>
           </div>
         </footer>
       </body>

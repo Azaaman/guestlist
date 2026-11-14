@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { fetchProfile, setProfileId } from "@/lib/profile";
+import { fetchProfile, setProfileId, type SavedProfile } from "@/lib/profile";
+import { Avatar } from "@/components/ui";
 import { INTERESTS } from "@/lib/room";
 
 const SAMPLE = {
@@ -16,7 +17,7 @@ const SAMPLE = {
   about: "Moved here from Denver for a job in renewable energy. I make a mean green-chile stew, run the Town Lake loop on weekends, and I'm happiest hosting a long dinner for people who just met.",
 };
 
-// A low-effort, disrespectful application: shows that screening and the vote can say no.
+// A disrespectful profile: shows that AI screening can say no.
 const RUDE = {
   name: "Chad Miller",
   age: "36",
@@ -35,6 +36,7 @@ export default function ProfileForm() {
   const [conduct, setConduct] = useState(false);
   const [id, setId] = useState<string | null>(null);
   const [pass, setPass] = useState(false);
+  const [profile, setProfile] = useState<SavedProfile | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -48,6 +50,7 @@ export default function ProfileForm() {
   useEffect(() => {
     fetchProfile().then((p) => {
       if (p) {
+        setProfile(p);
         setId(p.id);
         setPass(p.pass);
         setConduct(true);
@@ -71,7 +74,9 @@ export default function ProfileForm() {
       if (!res.ok) throw new Error(data.error || "The profile could not be saved. Try again.");
       setProfileId(data.id);
       setId(data.id);
-      if (next && next.startsWith("/")) router.push(next);
+      const fresh = await fetchProfile();
+      setProfile(fresh);
+      if (fresh?.status === "verified" && next && next.startsWith("/")) router.push(next);
       else setSaved(true);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "The profile could not be saved. Try again.");
@@ -80,15 +85,24 @@ export default function ProfileForm() {
     }
   }
 
+  // While a moderator is deciding, keep checking so the page updates by itself.
+  useEffect(() => {
+    if (profile?.status !== "pending") return;
+    const t = setInterval(async () => {
+      const fresh = await fetchProfile();
+      if (fresh && fresh.status !== "pending") {
+        setProfile(fresh);
+        if (fresh.status === "verified" && next && next.startsWith("/")) router.push(next);
+      }
+    }, 3000);
+    return () => clearInterval(t);
+  }, [profile?.status, next, router]);
+
   if (!loaded) return <p className="mt-8 text-white/60">Loading…</p>;
 
   return (
     <form onSubmit={submit} className="mt-8 space-y-5">
-      {id && (
-        <div className="rounded-xl border border-line p-3 text-sm">
-          {pass ? <span className="font-semibold text-hi">Season Pass holder.</span> : <>No Season Pass yet. <Link href="/pass" className="font-semibold text-brand-2 hover:underline">Get one</Link></>} Your details are saved and used for every application and check-in.
-        </div>
-      )}
+      {profile && <Verification profile={profile} pass={pass} />}
       <div className="rounded-xl border border-dashed border-line p-3 text-sm">
         <div className="font-semibold">Trying the demo? Fill in a sample guest</div>
         <div className="mt-2 flex flex-wrap gap-2">
@@ -126,13 +140,47 @@ export default function ProfileForm() {
       </div>
       <label className="flex items-start gap-3 text-sm text-white/80">
         <input type="checkbox" className="mt-1 h-4 w-4 accent-[#17103f]" checked={conduct} onChange={(e) => { setSaved(false); setConduct(e.target.checked); }} />
-        <span>I accept the code of conduct: respect, consent, no harassment. Breaking it means a permanent ban tied to my ID.</span>
+        <span>I accept the <Link href="/policy" className="font-semibold text-brand-2 underline">house rules</Link>: respect, consent, no harassment. Breaking them means a permanent ban tied to my ID.</span>
       </label>
       {err && <div className="rounded-xl bg-hot/15 p-3 text-sm">{err}</div>}
-      {saved && <div className="rounded-xl bg-mint/15 p-3 text-sm">Profile saved. <Link href="/parties" className="font-semibold underline">Choose a party</Link></div>}
+      {saved && <div className="rounded-xl bg-mint/15 p-3 text-sm">Saved and checked by AI. See your status at the top of this page.</div>}
       <button className="btn btn-primary w-full text-lg" disabled={busy || !f.gender}>
-        {busy ? "Saving…" : id ? "Save changes" : next ? "Save and continue" : "Create my profile"}
+        {busy ? "AI is checking your profile…" : id ? "Save changes and re-check" : "Create my profile"}
       </button>
     </form>
+  );
+}
+
+// Where the profile stands: AI screening first, then a human moderator.
+function Verification({ profile, pass }: { profile: SavedProfile; pass: boolean }) {
+  const t = profile.trust;
+  const c = profile.card;
+  const label = { pending: "Waiting for a moderator", verified: "Verified", rejected: "Not accepted", banned: "Permanently banned" }[profile.status];
+  const tone = { pending: "text-[#a8690a]", verified: "text-[#1f8a5b]", rejected: "text-[#b0283f]", banned: "text-[#b0283f]" }[profile.status];
+  return (
+    <div className="paper p-5">
+      <div className="flex items-center gap-3">
+        <Avatar name={profile.form.name} size={48} />
+        <div className="min-w-0 flex-1">
+          <div className={`font-bold ${tone}`}>{label}{pass ? ", Season Pass holder" : ""}</div>
+          {c && <div className="text-sm text-paper-ink/75">{c.headline}</div>}
+        </div>
+        {t && <div className="display text-3xl">{t.score}<span className="text-base font-semibold text-paper-ink/60"> / 100</span></div>}
+      </div>
+      {c && <p className="rule mt-3 pt-3 text-sm">{c.bio}</p>}
+      {t && t.redFlags.length > 0 && <p className="mt-3 rounded bg-[#b0283f]/10 p-3 text-sm font-semibold text-[#8f1f33]">AI screening flagged: {t.redFlags.join("; ")}. Edit your profile below to be checked again.</p>}
+      {profile.status === "pending" && (
+        <div className="rule mt-3 pt-3 text-sm">
+          <p>AI screening passed. A moderator now reads your profile, usually within a day. This page updates by itself.</p>
+          <p className="mt-2 text-paper-ink/70">Trying the demo? <Link href="/moderate" target="_blank" className="font-semibold text-[#4a33c9] underline">Open the moderator queue</Link> and approve yourself.</p>
+        </div>
+      )}
+      {profile.status === "verified" && (
+        <div className="rule mt-3 flex flex-col gap-2 pt-3 sm:flex-row">
+          <Link href="/parties" className="btn btn-paper">Choose a party</Link>
+          {!pass && <Link href="/pass" className="btn border-paper-ink/30 text-paper-ink">Get a Season Pass</Link>}
+        </div>
+      )}
+    </div>
   );
 }

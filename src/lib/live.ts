@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
 import { generateJson } from "@/lib/ai";
-import { getParty, MEMBERS } from "@/lib/data";
+import { getParty, MEMBERS, SEASON } from "@/lib/data";
+import { stripe } from "@/lib/stripe";
+import { passRefund } from "@/lib/room";
 
 export interface Person {
   id: string;
@@ -8,6 +10,12 @@ export interface Person {
   gender: "man" | "woman";
   demo: boolean; // simulated club member (fills the room for the demo)
   about?: string;
+  profileId?: string; // set when the guest checked in with a saved profile or a ticket
+}
+export interface BanInfo {
+  pass: boolean; // held a Season Pass
+  refund: number; // dollars sent back
+  fee: number; // conduct fee kept
 }
 export interface Intro {
   id: string;
@@ -20,6 +28,7 @@ export interface LiveState {
   intros: Record<string, Intro[]>; // guest id → the people they should meet tonight
   banned: string[]; // person ids removed tonight (and banned for good)
   dismissed: string[]; // person ids whose reports the host reviewed and dismissed
+  banInfo: Record<string, BanInfo>; // what happened to a banned guest's Season Pass
 }
 
 export interface ActionRow {
@@ -32,7 +41,7 @@ export interface ActionRow {
 }
 
 export function emptyState(): LiveState {
-  return { status: "lobby", people: [], intros: {}, banned: [], dismissed: [] };
+  return { status: "lobby", people: [], intros: {}, banned: [], dismissed: [], banInfo: {} };
 }
 
 export async function loadState(sid: string): Promise<LiveState> {
@@ -80,12 +89,45 @@ export async function banPerson(sid: string, state: LiveState, personId: string,
   const person = state.people.find((p) => p.id === personId);
   if (!person || state.banned.includes(personId)) return;
   state.banned.push(personId);
+  state.banInfo[personId] = await cancelMembership(person);
   await saveState(sid, state);
   if (!person.demo) {
     const list = await loadBans();
     list.push({ name: person.name, reason, at: new Date().toISOString() });
     await db().from("live_sessions").upsert({ id: BANS_ID, state: { list }, updated_at: new Date().toISOString() });
   }
+}
+
+// A banned guest's profile is closed. If they held a Season Pass, the unused parties are refunded
+// through Stripe minus the conduct fee set out in the house rules.
+async function cancelMembership(person: Person): Promise<BanInfo> {
+  const none = { pass: false, refund: 0, fee: 0 };
+  if (!person.profileId) return none;
+  const { data } = await db().from("applications").select("form,status,payment_intent_id").eq("id", person.profileId).eq("party_id", "profile").maybeSingle();
+  if (!data) return none;
+  const hadPass = !!data.form?.pass || data.status === "pass";
+  await db().from("applications").update({ status: "banned", form: { ...data.form, pass: false } }).eq("id", person.profileId);
+  if (!hadPass) return none;
+  const { refund, fee } = passRefund(SEASON.passPrice, SEASON.weeks, SEASON.currentWeek);
+  if (refund > 0 && data.payment_intent_id) {
+    try {
+      await stripe().refunds.create({ payment_intent: data.payment_intent_id, amount: refund * 100, metadata: { reason: "ban", conductFee: String(fee) } });
+    } catch (e) {
+      console.error("[ban] refund failed", e);
+      return { pass: true, refund: 0, fee };
+    }
+  }
+  return { pass: true, refund, fee };
+}
+
+// live_players.skill carries "pid:<profile id>|<about>" for guests who checked in with a profile.
+export function packAbout(about: string | null, profileId?: string | null) {
+  return profileId ? `pid:${profileId}|${about ?? ""}` : about;
+}
+export function unpackAbout(raw: string | null | undefined): { about?: string; profileId?: string } {
+  if (!raw) return {};
+  const m = /^pid:([0-9a-f-]{36})\|([\s\S]*)$/.exec(raw);
+  return m ? { profileId: m[1], about: m[2] || undefined } : { about: raw };
 }
 
 /* ---------- Opening the room: who is here, and who should meet whom ---------- */
@@ -100,7 +142,7 @@ export async function openRoom(sid: string, partyId: string) {
   if (!party) throw new Error("Party not found");
   const prev = await loadState(sid);
   const { data: players } = await db().from("live_players").select("*").eq("session_id", sid).order("created_at");
-  const real: Person[] = (players ?? []).map((p) => ({ id: p.id, name: p.name, gender: p.gender, demo: false, about: p.skill ?? undefined }));
+  const real: Person[] = (players ?? []).map((p) => ({ id: p.id, name: p.name, gender: p.gender, demo: false, ...unpackAbout(p.skill) }));
   const members: Person[] = MEMBERS.map((m) => ({ id: m.id, name: m.name, gender: m.gender, demo: true, about: `${m.job}. ${m.bio} Into ${m.into.toLowerCase()}.` }));
   const people = [...real, ...members];
   const present = people.filter((p) => !prev.banned.includes(p.id));
@@ -132,7 +174,7 @@ Mix men and women. Do not suggest the guest to themselves.`;
     if (!Object.values(intros).some((x) => x.length)) throw new Error("AI returned no introductions. Try again.");
   }
 
-  const state: LiveState = { status: "running", people, intros, banned: prev.banned, dismissed: prev.dismissed };
+  const state: LiveState = { status: "running", people, intros, banned: prev.banned, dismissed: prev.dismissed, banInfo: prev.banInfo };
   await saveState(sid, state);
   return state;
 }

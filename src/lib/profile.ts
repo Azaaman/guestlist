@@ -14,6 +14,9 @@ export interface SavedProfile {
   id: string;
   form: { name: string; age: number; gender: "man" | "woman"; instagram?: string; inviteCode?: string; lookingFor: string; into: string; about: string; conduct: boolean };
   pass: boolean;
+  status: "pending" | "verified" | "rejected" | "banned";
+  card: { headline: string; bio: string; strengths: string[]; vibe: string; icebreaker: string; moderatorNote?: string } | null;
+  trust: { score: number; badges: { label: string; ok: boolean; note?: string }[]; redFlags: string[] } | null;
 }
 
 export async function fetchProfile(): Promise<SavedProfile | null> {

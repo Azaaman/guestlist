@@ -29,7 +29,9 @@ export interface Party {
   priceUsd: number;
   basePriceUsd: number;
   spots: number;
-  taken: number;
+  men: number; // seeded bookings so far
+  women: number;
+  waitlist: number; // seeded guests already waiting (none of them pass holders)
   vibes: string[]; // what the night feels like, used as filters on the home page
   week: number;
   live?: boolean;
@@ -144,7 +146,9 @@ export const PARTIES: Party[] = [
     priceUsd: 72,
     basePriceUsd: 55,
     spots: 20,
-    taken: 18,
+    men: 10,
+    women: 8,
+    waitlist: 0,
     vibes: ["Pool", "Dancing", "Late night"],
     week: 5,
     live: true,
@@ -163,7 +167,9 @@ export const PARTIES: Party[] = [
     priceUsd: 48,
     basePriceUsd: 45,
     spots: 16,
-    taken: 9,
+    men: 5,
+    women: 4,
+    waitlist: 0,
     vibes: ["Foodie", "Chill", "Small group"],
     week: 6,
   },
@@ -181,7 +187,9 @@ export const PARTIES: Party[] = [
     priceUsd: 52,
     basePriceUsd: 50,
     spots: 18,
-    taken: 7,
+    men: 3,
+    women: 4,
+    waitlist: 0,
     vibes: ["Artsy", "Live music", "Chill"],
     week: 6,
   },
@@ -199,7 +207,9 @@ export const PARTIES: Party[] = [
     priceUsd: 64,
     basePriceUsd: 55,
     spots: 24,
-    taken: 15,
+    men: 14,
+    women: 8,
+    waitlist: 0,
     vibes: ["Dancing", "Late night", "Dress-up"],
     week: 7,
   },
@@ -217,7 +227,9 @@ export const PARTIES: Party[] = [
     priceUsd: 58,
     basePriceUsd: 55,
     spots: 20,
-    taken: 4,
+    men: 2,
+    women: 2,
+    waitlist: 0,
     vibes: ["Outdoors", "Daytime", "Foodie"],
     week: 8,
   },
@@ -235,7 +247,9 @@ export const PARTIES: Party[] = [
     priceUsd: 45,
     basePriceUsd: 45,
     spots: 18,
-    taken: 5,
+    men: 3,
+    women: 2,
+    waitlist: 0,
     vibes: ["Chill", "Outdoors", "Small group"],
     week: 8,
   },
@@ -253,7 +267,9 @@ export const PARTIES: Party[] = [
     priceUsd: 60,
     basePriceUsd: 55,
     spots: 20,
-    taken: 12,
+    men: 12,
+    women: 5,
+    waitlist: 4,
     vibes: ["Dress-up", "Live music", "Late night"],
     week: 9,
   },
@@ -271,7 +287,9 @@ export const PARTIES: Party[] = [
     priceUsd: 62,
     basePriceUsd: 55,
     spots: 22,
-    taken: 13,
+    men: 6,
+    women: 7,
+    waitlist: 0,
     vibes: ["Foodie", "Pool", "Daytime"],
     week: 9,
   },
@@ -298,11 +316,18 @@ export function getParty(id: string) {
 export function getHost(id: string) {
   return HOSTS.find((h) => h.id === id);
 }
-export function spotsLeft(p: Party) {
-  return Math.max(0, p.spots - p.taken);
+export function taken(p: Party) {
+  return p.men + p.women;
 }
-// Dynamic pricing: price rises as the party fills up.
+export function spotsLeft(p: Party) {
+  return Math.max(0, p.spots - taken(p));
+}
+// Dynamic pricing: the fewer spots left, the higher the price.
 export function dynamicPrice(p: Party) {
-  const fill = p.taken / p.spots;
+  const fill = taken(p) / p.spots;
   return Math.round(p.basePriceUsd * (1 + Math.max(0, fill - 0.5) * 0.7));
+}
+// Balance rule: neither men nor women may take more than 60% of the places.
+export function genderCap(p: Party) {
+  return Math.floor(p.spots * 0.6);
 }
