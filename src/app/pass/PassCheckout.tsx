@@ -6,7 +6,7 @@ import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-
 
 const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = pk ? loadStripe(pk) : null;
-const appearance = { theme: "night" as const, variables: { colorPrimary: "#ffc266", colorBackground: "#1c0e27", colorText: "#f6eef8", borderRadius: "10px" } };
+const appearance = { theme: "night" as const, variables: { colorPrimary: "#7c6cf2", colorBackground: "#0d0a2a", colorText: "#f3f1ff", borderRadius: "10px" } };
 
 export default function PassCheckout({ price, season, weeks }: { price: number; season: string; weeks: number }) {
   const [secret, setSecret] = useState<string | null>(null);
@@ -33,7 +33,7 @@ export default function PassCheckout({ price, season, weeks }: { price: number; 
     return (
       <div className="paper pop self-start p-6">
         <div className="font-semibold text-[#1f8a5b]">Paid. Welcome to the season.</div>
-        <div className="display mt-1 text-6xl">Season Pass</div>
+        <div className="display mt-1 text-5xl">Season Pass</div>
         <div className="mt-1 font-semibold">{season}</div>
         <p className="rule mt-4 pt-4">You have a seat at all {weeks} parties and your points now count toward the trips. Pick your first night.</p>
         <Link href="/parties" className="btn btn-paper mt-5">Choose a party</Link>
@@ -43,15 +43,15 @@ export default function PassCheckout({ price, season, weeks }: { price: number; 
   return (
     <div className="card self-start p-6">
       <div className="flex items-baseline justify-between">
-        <div className="display text-3xl">{season}</div>
-        <div className="display text-5xl">${price.toLocaleString()}</div>
+        <div className="display text-2xl">{season}</div>
+        <div className="display price text-4xl">${price.toLocaleString()}</div>
       </div>
       <p className="mt-1 text-sm text-white/60">{weeks} parties, one payment.</p>
       {!stripePromise ? (
         <p className="mt-4">Payments are not configured: the Stripe publishable key is missing.</p>
       ) : !secret ? (
         <>
-          {err && <div className="mt-3 text-sm text-brand">{err}</div>}
+          {err && <div className="mt-3 text-sm text-hot">{err}</div>}
           <button className="btn btn-primary mt-5 w-full" onClick={start} disabled={busy}>{busy ? "Preparing…" : "Get the Season Pass"}</button>
         </>
       ) : (
@@ -85,7 +85,7 @@ function PayForm({ price, onPaid }: { price: number; onPaid: () => void }) {
   return (
     <form onSubmit={pay} className="mt-5 space-y-3">
       <PaymentElement />
-      {err && <div className="text-sm text-brand">{err}</div>}
+      {err && <div className="text-sm text-hot">{err}</div>}
       <button className="btn btn-primary w-full" disabled={busy || !stripe}>{busy ? "Paying…" : `Pay $${price.toLocaleString()}`}</button>
     </form>
   );

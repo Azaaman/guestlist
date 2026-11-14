@@ -29,35 +29,35 @@ export default async function HostPage() {
   const price = dynamicPrice(tonight);
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
-      <h1 className="text-5xl sm:text-7xl">Hosts bring the house.<br />We bring the rest.</h1>
+      <h1 className="text-4xl sm:text-6xl">Hosts bring the house.<br />We bring the rest.</h1>
       <p className="mt-4 max-w-2xl text-white/70">Hosts keep 70% of ticket revenue, 75% as a Superhost. Guestlist handles the guests, screening, payments, pairing and the contest program.</p>
 
-      <h2 className="mt-12 text-3xl">How a host is checked</h2>
+      <h2 className="mt-12 text-2xl">How a host is checked</h2>
       <ol className="mt-4 grid gap-x-8 sm:grid-cols-2">
         {checks.map(([t, d]) => (
-          <li key={t} className="border-t border-line py-4"><div className="text-lg font-bold">{t}</div><p className="mt-1 text-white/70">{d}</p></li>
+          <li key={t} className="reveal border-t border-line py-4"><div className="text-lg font-bold">{t}</div><p className="mt-1 text-white/70">{d}</p></li>
         ))}
       </ol>
 
-      <h2 className="mt-12 text-3xl">Tonight at {tonight.title}</h2>
+      <h2 className="mt-12 text-2xl">Tonight at {tonight.title}</h2>
       {stats ? (
         <dl className="mt-4 grid grid-cols-2 divide-line border-y border-line py-4 text-center sm:grid-cols-4 sm:divide-x">
-          <div><dt className="label">Applications received</dt><dd className="display mt-1 text-5xl">{stats.total}</dd></div>
-          <div><dt className="label">Approved and charged</dt><dd className="display mt-1 text-5xl text-mint">{stats.approved}</dd></div>
-          <div><dt className="label">Turned down, $0 charged</dt><dd className="display mt-1 text-5xl text-brand">{stats.rejected}</dd></div>
-          <div><dt className="label">Host share from these tickets</dt><dd className="display mt-1 text-5xl">${Math.round(stats.approved * price * 0.75)}</dd></div>
+          <div><dt className="label">Applications received</dt><dd className="display mt-1 text-4xl">{stats.total}</dd></div>
+          <div><dt className="label">Approved and charged</dt><dd className="display mt-1 text-4xl text-mint">{stats.approved}</dd></div>
+          <div><dt className="label">Turned down, $0 charged</dt><dd className="display mt-1 text-4xl text-hot">{stats.rejected}</dd></div>
+          <div><dt className="label">Host share from these tickets</dt><dd className="display price mt-1 text-4xl">${Math.round(stats.approved * price * 0.75)}</dd></div>
         </dl>
       ) : (
         <p className="mt-4 text-white/60">Live numbers are unavailable right now. Reload to try again.</p>
       )}
       <p className="mt-2 text-sm text-white/50">These numbers come from real applications made on this site.</p>
 
-      <h2 className="mt-12 text-3xl">Host dashboards</h2>
+      <h2 className="mt-12 text-2xl">Host dashboards</h2>
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         {HOSTS.map((h) => {
           const done = h.checklist.filter((c) => c.done).length;
           return (
-            <div key={h.id} className="card p-5">
+            <div key={h.id} className="reveal card p-5">
               <div className="flex items-center gap-3">
                 <Avatar name={h.name} size={44} />
                 <div>

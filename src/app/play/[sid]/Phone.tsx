@@ -58,8 +58,8 @@ function Join({ sid, title, ticket, onJoined }: { sid: string; title: string; ti
   return (
     <div className="glow min-h-[calc(100vh-56px)] px-5 py-10">
       <div className="mx-auto max-w-sm">
-        <div className="flex items-center gap-2 text-sm font-semibold text-brand"><span className="live-dot h-2 w-2 rounded-full bg-brand" />Live now</div>
-        <h1 className="mt-2 text-5xl">{title}</h1>
+        <div className="flex items-center gap-2 text-sm font-semibold text-hot"><span className="live-dot h-2 w-2 rounded-full bg-hot" />Live now</div>
+        <h1 className="mt-2 text-4xl">{title}</h1>
         {ticket && busy ? (
           <p className="mt-6 text-white/75">Checking you in with your ticket…</p>
         ) : (
@@ -79,7 +79,7 @@ function Join({ sid, title, ticket, onJoined }: { sid: string; title: string; ti
               <label className="block"><span className="label">I&apos;m best at</span>
                 <select className="input mt-1" value={skill} onChange={(e) => setSkill(e.target.value)}>{CONTEST_SKILLS.map((s) => <option key={s}>{s}</option>)}</select>
               </label>
-              {err && <div className="rounded-lg bg-brand/15 p-3 text-sm text-white">{err}</div>}
+              {err && <div className="rounded-lg bg-hot/15 p-3 text-sm text-white">{err}</div>}
               <button className="btn btn-primary w-full text-lg" disabled={busy || !gender}>{busy ? "Joining…" : "Join the party"}</button>
             </form>
           </>
@@ -131,7 +131,7 @@ function Game({ sid, title, hostName, playerId, onLeave }: { sid: string; title:
 
       {s.status === "lobby" && (
         <div className="mt-8 text-center">
-          <h1 className="text-6xl">You&apos;re in</h1>
+          <h1 className="text-5xl">You&apos;re in</h1>
           <p className="mt-3 text-white/75">Waiting for the host to pair everyone. Keep this screen open.</p>
           <p className="mt-6 text-sm text-white/55">{data.players.length} {data.players.length === 1 ? "guest has" : "guests have"} joined from their phones</p>
         </div>
@@ -143,11 +143,11 @@ function Game({ sid, title, hostName, playerId, onLeave }: { sid: string; title:
             <Avatar name={partner.name} size={48} />
             <div className="min-w-0 flex-1">
               <div className="label">Your partner tonight</div>
-              <div className="display text-3xl">{partner.name}</div>
+              <div className="display text-2xl">{partner.name}</div>
               <div className="text-sm text-paper-ink/70">Together you are {pair.name}</div>
             </div>
             <div className="text-right">
-              <div className="display text-4xl">{data.scores.totals[pair.id] ?? 0}</div>
+              <div className="display text-3xl">{data.scores.totals[pair.id] ?? 0}</div>
               <div className="text-xs text-paper-ink/60">place {rank} of {order.length}</div>
             </div>
           </div>
@@ -159,7 +159,7 @@ function Game({ sid, title, hostName, playerId, onLeave }: { sid: string; title:
       )}
 
       {s.status === "running" && <Current data={data} myPairId={pair?.id ?? null} act={act} />}
-      {msg && <div className="mt-3 rounded-lg bg-brand/15 p-3 text-sm">{msg}</div>}
+      {msg && <div className="mt-3 rounded-lg bg-hot/15 p-3 text-sm">{msg}</div>}
       {s.status === "running" && <Pulse data={data} act={act} hostName={hostName} />}
       {s.status === "finished" && <After data={data} playerId={playerId} hostName={hostName} pairName={pair?.name ?? null} rank={rank} act={act} />}
     </div>
@@ -176,7 +176,7 @@ function Current({ data, myPairId, act }: { data: LiveData; myPairId: string | n
   return (
     <div className="mt-5">
       <div className="label">Round {s.current + 1} of {s.program.length}{q ? `, question ${s.qIndex + 1} of ${c.questions!.length}` : ""}</div>
-      <h2 className="mt-1 text-4xl">{c.emoji} {c.title}</h2>
+      <h2 className="mt-1 text-3xl">{c.emoji} {c.title}</h2>
       {q && (
         <>
           <p className="mt-3 text-lg font-semibold">{q.q}</p>
@@ -189,7 +189,7 @@ function Current({ data, myPairId, act }: { data: LiveData; myPairId: string | n
               const wrongPick = revealed && picked && !correct;
               return (
                 <button key={i} disabled={!myPairId || answered !== null || s.phase !== "open"} onClick={() => act("answer", i)}
-                  className={`rounded-xl border p-4 text-left font-semibold ${correct ? "border-mint bg-mint/20" : wrongPick ? "border-brand bg-brand/20" : picked ? "border-brand-2 bg-brand-2/15" : "border-line bg-night"} disabled:cursor-default`}>
+                  className={`rounded-xl border p-4 text-left font-semibold ${correct ? "border-mint bg-mint/20" : wrongPick ? "border-hot bg-hot/20" : picked ? "border-brand-2 bg-brand-2/15" : "border-line bg-night"} disabled:cursor-default`}>
                   <span className="mr-2 text-brand-2">{"ABCD"[i]}</span>{o}
                 </button>
               );
@@ -268,10 +268,10 @@ function After({ data, playerId, hostName, pairName, rank, act }: { data: LiveDa
   const place = ["Golden", "Silver", "Bronze"][rank - 1];
   return (
     <div className="mt-6">
-      <h1 className="text-5xl">{pairName ? (place ? `${place} couple tonight` : `Place ${rank} tonight`) : "That's the night"}</h1>
+      <h1 className="text-4xl">{pairName ? (place ? `${place} couple tonight` : `Place ${rank} tonight`) : "That's the night"}</h1>
       <p className="mt-2 text-white/70">{pairName ? `${pairName}'s points now count in the season race for Europe.` : "Thanks for judging."}</p>
 
-      <h2 className="mt-8 text-3xl">Rate the night</h2>
+      <h2 className="mt-8 text-2xl">Rate the night</h2>
       <p className="mt-1 text-sm text-white/60">{hostName} is paid only after guest ratings come in.</p>
       {([["party", "The party overall"], ["host", `${hostName} as a host`]] as const).map(([k, label]) => (
         <div key={k} className="mt-3">
@@ -288,7 +288,7 @@ function After({ data, playerId, hostName, pairName, rank, act }: { data: LiveDa
         </div>
       ))}
 
-      <h2 className="mt-10 text-3xl">Who would you like to see again?</h2>
+      <h2 className="mt-10 text-2xl">Who would you like to see again?</h2>
       <p className="mt-1 text-sm text-white/60">Private. A name is shared only if they pick you too.</p>
       <ul className="mt-3">
         {people.map((x) => {
@@ -306,7 +306,7 @@ function After({ data, playerId, hostName, pairName, rank, act }: { data: LiveDa
 
       {me && me.matches.length > 0 && (
         <div className="paper pop mt-6 p-5">
-          <div className="display text-3xl">It&apos;s mutual</div>
+          <div className="display text-2xl">It&apos;s mutual</div>
           <p className="mt-1 text-paper-ink/75">You and {me.matches.map((m) => m.name).join(", ")} both want to meet again. You can now message each other.</p>
           {me.matches.some((m) => m.demo) && <p className="mt-2 text-xs text-paper-ink/55">Season members are simulated in this demo. With two real phones, both people must pick each other.</p>}
         </div>

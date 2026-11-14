@@ -59,8 +59,8 @@ export default function ApplyForm({ partyId }: { partyId: string }) {
       <div className="rounded-xl border border-dashed border-line p-3 text-sm">
         <div className="font-semibold">Trying the demo?</div>
         <div className="mt-2 flex flex-wrap gap-2">
-          <button type="button" onClick={() => { setF(SAMPLE); setConduct(true); }} className="rounded-full bg-panel px-3 py-1.5 font-semibold hover:bg-line">Fill in a strong application</button>
-          <button type="button" onClick={() => { setF(RUDE); setConduct(true); }} className="rounded-full bg-panel px-3 py-1.5 font-semibold hover:bg-line">Fill in one that gets rejected</button>
+          <button type="button" onClick={() => { setF(SAMPLE); setConduct(true); }} className="btn btn-ghost min-h-0 flex-1 px-3 py-2 text-sm">Fill in a strong application</button>
+          <button type="button" onClick={() => { setF(RUDE); setConduct(true); }} className="btn btn-ghost min-h-0 flex-1 px-3 py-2 text-sm">Fill in one that gets rejected</button>
         </div>
       </div>
       <div className="grid grid-cols-3 gap-3">
@@ -72,30 +72,30 @@ export default function ApplyForm({ partyId }: { partyId: string }) {
         <div className="mt-1 grid grid-cols-2 gap-2">
           {["man", "woman"].map((g) => (
             <button type="button" key={g} onClick={() => setF({ ...f, gender: g })}
-              className={`rounded-xl border px-4 py-3 font-semibold capitalize ${f.gender === g ? "border-brand-2 bg-brand-2/15" : "border-line"}`}>{g}</button>
+              className={`min-h-12 rounded-xl border px-4 py-3 font-semibold capitalize ${f.gender === g ? "border-brand-2 bg-brand-2/15" : "border-line"}`}>{g}</button>
           ))}
         </div>
       </div>
-      <label className="block"><span className="label">Best contest skill</span>
+      <label className="reveal block"><span className="label">Best contest skill</span>
         <select className="input mt-1" value={f.skill} onChange={set("skill")}>
           {CONTEST_SKILLS.map((s) => <option key={s}>{s}</option>)}
         </select>
       </label>
-      <label className="block"><span className="label">What are you looking for?</span>
+      <label className="reveal block"><span className="label">What are you looking for?</span>
         <input className="input mt-1" value={f.lookingFor} onChange={set("lookingFor")} placeholder="New friends, a partner, a fun crew…" required />
       </label>
-      <label className="block"><span className="label">About you (2–3 sentences)</span>
+      <label className="reveal block"><span className="label">About you (2–3 sentences)</span>
         <textarea className="input mt-1 min-h-28" value={f.about} onChange={set("about")} required />
       </label>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="reveal grid grid-cols-2 gap-3">
         <label className="block"><span className="label">Instagram (optional)</span><input className="input mt-1" value={f.instagram} onChange={set("instagram")} placeholder="@handle" /></label>
         <label className="block"><span className="label">Invite code (optional)</span><input className="input mt-1" value={f.inviteCode} onChange={set("inviteCode")} placeholder="From a member" /></label>
       </div>
       <label className="flex items-start gap-3 text-sm text-white/80">
-        <input type="checkbox" className="mt-1 h-4 w-4 accent-[#ee3e5c]" checked={conduct} onChange={(e) => setConduct(e.target.checked)} />
+        <input type="checkbox" className="mt-1 h-4 w-4 accent-[#7c6cf2]" checked={conduct} onChange={(e) => setConduct(e.target.checked)} />
         <span>I accept the code of conduct: respect, consent, no harassment. Breaking it means a permanent ban tied to my ID.</span>
       </label>
-      {err && <div className="rounded-xl bg-brand/15 p-3 text-sm">{err}</div>}
+      {err && <div className="rounded-xl bg-hot/15 p-3 text-sm">{err}</div>}
       <button className="btn btn-primary w-full text-lg" disabled={busy || !f.gender}>
         {busy ? "AI is reading your application…" : "Send my application"}
       </button>

@@ -14,11 +14,11 @@ export default function PassPage() {
     <div className="glow">
       <div className="mx-auto grid max-w-5xl gap-10 px-4 py-12 md:grid-cols-[1.1fr_1fr]">
         <div>
-          <h1 className="text-6xl sm:text-7xl">Season Pass</h1>
+          <h1 className="text-5xl sm:text-6xl">Season Pass</h1>
           <p className="mt-4 max-w-md text-lg text-white/80">One payment for the whole of {SEASON.name}. About ${perNight} a night, with the trips to play for.</p>
           <ul className="mt-8">
             {perks.map(([t, d]) => (
-              <li key={t} className="border-t border-line py-4">
+              <li key={t} className="reveal border-t border-line py-4">
                 <div className="text-lg font-bold">{t}</div>
                 <p className="text-white/70">{d}</p>
               </li>

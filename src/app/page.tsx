@@ -25,11 +25,11 @@ export default function Home() {
       <section className="glow">
         <div className="mx-auto grid max-w-5xl gap-10 px-4 pb-16 pt-12 md:grid-cols-[1.15fr_1fr] md:items-center md:pt-20">
           <div>
-            <h1 className="text-7xl sm:text-8xl md:text-[7.5rem]">Get on<br />the list.</h1>
+            <h1 className="text-6xl sm:text-7xl md:text-7xl">Get on<br />the list.</h1>
             <p className="mt-6 max-w-md text-lg text-white/80">
               Secret house parties for adults in their thirties. Members decide who gets in. Couples compete all season, and the best pair flies to Europe.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="/parties" className="btn btn-primary">See this season&apos;s parties</Link>
               <Link href="/live/tonight" className="btn btn-ghost">Watch tonight live</Link>
             </div>
@@ -37,9 +37,9 @@ export default function Home() {
           </div>
 
           {/* The door list: the thing everyone wants to be on. */}
-          <div className="paper mx-auto w-full max-w-sm rotate-1 p-6">
+          <div className="paper mx-auto w-full max-w-sm p-6">
             <div className="flex items-baseline justify-between">
-              <div className="display text-3xl">Door list</div>
+              <div className="display text-2xl">Door list</div>
               <div className="text-sm font-semibold">Tonight, 9 pm</div>
             </div>
             <div className="mt-1 text-sm text-paper-ink/70">{tonight.title}, {tonight.neighborhood}</div>
@@ -52,7 +52,7 @@ export default function Home() {
               ))}
               <li className="rule flex items-center justify-between py-2">
                 <span className="font-semibold text-paper-ink/45">Your name</span>
-                <span className="text-sm font-semibold text-brand">{spotsLeft(tonight)} spots left</span>
+                <span className="text-sm font-semibold text-[#d43a5c]">{spotsLeft(tonight)} spots left</span>
               </li>
             </ul>
             <Link href="/apply/tonight" className="btn btn-paper mt-4 w-full">Apply for tonight</Link>
@@ -61,11 +61,11 @@ export default function Home() {
       </section>
 
       <section className="mx-auto max-w-5xl px-4 py-16">
-        <h2 className="text-4xl sm:text-5xl">How a season works</h2>
+        <h2 className="reveal text-3xl sm:text-4xl">How a season works</h2>
         <ol className="mt-8 grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
           {how.map((s, i) => (
-            <li key={s.t} className="border-t-2 border-brand pt-4">
-              <div className="display text-5xl text-brand-2">{i + 1}</div>
+            <li key={s.t} className="reveal border-t-2 border-brand pt-4" style={{ transitionDelay: `${i * 90}ms` }}>
+              <div className="display text-4xl text-brand-2">{i + 1}</div>
               <div className="mt-2 text-lg font-bold">{s.t}</div>
               <p className="mt-1 text-white/70">{s.d}</p>
             </li>
@@ -75,15 +75,15 @@ export default function Home() {
 
       <section className="border-y border-line bg-night">
         <div className="mx-auto grid max-w-5xl gap-8 px-4 py-14 md:grid-cols-[1fr_1.4fr] md:items-center">
-          <div>
-            <h2 className="text-4xl sm:text-5xl">Three couples.<br />Three trips.</h2>
+          <div className="reveal">
+            <h2 className="text-3xl sm:text-4xl">Three couples.<br />Three trips.</h2>
             <p className="mt-4 text-white/70">Prizes go to the couples with the most contest points after {SEASON.weeks} weeks. Skill decides it, not luck.</p>
             <Link href="/season" className="btn btn-ghost mt-6">See the standings</Link>
           </div>
           <ul>
-            {SEASON.prizes.map((p) => (
-              <li key={p.place} className="flex items-baseline gap-4 border-t border-line py-4 last:border-b">
-                <span className={`display w-44 shrink-0 text-3xl ${p.color === "gold" ? "text-gold" : p.color === "silver" ? "text-silver" : "text-bronze"}`}>{p.title}</span>
+            {SEASON.prizes.map((p, i) => (
+              <li key={p.place} style={{ transitionDelay: `${i * 90}ms` }} className="reveal flex items-baseline gap-4 border-t border-line py-4 last:border-b">
+                <span className={`display w-40 shrink-0 text-xl sm:w-48 sm:text-2xl ${p.color === "gold" ? "text-gold" : p.color === "silver" ? "text-silver" : "text-bronze"}`}>{p.title}</span>
                 <span className="text-lg text-white/85">{p.prize}</span>
               </li>
             ))}
@@ -92,8 +92,8 @@ export default function Home() {
       </section>
 
       <section className="mx-auto max-w-5xl px-4 py-16">
-        <div className="flex items-end justify-between gap-4">
-          <h2 className="text-4xl sm:text-5xl">Coming up in Austin</h2>
+        <div className="reveal flex items-end justify-between gap-4">
+          <h2 className="text-3xl sm:text-4xl">Coming up in Austin</h2>
           <Link href="/parties" className="shrink-0 font-semibold text-brand-2 hover:underline">All parties</Link>
         </div>
         <div className="mt-6 border-b border-line">
@@ -102,22 +102,22 @@ export default function Home() {
       </section>
 
       <section className="mx-auto max-w-5xl px-4 pb-16">
-        <h2 className="text-4xl sm:text-5xl">Try the whole thing in three minutes</h2>
+        <h2 className="reveal text-3xl sm:text-4xl">Try the whole thing in three minutes</h2>
         <p className="mt-3 max-w-xl text-white/70">Everything below runs for real: the AI screening, the card hold, the pairing and the live scoring.</p>
         <ol className="mt-8 grid gap-6 md:grid-cols-3">
           {jury.map((s, i) => (
-            <li key={s.t} className="card flex flex-col p-5">
-              <div className="display text-4xl text-brand-2">{i + 1}</div>
+            <li key={s.t} className="reveal card flex flex-col p-5" style={{ transitionDelay: `${i * 90}ms` }}>
+              <div className="display text-3xl text-brand-2">{i + 1}</div>
               <div className="mt-1 text-lg font-bold">{s.t}</div>
               <p className="mt-1 flex-1 text-white/70">{s.d}</p>
-              <Link href={s.href} className="btn btn-ghost mt-4">{s.cta}</Link>
+              <Link href={s.href} className="btn btn-ghost mt-4 w-full">{s.cta}</Link>
             </li>
           ))}
         </ol>
       </section>
 
       <section className="mx-auto max-w-5xl px-4 pb-20">
-        <div className="grid gap-8 border-t border-line pt-10 sm:grid-cols-3">
+        <div className="reveal grid gap-8 border-t border-line pt-10 sm:grid-cols-3">
           <div>
             <div className="text-lg font-bold">Everyone is screened</div>
             <p className="mt-1 text-white/70">Guests are checked before the party, approved by members and rated after it. A ban follows your ID, not your email.</p>
@@ -127,7 +127,7 @@ export default function Home() {
             <p className="mt-1 text-white/70">Verified hosts provide the house. Their money stays in escrow until guests rate the night.</p>
           </div>
           <div>
-            <div className="text-lg font-bold">Season Pass, ${SEASON.passPrice.toLocaleString()}</div>
+            <div className="text-lg font-bold">Season Pass, <span className="price">${SEASON.passPrice.toLocaleString()}</span></div>
             <p className="mt-1 text-white/70">A seat at all {SEASON.weeks} parties, priority approval and your place in the race for the trips. <Link href="/pass" className="font-semibold text-brand-2 hover:underline">Get the pass</Link></p>
           </div>
         </div>

@@ -13,7 +13,7 @@ const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = pk ? loadStripe(pk) : null;
 export const stripeAppearance = {
   theme: "night" as const,
-  variables: { colorPrimary: "#ffc266", colorBackground: "#1c0e27", colorText: "#f6eef8", borderRadius: "10px" },
+  variables: { colorPrimary: "#7c6cf2", colorBackground: "#0d0a2a", colorText: "#f3f1ff", borderRadius: "10px" },
 };
 
 const STEPS = ["Profile", "Card hold", "Members vote", "Ticket"];
@@ -35,7 +35,7 @@ export default function ApplicationFlow({ id, partyTitle, partyId, partyWhen, pr
 
   useEffect(() => { load(); }, [load]);
 
-  if (err) return <div className="mt-8 rounded-xl bg-brand/15 p-4">{err}</div>;
+  if (err) return <div className="mt-8 rounded-xl bg-hot/15 p-4">{err}</div>;
   if (!app) return <div className="mt-8 text-white/60">Loading your application…</div>;
 
   const step = app.status === "reviewed" ? 1 : app.status === "held" ? 2 : 3;
@@ -65,7 +65,7 @@ function ProfileCard({ app }: { app: App }) {
       <div className="mt-3 flex items-center gap-3">
         <Avatar name={app.form.name} size={56} />
         <div>
-          <div className="display text-3xl">{app.form.name}, {app.form.age}</div>
+          <div className="display text-2xl">{app.form.name}, {app.form.age}</div>
           <div className="font-semibold text-[#b0283f]">{p.headline}</div>
         </div>
       </div>
@@ -76,7 +76,7 @@ function ProfileCard({ app }: { app: App }) {
         <div className="rule mt-4 pt-4">
           <div className="flex items-baseline justify-between">
             <div className="font-bold">Trust score</div>
-            <div className="display text-4xl" style={{ color: t.score >= 70 ? "#1f8a5b" : t.score >= 45 ? "#a8690a" : "#b0283f" }}>{t.score} / 100</div>
+            <div className="display text-3xl" style={{ color: t.score >= 70 ? "#1f8a5b" : t.score >= 45 ? "#a8690a" : "#b0283f" }}>{t.score} / 100</div>
           </div>
           <ul className="mt-2 grid gap-1 text-sm">
             {t.badges.map((b) => (
@@ -119,11 +119,11 @@ function PayStep({ id, price, onHeld }: { id: string; price: number; onHeld: () 
 
   return (
     <div className="card p-5">
-      <h2 className="text-3xl">Hold ${price} to send your application</h2>
+      <h2 className="text-2xl">Hold <span className="price">${price}</span> to send your application</h2>
       <p className="mt-2 text-white/70">This is a hold, not a charge. If {APPROVALS_NEEDED} or more members approve you, the ${price} is charged and the address unlocks. If they don&apos;t, the hold is released and you pay $0.</p>
       {!secret ? (
         <>
-          {err && <div className="mt-3 text-sm text-brand">{err}</div>}
+          {err && <div className="mt-3 text-sm text-hot">{err}</div>}
           <button className="btn btn-primary mt-4 w-full" onClick={start} disabled={busy}>{busy ? "Preparing…" : `Hold $${price} and send to members`}</button>
         </>
       ) : (
@@ -166,7 +166,7 @@ function CardForm({ id, price, onHeld }: { id: string; price: number; onHeld: ()
   return (
     <form onSubmit={pay} className="mt-4 space-y-3">
       <PaymentElement />
-      {err && <div className="text-sm text-brand">{err}</div>}
+      {err && <div className="text-sm text-hot">{err}</div>}
       <button className="btn btn-primary w-full" disabled={busy || !stripe}>{busy ? "Placing the hold…" : `Hold $${price}`}</button>
     </form>
   );
@@ -199,8 +199,8 @@ function VotingStep({ app, onDecided }: { app: App; onDecided: () => void }) {
   return (
     <div className="card p-5">
       <div className="flex items-baseline justify-between gap-4">
-        <h2 className="text-3xl">Members are voting</h2>
-        <div className="display text-3xl text-brand-2">{yes} of {APPROVALS_NEEDED} needed</div>
+        <h2 className="text-2xl">Members are voting</h2>
+        <div className="display shrink-0 text-xl text-brand-2">{yes} of {APPROVALS_NEEDED} needed</div>
       </div>
       <p className="mt-1 text-sm text-white/60">Each member is played by AI in this demo, reading your card in their own voice.</p>
       <ul className="mt-3">
@@ -211,7 +211,7 @@ function VotingStep({ app, onDecided }: { app: App; onDecided: () => void }) {
               <div className="flex items-center justify-between">
                 <span className="font-bold">{v.voter}</span>
                 {i < shown ? (
-                  <span className={`rounded-full px-3 py-0.5 text-sm font-bold ${v.vote === "yes" ? "bg-mint/20 text-mint" : "bg-brand/20 text-brand"}`}>{v.vote === "yes" ? "Let them in" : "Not this time"}</span>
+                  <span className={`rounded-full px-3 py-0.5 text-sm font-bold ${v.vote === "yes" ? "bg-mint/20 text-mint" : "bg-hot/20 text-hot"}`}>{v.vote === "yes" ? "Let them in" : "Not this time"}</span>
                 ) : (
                   <span className="text-sm text-white/40">reading…</span>
                 )}
@@ -221,7 +221,7 @@ function VotingStep({ app, onDecided }: { app: App; onDecided: () => void }) {
           </li>
         ))}
       </ul>
-      {err && <div className="mt-3 text-sm text-brand">{err}</div>}
+      {err && <div className="mt-3 text-sm text-hot">{err}</div>}
     </div>
   );
 }
@@ -230,20 +230,20 @@ function Ticket({ app, partyTitle, partyId, partyWhen, live }: { app: App; party
   const [qr, setQr] = useState("");
   const path = `/play/${partyId}?ticket=${app.id}`;
   useEffect(() => {
-    QRCode.toDataURL(`${window.location.origin}${path}`, { margin: 0, width: 240, color: { dark: "#1d1026", light: "#f5ecdc" } }).then(setQr);
+    QRCode.toDataURL(`${window.location.origin}${path}`, { margin: 0, width: 240, color: { dark: "#120e33", light: "#f4f2ff" } }).then(setQr);
   }, [path]);
   return (
     <div className="paper pop grid sm:grid-cols-[1fr_auto]">
       <div className="p-6">
         <div className="font-semibold text-[#1f8a5b]">Approved. You&apos;re on the list.</div>
-        <div className="display mt-1 text-5xl">{partyTitle}</div>
+        <div className="display mt-1 text-4xl">{partyTitle}</div>
         <div className="mt-1 font-semibold">{partyWhen}</div>
         <dl className="rule mt-4 space-y-3 pt-4">
           <div><dt className="label">Address, now unlocked</dt><dd className="text-lg font-bold">{app.reveal?.address}</dd></div>
           <div><dt className="label">Dress code</dt><dd>{app.reveal?.dressCode}</dd></div>
           <div><dt className="label">Admit one</dt><dd>{app.form.name}. Your card has been charged.</dd></div>
         </dl>
-        {live && <Link href={path} className="btn btn-paper mt-5">Check in and open Party Mode</Link>}
+        {live && <Link href={path} className="btn btn-paper mt-5 w-full sm:w-auto">Check in and open Party Mode</Link>}
       </div>
       <div className="flex flex-col items-center justify-center gap-2 border-t border-dashed border-paper-ink/30 p-6 sm:border-l sm:border-t-0">
         {qr && <img src={qr} alt="Check-in QR code" className="h-40 w-40" />}
@@ -257,17 +257,17 @@ function Rejected({ app }: { app: App }) {
   const yes = (app.votes ?? []).filter((v) => v.vote === "yes").length;
   return (
     <div className="card p-5">
-      <h2 className="text-3xl">Not approved this time</h2>
+      <h2 className="text-2xl">Not approved this time</h2>
       <p className="mt-2 text-white/75">{yes} of the {APPROVALS_NEEDED} approvals needed. The hold on your card was released, so you paid $0. Read what members said, improve your application and apply to another night.</p>
       <ul className="mt-3">
         {(app.votes ?? []).map((v) => (
           <li key={v.voterId} className="border-t border-line py-2 text-white/75">
-            <span className={`mr-2 font-bold ${v.vote === "yes" ? "text-mint" : "text-brand"}`}>{v.vote === "yes" ? "Yes" : "No"}</span>
+            <span className={`mr-2 font-bold ${v.vote === "yes" ? "text-mint" : "text-hot"}`}>{v.vote === "yes" ? "Yes" : "No"}</span>
             {v.voter}: “{v.reason}”
           </li>
         ))}
       </ul>
-      <Link href="/parties" className="btn btn-ghost mt-4">Browse other parties</Link>
+      <Link href="/parties" className="btn btn-ghost mt-4 w-full sm:w-auto">Browse other parties</Link>
     </div>
   );
 }

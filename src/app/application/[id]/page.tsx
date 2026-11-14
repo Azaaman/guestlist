@@ -15,7 +15,7 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
   return (
     <div className="mx-auto max-w-xl px-4 py-10">
       <p className="font-semibold text-brand-2">{p.title}</p>
-      <h1 className="mt-1 text-5xl">Your application</h1>
+      <h1 className="mt-1 text-4xl">Your application</h1>
       <ApplicationFlow id={id} partyTitle={p.title} partyId={p.id} partyWhen={fmtDate(p.date)} price={dynamicPrice(p)} live={!!p.live} />
     </div>
   );

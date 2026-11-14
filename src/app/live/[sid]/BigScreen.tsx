@@ -18,7 +18,7 @@ export default function BigScreen({ sid, title }: { sid: string; title: string }
   useEffect(() => {
     const url = `${window.location.origin}/play/${sid}`;
     setJoinUrl(url);
-    QRCode.toDataURL(url, { margin: 1, width: 360, color: { dark: "#1d1026", light: "#f5ecdc" } }).then(setQr);
+    QRCode.toDataURL(url, { margin: 1, width: 360, color: { dark: "#120e33", light: "#f4f2ff" } }).then(setQr);
     try { setPin(localStorage.getItem("gl_host_pin") ?? ""); } catch {}
   }, [sid]);
 
@@ -44,13 +44,13 @@ export default function BigScreen({ sid, title }: { sid: string; title: string }
         <div>
           <Link href="/" className="display text-xl text-white/70">Guestlist</Link>
           <div className="mt-1 flex items-center gap-3">
-            <span className="live-dot h-3 w-3 rounded-full bg-brand" />
-            <h1 className="text-4xl lg:text-6xl">{title}</h1>
+            <span className="live-dot h-3 w-3 rounded-full bg-hot" />
+            <h1 className="text-3xl lg:text-5xl">{title}</h1>
           </div>
           {data && s?.status !== "lobby" && (
             <p className="mt-2 text-white/65">
               {data.room.vibe !== null ? `Room pulse ${data.room.vibe} out of 5 from ${data.room.vibeCount} ${data.room.vibeCount === 1 ? "guest" : "guests"}` : "Room pulse appears when guests rate the night on their phones"}
-              {data.room.reports > 0 && <span className="ml-3 font-bold text-brand">{data.room.reports} safety {data.room.reports === 1 ? "alert" : "alerts"} sent to the host</span>}
+              {data.room.reports > 0 && <span className="ml-3 font-bold text-hot">{data.room.reports} safety {data.room.reports === 1 ? "alert" : "alerts"} sent to the host</span>}
             </p>
           )}
         </div>
@@ -62,18 +62,18 @@ export default function BigScreen({ sid, title }: { sid: string; title: string }
         )}
       </div>
 
-      {error && <div className="mt-4 rounded-lg bg-brand/15 p-3">{error}</div>}
+      {error && <div className="mt-4 rounded-lg bg-hot/15 p-3">{error}</div>}
       {!data && !error && <div className="mt-20 text-center text-white/60">Connecting…</div>}
 
       {data && s?.status === "lobby" && (
         <div className="mt-10 grid items-start gap-10 lg:grid-cols-[auto_1fr]">
           <div className="paper p-6 text-center">
-            <div className="display text-3xl">Scan to join the party</div>
+            <div className="display text-2xl">Scan to join the party</div>
             {qr && <img src={qr} alt="QR code to join the party" className="mx-auto mt-3 h-72 w-72" />}
             <div className="mt-2 break-all text-sm text-paper-ink/70">{joinUrl}</div>
           </div>
           <div>
-            <div className="display text-8xl">{data.players.length}</div>
+            <div className="display text-7xl">{data.players.length}</div>
             <div className="text-xl text-white/70">{data.players.length === 1 ? "guest has" : "guests have"} joined from their phones</div>
             <p className="mt-4 max-w-lg text-white/65">When everyone is in, the host starts the night. AI pairs the room into couples and writes tonight&apos;s contests. Season members fill the remaining places.</p>
             <ul className="mt-6 flex flex-wrap gap-2">
@@ -89,7 +89,7 @@ export default function BigScreen({ sid, title }: { sid: string; title: string }
       {data && s?.status === "finished" && <Finished data={data} />}
 
       {/* Host controls */}
-      <div className="fixed bottom-4 left-1/2 z-20 flex w-max max-w-[95vw] -translate-x-1/2 flex-wrap items-center gap-2 rounded-full border border-line bg-ink/95 p-2 pl-4 backdrop-blur">
+      <div className="fixed bottom-4 left-1/2 z-20 flex w-max max-w-[95vw] -translate-x-1/2 flex-wrap items-center gap-2 rounded-2xl border border-line bg-ink/95 p-2 pl-4 backdrop-blur">
         <span className="text-sm font-semibold text-white/55">Host</span>
         {s?.status === "lobby" && (
           <button className="btn btn-primary" disabled={!!busy} onClick={() => host("setup")}>
@@ -102,8 +102,8 @@ export default function BigScreen({ sid, title }: { sid: string; title: string }
           </button>
         )}
         <button className="btn btn-ghost" disabled={!!busy} onClick={() => { if (confirm("Reset the party? All guests and scores are cleared.")) host("reset"); }}>Reset</button>
-        <input className="input w-20 rounded-full py-2 text-sm" placeholder="PIN" aria-label="Host PIN" value={pin} onChange={(e) => { setPin(e.target.value); try { localStorage.setItem("gl_host_pin", e.target.value); } catch {} }} />
-        {hostErr && <span className="px-2 text-sm text-brand">{hostErr}</span>}
+        <input className="input w-20 text-sm" placeholder="PIN" aria-label="Host PIN" value={pin} onChange={(e) => { setPin(e.target.value); try { localStorage.setItem("gl_host_pin", e.target.value); } catch {} }} />
+        {hostErr && <span className="px-2 text-sm text-hot">{hostErr}</span>}
       </div>
     </div>
   );
@@ -120,11 +120,11 @@ function Running({ data }: { data: LiveData }) {
           <span>Round {s.current + 1} of {s.program.length}{q ? `, question ${s.qIndex + 1} of ${c.questions!.length}` : ""}</span>
           <span>{data.responses} {c?.type === "quiz" ? (data.responses === 1 ? "answer in" : "answers in") : (data.responses === 1 ? "judge has scored" : "judges have scored")}</span>
         </div>
-        <h2 className="mt-2 text-6xl lg:text-7xl">{c?.emoji} {c?.title}</h2>
+        <h2 className="mt-2 text-5xl lg:text-6xl">{c?.emoji} {c?.title}</h2>
         <p className="mt-3 max-w-2xl text-xl text-white/75">{c?.description}</p>
         {q && (
           <div className="mt-8">
-            <div className="text-2xl font-bold lg:text-4xl">{q.q}</div>
+            <div className="text-2xl font-bold lg:text-3xl">{q.q}</div>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               {q.options.map((o, i) => {
                 const correct = s.phase === "reveal" && q.answer === i;
@@ -153,17 +153,17 @@ function Leaderboard({ data }: { data: LiveData }) {
   const medal = ["text-gold", "text-silver", "text-bronze"];
   return (
     <div>
-      <div className="display text-3xl">Tonight&apos;s board</div>
+      <div className="display text-2xl">Tonight&apos;s board</div>
       <ol className="mt-2">
         {order.map((p, i) => (
           <li key={p.id} className="flex items-center gap-3 border-t border-line py-3">
-            <div className={`display w-8 text-center text-3xl ${medal[i] ?? "text-white/50"}`}>{i + 1}</div>
+            <div className={`display w-8 text-center text-2xl ${medal[i] ?? "text-white/50"}`}>{i + 1}</div>
             <div className="flex -space-x-2"><Avatar name={p.a.name} size={34} /><Avatar name={p.b.name} size={34} tone={3} /></div>
             <div className="min-w-0 flex-1">
               <div className="truncate text-lg font-bold">{p.name}</div>
               <div className="truncate text-sm text-white/60">{p.a.name} and {p.b.name}{!p.a.demo || !p.b.demo ? ", joined live" : ""}</div>
             </div>
-            <div className="display text-4xl">{data.scores.totals[p.id] ?? 0}</div>
+            <div className="display price text-3xl">{data.scores.totals[p.id] ?? 0}</div>
           </li>
         ))}
       </ol>
@@ -180,14 +180,14 @@ function Finished({ data }: { data: LiveData }) {
   const released = r.hostRating !== null && r.hostRating >= PAYOUT_THRESHOLD;
   return (
     <div className="mt-10">
-      <h2 className="text-6xl lg:text-8xl">Tonight&apos;s winners</h2>
+      <h2 className="text-5xl lg:text-7xl">Tonight&apos;s winners</h2>
       <ol className="mt-8 grid gap-8 lg:grid-cols-3">
         {order.slice(0, 3).map((p, i) => (
           <li key={p.id} className="pop border-t-4 border-line pt-4" style={{ animationDelay: `${(2 - i) * 0.5}s`, borderColor: i === 0 ? "var(--color-gold)" : undefined }}>
-            <div className={`display text-3xl ${colors[i]}`}>{titles[i]}</div>
-            <div className="display mt-1 text-5xl">{p.name}</div>
+            <div className={`display text-2xl ${colors[i]}`}>{titles[i]}</div>
+            <div className="display mt-1 text-4xl">{p.name}</div>
             <div className="mt-1 text-lg text-white/70">{p.a.name} and {p.b.name}</div>
-            <div className="display mt-3 text-7xl">{data.scores.totals[p.id] ?? 0}</div>
+            <div className="display mt-3 text-6xl">{data.scores.totals[p.id] ?? 0}</div>
             <p className="mt-2 text-white/60">{p.why}</p>
           </li>
         ))}
