@@ -27,7 +27,7 @@ const tryIt = [
 
 export default function Home() {
   const hook: HookParty[] = PARTIES.map((p) => ({
-    id: p.id, title: p.title, when: when(p.date, p.live), place: p.neighborhood, price: dynamicPrice(p), left: spotsLeft(p),
+    id: p.id, title: p.title, date: p.date, when: when(p.date, p.live), place: p.neighborhood, price: dynamicPrice(p), left: spotsLeft(p),
     photo: p.photo, venue: p.venue, vibes: p.vibes, live: !!p.live,
   }));
   const medal = ["text-gold", "text-silver", "text-bronze"];

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { dynamicPrice, genderCap, getHost, getParty, MEMBERS, spotsLeft } from "@/lib/data";
 import { Avatar, Superhost, fmtDate } from "@/components/ui";
 import PartyPhoto from "@/components/PartyPhoto";
+import Countdown from "@/components/Countdown";
 
 export default async function PartyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,6 +20,7 @@ export default async function PartyPage({ params }: { params: Promise<{ id: stri
         <Link href="/parties" className="text-sm font-semibold text-white/60 hover:text-white">Back to the line-up</Link>
         <p className="mt-6 font-semibold text-brand-2">{fmtDate(p.date)}, {p.neighborhood}</p>
         <h1 className="mt-2 text-5xl sm:text-6xl">{p.title}</h1>
+        <Countdown to={p.date} className="mt-3 inline-block rounded-full bg-panel px-4 py-1.5 font-semibold text-hi" />
         <p className="mt-4 text-lg text-white/85">{p.theme}.</p>
         <PartyPhoto src={p.photo} alt={`Example of a venue like the one for ${p.title}`} className="mt-6 aspect-[16/9] w-full rounded-2xl" />
         <p className="mt-2 text-sm text-white/50">Example photo. The real house and its address are shown only to guests with a ticket.</p>

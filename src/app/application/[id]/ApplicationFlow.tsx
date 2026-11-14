@@ -4,6 +4,7 @@ import Link from "next/link";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import QRCode from "qrcode";
+import Countdown from "@/components/Countdown";
 import { CANCEL_HOURS, DEPOSIT } from "@/lib/room";
 
 interface Booking {
@@ -20,7 +21,7 @@ const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = pk ? loadStripe(pk) : null;
 const appearance = { theme: "night" as const, variables: { colorPrimary: "#8f7dff", colorBackground: "#0f0a3d", colorText: "#ffffff", colorTextPlaceholder: "#cfc7ff", borderRadius: "10px" } };
 
-export default function ApplicationFlow({ id, partyTitle, partyId, partyWhen, price, live }: { id: string; partyTitle: string; partyId: string; partyWhen: string; price: number; live: boolean }) {
+export default function ApplicationFlow({ id, partyTitle, partyId, partyWhen, partyDate, price, live }: { id: string; partyTitle: string; partyId: string; partyWhen: string; partyDate: string; price: number; live: boolean }) {
   const [b, setB] = useState<Booking | null>(null);
   const [err, setErr] = useState("");
 
@@ -42,7 +43,7 @@ export default function ApplicationFlow({ id, partyTitle, partyId, partyWhen, pr
 
   return (
     <div className="mt-6 space-y-6">
-      {b.status === "approved" && <Ticket b={b} partyTitle={partyTitle} partyId={partyId} partyWhen={partyWhen} live={live} />}
+      {b.status === "approved" && <Ticket b={b} partyTitle={partyTitle} partyId={partyId} partyWhen={partyWhen} partyDate={partyDate} live={live} />}
       {b.status === "reviewed" && <PayStep id={id} ticket={b.meta?.price ?? price} deposit={b.meta?.deposit ?? DEPOSIT} onPaid={load} />}
       {b.status === "waitlist" && <Waitlist b={b} />}
       {b.status === "cancelled" && (
@@ -52,7 +53,7 @@ export default function ApplicationFlow({ id, partyTitle, partyId, partyWhen, pr
           <Link href="/parties" className="btn btn-primary mt-4">Choose another party</Link>
         </div>
       )}
-      {(b.status === "approved" || b.status === "reviewed") && <Cancel b={b} onDone={load} />}
+      {(b.status === "approved" || b.status === "reviewed") && <Cancel b={b} partyDate={partyDate} onDone={load} />}
     </div>
   );
 }
@@ -159,7 +160,7 @@ function Waitlist({ b }: { b: Booking }) {
   );
 }
 
-function Ticket({ b, partyTitle, partyId, partyWhen, live }: { b: Booking; partyTitle: string; partyId: string; partyWhen: string; live: boolean }) {
+function Ticket({ b, partyTitle, partyId, partyWhen, partyDate, live }: { b: Booking; partyTitle: string; partyId: string; partyWhen: string; partyDate: string; live: boolean }) {
   const [qr, setQr] = useState("");
   const path = `/play/${partyId}?ticket=${b.id}`;
   useEffect(() => {
@@ -171,6 +172,7 @@ function Ticket({ b, partyTitle, partyId, partyWhen, live }: { b: Booking; party
         <div className="font-semibold text-[#1f8a5b]">Booked. You&apos;re on the list.</div>
         <div className="display mt-1 text-4xl">{partyTitle}</div>
         <div className="mt-1 font-semibold">{partyWhen}</div>
+        <Countdown to={partyDate} className="mt-2 inline-block rounded-full bg-paper-ink px-3 py-1 text-sm font-semibold text-hi" />
         <dl className="rule mt-4 space-y-3 pt-4">
           <div><dt className="label">Address, now unlocked</dt><dd className="text-lg font-bold">{b.reveal?.address}</dd></div>
           <div><dt className="label">Dress code</dt><dd>{b.reveal?.dressCode}</dd></div>
@@ -187,7 +189,7 @@ function Ticket({ b, partyTitle, partyId, partyWhen, live }: { b: Booking; party
 }
 
 // Free cancellation until 24 hours before the party. After that the ticket is charged even for a no-show.
-function Cancel({ b, onDone }: { b: Booking; onDone: () => void }) {
+function Cancel({ b, partyDate, onDone }: { b: Booking; partyDate: string; onDone: () => void }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   if (b.meta?.settled) return null;
@@ -206,6 +208,7 @@ function Cancel({ b, onDone }: { b: Booking; onDone: () => void }) {
       {free ? (
         <>
           <p>Plans changed? Cancel for free until {CANCEL_HOURS} hours before the party.</p>
+          <Countdown to={new Date(new Date(partyDate).getTime() - CANCEL_HOURS * 3600000).toISOString()} label="Free cancellation ends in" event={false} className="mt-1 block font-semibold text-hi" />
           <button className="btn btn-ghost mt-3" disabled={busy} onClick={cancel}>{busy ? "Cancelling…" : "Cancel my booking"}</button>
         </>
       ) : (
