@@ -11,30 +11,46 @@ type App = ApplicationRow & { reveal: { address: string; dressCode: string } | n
 
 const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = pk ? loadStripe(pk) : null;
+export const stripeAppearance = {
+  theme: "night" as const,
+  variables: { colorPrimary: "#ffc266", colorBackground: "#1c0e27", colorText: "#f6eef8", borderRadius: "10px" },
+};
 
-export default function ApplicationFlow({ id, partyTitle, partyId, price, live }: { id: string; partyTitle: string; partyId: string; price: number; live: boolean }) {
+const STEPS = ["Profile", "Card hold", "Members vote", "Ticket"];
+
+export default function ApplicationFlow({ id, partyTitle, partyId, partyWhen, price, live }: { id: string; partyTitle: string; partyId: string; partyWhen: string; price: number; live: boolean }) {
   const [app, setApp] = useState<App | null>(null);
   const [err, setErr] = useState("");
 
   const load = useCallback(async () => {
-    const res = await fetch(`/api/application/${id}`, { cache: "no-store" });
-    const data = await res.json();
-    if (!res.ok) setErr(data.error || "Failed to load");
-    else setApp(data);
+    try {
+      const res = await fetch(`/api/application/${id}`, { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok) setErr(data.error || "This application could not be loaded.");
+      else setApp(data);
+    } catch {
+      setErr("No connection. Reload the page to try again.");
+    }
   }, [id]);
 
   useEffect(() => { load(); }, [load]);
 
-  if (err) return <div className="mt-8 rounded-xl border border-red-400/40 bg-red-500/10 p-4 text-red-200">{err}</div>;
-  if (!app) return <div className="mt-8 text-white/60">Loading…</div>;
+  if (err) return <div className="mt-8 rounded-xl bg-brand/15 p-4">{err}</div>;
+  if (!app) return <div className="mt-8 text-white/60">Loading your application…</div>;
 
+  const step = app.status === "reviewed" ? 1 : app.status === "held" ? 2 : 3;
   return (
     <div className="mt-6 space-y-6">
-      <ProfileCard app={app} />
-      {app.status === "reviewed" && <PayStep id={id} price={price} onHeld={load} />}
-      {app.status === "held" && <VotingStep app={app} onDecided={load} />}
-      {app.status === "approved" && <Ticket app={app} partyTitle={partyTitle} partyId={partyId} live={live} />}
+      <ol className="flex gap-1 text-sm font-semibold">
+        {STEPS.map((s, i) => (
+          <li key={s} className={`flex-1 border-t-2 pt-2 ${i <= step ? "border-brand-2 text-white" : "border-line text-white/40"}`}>{s}</li>
+        ))}
+      </ol>
+      {app.status === "approved" && <Ticket app={app} partyTitle={partyTitle} partyId={partyId} partyWhen={partyWhen} live={live} />}
       {app.status === "rejected" && <Rejected app={app} />}
+      {app.status === "held" && <VotingStep app={app} onDecided={load} />}
+      {app.status === "reviewed" && <PayStep id={id} price={price} onHeld={load} />}
+      <ProfileCard app={app} />
     </div>
   );
 }
@@ -44,37 +60,34 @@ function ProfileCard({ app }: { app: App }) {
   const t = app.trust;
   if (!p) return null;
   return (
-    <div className="card p-5 pop">
-      <div className="label">AI profile card · what members see</div>
+    <div className="paper p-5">
+      <div className="label">Your profile card, written by AI from your application. This is what members read.</div>
       <div className="mt-3 flex items-center gap-3">
         <Avatar name={app.form.name} size={56} />
         <div>
-          <div className="text-xl font-extrabold">{app.form.name}, {app.form.age}</div>
-          <div className="text-brand-2">{p.headline}</div>
+          <div className="display text-3xl">{app.form.name}, {app.form.age}</div>
+          <div className="font-semibold text-[#b0283f]">{p.headline}</div>
         </div>
       </div>
-      <p className="mt-3 text-white/85">{p.bio}</p>
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        <span className="rounded-md bg-brand/25 px-2 py-0.5 text-xs font-semibold">{p.vibe}</span>
-        {p.strengths?.map((s) => <span key={s} className="rounded-md bg-night px-2 py-0.5 text-xs">{s}</span>)}
-      </div>
-      <p className="mt-3 text-sm text-white/60">Icebreaker: “{p.icebreaker}”</p>
+      <p className="mt-3">{p.bio}</p>
+      <p className="mt-2 text-sm text-paper-ink/75">{p.vibe}. Good at: {p.strengths?.join(", ")}.</p>
+      <p className="mt-2 text-sm text-paper-ink/65">Ask them: “{p.icebreaker}”</p>
       {t && (
-        <div className="mt-4 border-t border-line pt-4">
-          <div className="flex items-center justify-between">
-            <div className="label">Trust score</div>
-            <div className={`text-2xl font-black ${t.score >= 70 ? "text-mint" : t.score >= 45 ? "text-gold" : "text-red-300"}`}>{t.score}/100</div>
+        <div className="rule mt-4 pt-4">
+          <div className="flex items-baseline justify-between">
+            <div className="font-bold">Trust score</div>
+            <div className="display text-4xl" style={{ color: t.score >= 70 ? "#1f8a5b" : t.score >= 45 ? "#a8690a" : "#b0283f" }}>{t.score} / 100</div>
           </div>
-          <div className="mt-2 grid gap-1 text-sm">
+          <ul className="mt-2 grid gap-1 text-sm">
             {t.badges.map((b) => (
-              <div key={b.label} className="flex items-center gap-2">
-                <span>{b.ok ? "✅" : "⏳"}</span>
-                <span className={b.ok ? "" : "text-white/55"}>{b.label}{b.note ? <span className="text-white/40"> — {b.note}</span> : null}</span>
-              </div>
+              <li key={b.label} className="flex items-baseline gap-2">
+                <span className={`w-16 shrink-0 font-bold ${b.ok ? "text-[#1f8a5b]" : "text-paper-ink/45"}`}>{b.ok ? "Done" : "Pending"}</span>
+                <span className={b.ok ? "" : "text-paper-ink/60"}>{b.label}{b.note ? `, ${b.note}` : ""}</span>
+              </li>
             ))}
-          </div>
+          </ul>
           {t.redFlags.length > 0 && (
-            <div className="mt-3 rounded-lg bg-red-500/10 p-3 text-sm text-red-200">⚠️ Red flags: {t.redFlags.join("; ")}</div>
+            <div className="mt-3 rounded bg-[#b0283f]/10 p-3 text-sm font-semibold text-[#8f1f33]">Flagged by screening: {t.redFlags.join("; ")}</div>
           )}
         </div>
       )}
@@ -90,31 +103,35 @@ function PayStep({ id, price, onHeld }: { id: string; price: number; onHeld: () 
   async function start() {
     setBusy(true);
     setErr("");
-    const res = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ applicationId: id }) });
-    const data = await res.json();
-    setBusy(false);
-    if (!res.ok) return setErr(data.error || "Checkout failed");
-    setSecret(data.clientSecret);
+    try {
+      const res = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ applicationId: id }) });
+      const data = await res.json();
+      if (!res.ok) setErr(data.error || "The payment could not be started. Try again.");
+      else setSecret(data.clientSecret);
+    } catch {
+      setErr("No connection. Try again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
-  if (!stripePromise) return <div className="card p-4 text-red-200">Stripe publishable key is not configured.</div>;
+  if (!stripePromise) return <div className="card p-4">Payments are not configured: the Stripe publishable key is missing.</div>;
 
   return (
     <div className="card p-5">
-      <div className="label">Step 2 · Hold your spot</div>
-      <h3 className="mt-2 text-xl font-extrabold">${price} hold → members vote</h3>
-      <p className="mt-1 text-sm text-white/65">We place a temporary hold on your card. Approved by {APPROVALS_NEEDED}+ members → charged. Not approved → hold released, you pay $0.</p>
+      <h2 className="text-3xl">Hold ${price} to send your application</h2>
+      <p className="mt-2 text-white/70">This is a hold, not a charge. If {APPROVALS_NEEDED} or more members approve you, the ${price} is charged and the address unlocks. If they don&apos;t, the hold is released and you pay $0.</p>
       {!secret ? (
         <>
-          {err && <div className="mt-3 text-sm text-red-300">{err}</div>}
-          <button className="btn btn-primary mt-4 w-full" onClick={start} disabled={busy}>{busy ? "Preparing…" : `Hold $${price} & send to members`}</button>
+          {err && <div className="mt-3 text-sm text-brand">{err}</div>}
+          <button className="btn btn-primary mt-4 w-full" onClick={start} disabled={busy}>{busy ? "Preparing…" : `Hold $${price} and send to members`}</button>
         </>
       ) : (
-        <Elements stripe={stripePromise} options={{ clientSecret: secret, appearance: { theme: "night", variables: { colorPrimary: "#6c5ce7" } } }}>
+        <Elements stripe={stripePromise} options={{ clientSecret: secret, appearance: stripeAppearance }}>
           <CardForm id={id} price={price} onHeld={onHeld} />
         </Elements>
       )}
-      <p className="mt-3 text-xs text-white/45">Test mode — use card 4242 4242 4242 4242, any future date, any CVC.</p>
+      <p className="mt-3 text-sm text-white/50">Test mode. Use card 4242 4242 4242 4242, any future date, any CVC.</p>
     </div>
   );
 }
@@ -132,14 +149,14 @@ function CardForm({ id, price, onHeld }: { id: string; price: number; onHeld: ()
     setErr("");
     const { error } = await stripe.confirmPayment({ elements, redirect: "if_required" });
     if (error) {
-      setErr(error.message || "Payment failed");
+      setErr(error.message || "The card was not accepted. Check the details and try again.");
       setBusy(false);
       return;
     }
     const res = await fetch("/api/hold", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ applicationId: id }) });
     const data = await res.json();
     if (!res.ok) {
-      setErr(data.error || "Hold failed");
+      setErr(data.error || "The hold was not confirmed. Try again.");
       setBusy(false);
       return;
     }
@@ -149,8 +166,8 @@ function CardForm({ id, price, onHeld }: { id: string; price: number; onHeld: ()
   return (
     <form onSubmit={pay} className="mt-4 space-y-3">
       <PaymentElement />
-      {err && <div className="text-sm text-red-300">{err}</div>}
-      <button className="btn btn-primary w-full" disabled={busy || !stripe}>{busy ? "Placing hold…" : `Place $${price} hold`}</button>
+      {err && <div className="text-sm text-brand">{err}</div>}
+      <button className="btn btn-primary w-full" disabled={busy || !stripe}>{busy ? "Placing the hold…" : `Hold $${price}`}</button>
     </form>
   );
 }
@@ -166,10 +183,14 @@ function VotingStep({ app, onDecided }: { app: App; onDecided: () => void }) {
       return () => clearTimeout(t);
     }
     const t = setTimeout(async () => {
-      const res = await fetch("/api/decide", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ applicationId: app.id }) });
-      const data = await res.json();
-      if (!res.ok) setErr(data.error || "Decision failed");
-      else onDecided();
+      try {
+        const res = await fetch("/api/decide", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ applicationId: app.id }) });
+        const data = await res.json();
+        if (!res.ok) setErr(data.error || "The result could not be saved. Reload the page.");
+        else onDecided();
+      } catch {
+        setErr("No connection. Reload the page.");
+      }
     }, 1200);
     return () => clearTimeout(t);
   }, [shown, votes.length, app.id, onDecided]);
@@ -177,52 +198,56 @@ function VotingStep({ app, onDecided }: { app: App; onDecided: () => void }) {
   const yes = votes.slice(0, shown).filter((v) => v.vote === "yes").length;
   return (
     <div className="card p-5">
-      <div className="flex items-center justify-between">
-        <div className="label">Step 3 · Members are voting</div>
-        <div className="font-mono text-sm">{yes} / {APPROVALS_NEEDED} yes needed</div>
+      <div className="flex items-baseline justify-between gap-4">
+        <h2 className="text-3xl">Members are voting</h2>
+        <div className="display text-3xl text-brand-2">{yes} of {APPROVALS_NEEDED} needed</div>
       </div>
-      <div className="mt-4 space-y-2">
+      <p className="mt-1 text-sm text-white/60">Each member is played by AI in this demo, reading your card in their own voice.</p>
+      <ul className="mt-3">
         {votes.map((v, i) => (
-          <div key={v.voterId} className={`flex items-start gap-3 rounded-xl border border-line p-3 transition ${i < shown ? "pop" : "opacity-30"}`}>
-            <Avatar name={v.voter} size={36} />
+          <li key={v.voterId} className={`flex items-start gap-3 border-t border-line py-3 ${i < shown ? "pop" : "opacity-30"}`}>
+            <Avatar name={v.voter} size={38} />
             <div className="flex-1">
               <div className="flex items-center justify-between">
-                <span className="font-semibold">{v.voter}</span>
+                <span className="font-bold">{v.voter}</span>
                 {i < shown ? (
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${v.vote === "yes" ? "bg-mint/20 text-mint" : "bg-red-500/20 text-red-300"}`}>{v.vote === "yes" ? "YES" : "NO"}</span>
+                  <span className={`rounded-full px-3 py-0.5 text-sm font-bold ${v.vote === "yes" ? "bg-mint/20 text-mint" : "bg-brand/20 text-brand"}`}>{v.vote === "yes" ? "Let them in" : "Not this time"}</span>
                 ) : (
-                  <span className="text-xs text-white/40">reading…</span>
+                  <span className="text-sm text-white/40">reading…</span>
                 )}
               </div>
-              {i < shown && <p className="text-sm text-white/70">“{v.reason}”</p>}
+              {i < shown && <p className="text-white/75">“{v.reason}”</p>}
             </div>
-          </div>
+          </li>
         ))}
-      </div>
-      {err && <div className="mt-3 text-sm text-red-300">{err}</div>}
+      </ul>
+      {err && <div className="mt-3 text-sm text-brand">{err}</div>}
     </div>
   );
 }
 
-function Ticket({ app, partyTitle, partyId, live }: { app: App; partyTitle: string; partyId: string; live: boolean }) {
+function Ticket({ app, partyTitle, partyId, partyWhen, live }: { app: App; partyTitle: string; partyId: string; partyWhen: string; live: boolean }) {
   const [qr, setQr] = useState("");
+  const path = `/play/${partyId}?ticket=${app.id}`;
   useEffect(() => {
-    QRCode.toDataURL(`GUESTLIST:${app.id}`, { margin: 1, width: 220 }).then(setQr);
-  }, [app.id]);
+    QRCode.toDataURL(`${window.location.origin}${path}`, { margin: 0, width: 240, color: { dark: "#1d1026", light: "#f5ecdc" } }).then(setQr);
+  }, [path]);
   return (
-    <div className="card overflow-hidden pop">
-      <div className="bg-brand p-5">
-        <div className="font-mono text-xs tracking-widest">YOU&apos;RE ON THE LIST</div>
-        <div className="mt-1 text-2xl font-black">{partyTitle}</div>
+    <div className="paper pop grid sm:grid-cols-[1fr_auto]">
+      <div className="p-6">
+        <div className="font-semibold text-[#1f8a5b]">Approved. You&apos;re on the list.</div>
+        <div className="display mt-1 text-5xl">{partyTitle}</div>
+        <div className="mt-1 font-semibold">{partyWhen}</div>
+        <dl className="rule mt-4 space-y-3 pt-4">
+          <div><dt className="label">Address, now unlocked</dt><dd className="text-lg font-bold">{app.reveal?.address}</dd></div>
+          <div><dt className="label">Dress code</dt><dd>{app.reveal?.dressCode}</dd></div>
+          <div><dt className="label">Admit one</dt><dd>{app.form.name}. Your card has been charged.</dd></div>
+        </dl>
+        {live && <Link href={path} className="btn btn-paper mt-5">Check in and open Party Mode</Link>}
       </div>
-      <div className="grid gap-5 p-5 sm:grid-cols-[1fr_auto]">
-        <div className="space-y-3">
-          <div><div className="label">Address (unlocked)</div><div className="mt-1 text-lg font-bold">📍 {app.reveal?.address}</div></div>
-          <div><div className="label">Dress code</div><div className="mt-1">{app.reveal?.dressCode}</div></div>
-          <div className="text-sm text-white/65">Card charged. Show this QR at the door — the host checks you in and Party Mode starts on your phone.</div>
-          {live && <Link href={`/play/${partyId}`} className="btn btn-primary">Open Party Mode →</Link>}
-        </div>
-        {qr && <img src={qr} alt="Check-in QR" className="h-44 w-44 rounded-xl bg-white p-2" />}
+      <div className="flex flex-col items-center justify-center gap-2 border-t border-dashed border-paper-ink/30 p-6 sm:border-l sm:border-t-0">
+        {qr && <img src={qr} alt="Check-in QR code" className="h-40 w-40" />}
+        <div className="text-center text-sm text-paper-ink/70">Scan at the door<br />to check in</div>
       </div>
     </div>
   );
@@ -232,12 +257,16 @@ function Rejected({ app }: { app: App }) {
   const yes = (app.votes ?? []).filter((v) => v.vote === "yes").length;
   return (
     <div className="card p-5">
-      <div className="label">Not this time</div>
-      <h3 className="mt-2 text-xl font-extrabold">{yes} of {APPROVALS_NEEDED} approvals</h3>
-      <p className="mt-2 text-white/70">Your card hold was released — you were charged <b>$0</b>. Read the members&apos; feedback, update your application and try another party.</p>
-      <div className="mt-3 space-y-1 text-sm text-white/60">
-        {(app.votes ?? []).map((v) => <div key={v.voterId}>{v.vote === "yes" ? "✅" : "❌"} {v.voter}: “{v.reason}”</div>)}
-      </div>
+      <h2 className="text-3xl">Not approved this time</h2>
+      <p className="mt-2 text-white/75">{yes} of the {APPROVALS_NEEDED} approvals needed. The hold on your card was released, so you paid $0. Read what members said, improve your application and apply to another night.</p>
+      <ul className="mt-3">
+        {(app.votes ?? []).map((v) => (
+          <li key={v.voterId} className="border-t border-line py-2 text-white/75">
+            <span className={`mr-2 font-bold ${v.vote === "yes" ? "text-mint" : "text-brand"}`}>{v.vote === "yes" ? "Yes" : "No"}</span>
+            {v.voter}: “{v.reason}”
+          </li>
+        ))}
+      </ul>
       <Link href="/parties" className="btn btn-ghost mt-4">Browse other parties</Link>
     </div>
   );

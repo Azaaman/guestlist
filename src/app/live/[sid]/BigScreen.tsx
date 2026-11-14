@@ -5,6 +5,8 @@ import QRCode from "qrcode";
 import { Avatar } from "@/components/ui";
 import { ranked, useLive, type LiveData } from "@/components/useLive";
 
+const PAYOUT_THRESHOLD = 4.2;
+
 export default function BigScreen({ sid, title }: { sid: string; title: string }) {
   const { data, error, refresh } = useLive(sid);
   const [qr, setQr] = useState("");
@@ -16,7 +18,7 @@ export default function BigScreen({ sid, title }: { sid: string; title: string }
   useEffect(() => {
     const url = `${window.location.origin}/play/${sid}`;
     setJoinUrl(url);
-    QRCode.toDataURL(url, { margin: 1, width: 360 }).then(setQr);
+    QRCode.toDataURL(url, { margin: 1, width: 360, color: { dark: "#1d1026", light: "#f5ecdc" } }).then(setQr);
     try { setPin(localStorage.getItem("gl_host_pin") ?? ""); } catch {}
   }, [sid]);
 
@@ -26,8 +28,10 @@ export default function BigScreen({ sid, title }: { sid: string; title: string }
     try {
       const res = await fetch(`/api/live/${sid}/host`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, pin, partyId: sid }) });
       const d = await res.json();
-      if (!res.ok) setHostErr(d.error || "Failed");
+      if (!res.ok) setHostErr(d.error || "That didn't work. Try again.");
       await refresh();
+    } catch {
+      setHostErr("No connection. Try again.");
     } finally {
       setBusy("");
     }
@@ -35,40 +39,48 @@ export default function BigScreen({ sid, title }: { sid: string; title: string }
 
   const s = data?.state;
   return (
-    <div className="glow min-h-screen px-6 py-6 lg:px-10">
-      <div className="flex items-center justify-between">
+    <div className="glow min-h-screen px-6 pb-28 pt-6 lg:px-10">
+      <div className="flex items-start justify-between gap-6">
         <div>
-          <Link href="/" className="font-mono text-sm font-bold tracking-[0.25em]">GUEST<span className="text-brand-2">LIST</span></Link>
-          <div className="mt-1 flex items-center gap-2 text-2xl font-black lg:text-3xl">
-            <span className="live-dot h-3 w-3 rounded-full bg-red-500" /> {title}
+          <Link href="/" className="display text-xl text-white/70">Guestlist</Link>
+          <div className="mt-1 flex items-center gap-3">
+            <span className="live-dot h-3 w-3 rounded-full bg-brand" />
+            <h1 className="text-4xl lg:text-6xl">{title}</h1>
           </div>
+          {data && s?.status !== "lobby" && (
+            <p className="mt-2 text-white/65">
+              {data.room.vibe !== null ? `Room pulse ${data.room.vibe} out of 5 from ${data.room.vibeCount} ${data.room.vibeCount === 1 ? "guest" : "guests"}` : "Room pulse appears when guests rate the night on their phones"}
+              {data.room.reports > 0 && <span className="ml-3 font-bold text-brand">{data.room.reports} safety {data.room.reports === 1 ? "alert" : "alerts"} sent to the host</span>}
+            </p>
+          )}
         </div>
         {s && s.status !== "lobby" && qr && (
-          <div className="flex items-center gap-3">
-            <div className="text-right text-sm text-white/70">Judges & guests:<br />scan to vote</div>
-            <img src={qr} alt="Join QR" className="h-24 w-24 rounded-lg bg-white p-1" />
+          <div className="flex shrink-0 items-center gap-3">
+            <div className="text-right text-sm text-white/70">Scan to join<br />as a judge</div>
+            <img src={qr} alt="QR code to join the party" className="h-24 w-24 rounded-md" />
           </div>
         )}
       </div>
 
-      {error && <div className="mt-4 rounded-lg bg-red-500/15 p-3 text-red-200">{error}</div>}
+      {error && <div className="mt-4 rounded-lg bg-brand/15 p-3">{error}</div>}
       {!data && !error && <div className="mt-20 text-center text-white/60">Connecting…</div>}
 
       {data && s?.status === "lobby" && (
         <div className="mt-10 grid items-start gap-10 lg:grid-cols-[auto_1fr]">
-          <div className="card p-6 text-center">
-            <div className="label">Scan to join the party</div>
-            {qr && <img src={qr} alt="Join QR" className="mx-auto mt-4 h-72 w-72 rounded-xl bg-white p-2" />}
-            <div className="mt-3 break-all font-mono text-sm text-white/60">{joinUrl}</div>
+          <div className="paper p-6 text-center">
+            <div className="display text-3xl">Scan to join the party</div>
+            {qr && <img src={qr} alt="QR code to join the party" className="mx-auto mt-3 h-72 w-72" />}
+            <div className="mt-2 break-all text-sm text-paper-ink/70">{joinUrl}</div>
           </div>
           <div>
-            <div className="text-5xl font-black">{data.players.length} <span className="text-white/50">guests in</span></div>
-            <p className="mt-2 text-white/65">When everyone is in, AI forms tonight&apos;s pairs and writes the contest program. Season members fill the room.</p>
-            <div className="mt-6 flex flex-wrap gap-2">
+            <div className="display text-8xl">{data.players.length}</div>
+            <div className="text-xl text-white/70">{data.players.length === 1 ? "guest has" : "guests have"} joined from their phones</div>
+            <p className="mt-4 max-w-lg text-white/65">When everyone is in, the host starts the night. AI pairs the room into couples and writes tonight&apos;s contests. Season members fill the remaining places.</p>
+            <ul className="mt-6 flex flex-wrap gap-2">
               {data.players.map((p) => (
-                <div key={p.id} className="card pop flex items-center gap-2 px-3 py-2"><Avatar name={p.name} size={30} /><span className="font-semibold">{p.name}</span></div>
+                <li key={p.id} className="pop flex items-center gap-2 rounded-full border border-line py-1.5 pl-1.5 pr-4"><Avatar name={p.name} size={30} /><span className="font-semibold">{p.name}</span></li>
               ))}
-            </div>
+            </ul>
           </div>
         </div>
       )}
@@ -77,21 +89,21 @@ export default function BigScreen({ sid, title }: { sid: string; title: string }
       {data && s?.status === "finished" && <Finished data={data} />}
 
       {/* Host controls */}
-      <div className="fixed bottom-4 left-1/2 z-20 flex -translate-x-1/2 flex-wrap items-center gap-2 rounded-2xl border border-line bg-ink/90 p-2 backdrop-blur">
-        <span className="px-2 font-mono text-xs text-white/50">HOST</span>
+      <div className="fixed bottom-4 left-1/2 z-20 flex w-max max-w-[95vw] -translate-x-1/2 flex-wrap items-center gap-2 rounded-full border border-line bg-ink/95 p-2 pl-4 backdrop-blur">
+        <span className="text-sm font-semibold text-white/55">Host</span>
         {s?.status === "lobby" && (
           <button className="btn btn-primary" disabled={!!busy} onClick={() => host("setup")}>
-            {busy === "setup" ? "AI is pairing everyone…" : "✨ Pair everyone & start"}
+            {busy === "setup" ? "AI is pairing the room…" : "Pair everyone and start"}
           </button>
         )}
         {s?.status === "running" && (
           <button className="btn btn-primary" disabled={!!busy} onClick={() => host("next")}>
-            {s.phase === "open" ? "Reveal / close voting" : "Next →"}
+            {s.phase === "open" ? (s.program[s.current]?.type === "quiz" ? "Reveal the answer" : "Close scoring") : "Next"}
           </button>
         )}
-        <button className="btn btn-ghost" disabled={!!busy} onClick={() => { if (confirm("Reset the party? All guests and votes are cleared.")) host("reset"); }}>Reset</button>
-        <input className="input w-20 py-2 text-sm" placeholder="PIN" value={pin} onChange={(e) => { setPin(e.target.value); try { localStorage.setItem("gl_host_pin", e.target.value); } catch {} }} />
-        {hostErr && <span className="px-2 text-sm text-red-300">{hostErr}</span>}
+        <button className="btn btn-ghost" disabled={!!busy} onClick={() => { if (confirm("Reset the party? All guests and scores are cleared.")) host("reset"); }}>Reset</button>
+        <input className="input w-20 rounded-full py-2 text-sm" placeholder="PIN" aria-label="Host PIN" value={pin} onChange={(e) => { setPin(e.target.value); try { localStorage.setItem("gl_host_pin", e.target.value); } catch {} }} />
+        {hostErr && <span className="px-2 text-sm text-brand">{hostErr}</span>}
       </div>
     </div>
   );
@@ -101,25 +113,24 @@ function Running({ data }: { data: LiveData }) {
   const s = data.state;
   const c = s.program[s.current];
   const q = c?.type === "quiz" ? c.questions?.[s.qIndex] : null;
-  const order = ranked(data);
   return (
-    <div className="mt-6 grid gap-6 pb-24 lg:grid-cols-[1.4fr_1fr]">
-      <div className="card p-6">
-        <div className="flex items-center justify-between">
-          <div className="label">Contest {s.current + 1} of {s.program.length}{q ? ` · Question ${s.qIndex + 1}/${c.questions!.length}` : ""}</div>
-          <div className="font-mono text-sm text-white/60">{data.responses} {c?.type === "quiz" ? "answers" : "judges voted"}</div>
+    <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
+      <div>
+        <div className="flex items-baseline justify-between text-white/65">
+          <span>Round {s.current + 1} of {s.program.length}{q ? `, question ${s.qIndex + 1} of ${c.questions!.length}` : ""}</span>
+          <span>{data.responses} {c?.type === "quiz" ? (data.responses === 1 ? "answer in" : "answers in") : (data.responses === 1 ? "judge has scored" : "judges have scored")}</span>
         </div>
-        <div className="mt-3 text-4xl font-black">{c?.emoji} {c?.title}</div>
-        <p className="mt-2 text-lg text-white/75">{c?.description}</p>
+        <h2 className="mt-2 text-6xl lg:text-7xl">{c?.emoji} {c?.title}</h2>
+        <p className="mt-3 max-w-2xl text-xl text-white/75">{c?.description}</p>
         {q && (
-          <div className="mt-6">
-            <div className="text-2xl font-bold lg:text-3xl">{q.q}</div>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="mt-8">
+            <div className="text-2xl font-bold lg:text-4xl">{q.q}</div>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
               {q.options.map((o, i) => {
                 const correct = s.phase === "reveal" && q.answer === i;
                 return (
                   <div key={i} className={`rounded-xl border p-4 text-xl font-semibold ${correct ? "border-mint bg-mint/20" : "border-line bg-night"} ${s.phase === "reveal" && !correct ? "opacity-40" : ""}`}>
-                    <span className="mr-2 font-mono text-brand-2">{"ABCD"[i]}</span>{o}
+                    <span className="mr-2 text-brand-2">{"ABCD"[i]}</span>{o}
                   </div>
                 );
               })}
@@ -127,56 +138,73 @@ function Running({ data }: { data: LiveData }) {
           </div>
         )}
         {c?.type === "vote" && (
-          <div className="mt-6 rounded-xl border border-brand/50 bg-brand/10 p-5 text-xl">
-            {s.phase === "open" ? "📱 Pairs perform — everyone rates each pair 1–5 on their phone." : "🔒 Voting closed — scores added."}
+          <div className="mt-8 border-l-4 border-brand-2 pl-5 text-2xl">
+            {s.phase === "open" ? "Couples perform. Everyone scores each couple from 1 to 5 on their phone." : "Scoring is closed. Points are on the board."}
           </div>
         )}
       </div>
-      <Leaderboard data={data} order={order} />
+      <Leaderboard data={data} />
     </div>
   );
 }
 
-function Leaderboard({ data, order }: { data: LiveData; order: LiveData["state"]["pairs"] }) {
+function Leaderboard({ data }: { data: LiveData }) {
+  const order = ranked(data);
+  const medal = ["text-gold", "text-silver", "text-bronze"];
   return (
-    <div className="card p-5">
-      <div className="label">Tonight&apos;s leaderboard</div>
-      <div className="mt-3 space-y-2">
+    <div>
+      <div className="display text-3xl">Tonight&apos;s board</div>
+      <ol className="mt-2">
         {order.map((p, i) => (
-          <div key={p.id} className={`flex items-center gap-3 rounded-xl p-3 ${i === 0 ? "bg-gold/15" : i === 1 ? "bg-silver/10" : i === 2 ? "bg-bronze/15" : "bg-night"}`}>
-            <div className="w-6 text-center font-mono font-bold">{i + 1}</div>
-            <div className="flex -space-x-2"><Avatar name={p.a.name} size={30} /><Avatar name={p.b.name} size={30} tone={3} /></div>
+          <li key={p.id} className="flex items-center gap-3 border-t border-line py-3">
+            <div className={`display w-8 text-center text-3xl ${medal[i] ?? "text-white/50"}`}>{i + 1}</div>
+            <div className="flex -space-x-2"><Avatar name={p.a.name} size={34} /><Avatar name={p.b.name} size={34} tone={3} /></div>
             <div className="min-w-0 flex-1">
-              <div className="truncate font-bold">{p.name}</div>
-              <div className="truncate text-xs text-white/60">{p.a.name}{p.a.demo ? "" : " ★"} & {p.b.name}{p.b.demo ? "" : " ★"}</div>
+              <div className="truncate text-lg font-bold">{p.name}</div>
+              <div className="truncate text-sm text-white/60">{p.a.name} and {p.b.name}{!p.a.demo || !p.b.demo ? ", joined live" : ""}</div>
             </div>
-            <div className="text-2xl font-black">{data.scores.totals[p.id] ?? 0}</div>
-          </div>
+            <div className="display text-4xl">{data.scores.totals[p.id] ?? 0}</div>
+          </li>
         ))}
-      </div>
-      <p className="mt-3 text-xs text-white/45">★ joined live tonight · other guests are season members (simulated in this demo)</p>
+      </ol>
+      <p className="mt-3 text-sm text-white/45">Guests who joined by phone play for real. The other couples are season members, simulated in this demo.</p>
     </div>
   );
 }
 
 function Finished({ data }: { data: LiveData }) {
   const order = ranked(data);
-  const titles = ["🥇 Golden Couple of the night", "🥈 Silver Couple", "🥉 Bronze Couple"];
+  const titles = ["Golden couple", "Silver couple", "Bronze couple"];
+  const colors = ["text-gold", "text-silver", "text-bronze"];
+  const r = data.room;
+  const released = r.hostRating !== null && r.hostRating >= PAYOUT_THRESHOLD;
   return (
-    <div className="mt-10 pb-24">
-      <div className="text-center text-5xl font-black">Final results</div>
-      <div className="mt-8 grid gap-4 lg:grid-cols-3">
+    <div className="mt-10">
+      <h2 className="text-6xl lg:text-8xl">Tonight&apos;s winners</h2>
+      <ol className="mt-8 grid gap-8 lg:grid-cols-3">
         {order.slice(0, 3).map((p, i) => (
-          <div key={p.id} className={`card pop p-6 text-center ${i === 0 ? "border-gold" : ""}`} style={{ animationDelay: `${(2 - i) * 0.4}s` }}>
-            <div className="text-lg font-bold">{titles[i]}</div>
-            <div className="mt-2 text-3xl font-black">{p.name}</div>
-            <div className="mt-1 text-white/70">{p.a.name} & {p.b.name}</div>
-            <div className="mt-3 text-5xl font-black text-brand-2">{data.scores.totals[p.id] ?? 0}</div>
-            <p className="mt-3 text-sm text-white/60">{p.why}</p>
-          </div>
+          <li key={p.id} className="pop border-t-4 border-line pt-4" style={{ animationDelay: `${(2 - i) * 0.5}s`, borderColor: i === 0 ? "var(--color-gold)" : undefined }}>
+            <div className={`display text-3xl ${colors[i]}`}>{titles[i]}</div>
+            <div className="display mt-1 text-5xl">{p.name}</div>
+            <div className="mt-1 text-lg text-white/70">{p.a.name} and {p.b.name}</div>
+            <div className="display mt-3 text-7xl">{data.scores.totals[p.id] ?? 0}</div>
+            <p className="mt-2 text-white/60">{p.why}</p>
+          </li>
         ))}
+      </ol>
+      <div className="mt-10 grid gap-6 border-t border-line pt-6 md:grid-cols-2">
+        <p className="text-lg text-white/75">Tonight&apos;s points are added to the Season 1 race for the trip to Europe.</p>
+        <div>
+          <div className="text-lg font-bold">
+            {r.ratingCount === 0 ? "Host payout is in escrow" : released ? "Host payout released" : "Host payout on hold"}
+          </div>
+          <p className="text-white/65">
+            {r.ratingCount === 0
+              ? "Guests are rating the night on their phones now. The host is paid once ratings come in."
+              : `Guests rated the host ${r.hostRating} out of 5 (${r.ratingCount} ${r.ratingCount === 1 ? "rating" : "ratings"}). The payout needs ${PAYOUT_THRESHOLD} or higher.`}
+          </p>
+        </div>
       </div>
-      <p className="mt-8 text-center text-white/65">Points added to the Season 1 race for the trip to Europe.</p>
     </div>
   );
 }

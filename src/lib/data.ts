@@ -47,7 +47,7 @@ export interface Member {
 }
 
 export const SEASON = {
-  name: "Season 1 · Austin",
+  name: "Season 1, Austin",
   weeks: 12,
   currentWeek: 5,
   prizes: [
@@ -116,11 +116,13 @@ export const HOSTS: Host[] = [
   },
 ];
 
+// Party times are Austin wall-clock times (US Central, UTC-6 in winter), whatever the server's time zone.
 function day(offset: number, hour = 20) {
-  const d = new Date();
-  d.setDate(d.getDate() + offset);
-  d.setHours(hour, 0, 0, 0);
-  return d.toISOString();
+  const [y, m, d] = new Date()
+    .toLocaleDateString("en-CA", { timeZone: "America/Chicago" })
+    .split("-")
+    .map(Number);
+  return new Date(Date.UTC(y, m - 1, d + offset, hour + 6)).toISOString();
 }
 
 export const PARTIES: Party[] = [
@@ -230,7 +232,7 @@ export interface SeasonPair {
 
 export const SEASON_PAIRS: SeasonPair[] = [
   { id: "p1", name: "The Two-Steppers", members: ["Sarah K.", "Tyler G."], weeks: [62, 71, 58, 80] },
-  { id: "p2", name: "Brain & Brawn", members: ["Rachel T.", "Marcus D."], weeks: [70, 55, 77, 69] },
+  { id: "p2", name: "Brain & Brawn", members: ["Rachel T.", "Marcus D."], weeks: [70, 55, 77, 66] },
   { id: "p3", name: "History Buffs", members: ["Emily W.", "Daniel P."], weeks: [81, 60, 52, 73] },
   { id: "p4", name: "Brush Strokes", members: ["Ana R.", "Chris B."], weeks: [49, 76, 66, 61] },
   { id: "p5", name: "Night Shift", members: ["Jessica L.", "Jake M."], weeks: [55, 58, 71, 60] },

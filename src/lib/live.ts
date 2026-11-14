@@ -57,7 +57,7 @@ export async function saveState(sid: string, state: LiveState) {
 }
 
 // Deterministic pseudo-random for simulated members (so scores don't jump between polls).
-function hash(s: string) {
+export function hash(s: string) {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) {
     h ^= s.charCodeAt(i);
@@ -70,7 +70,7 @@ export interface ActionRow {
   player_id: string;
   contest_index: number;
   question_index: number;
-  kind: "answer" | "vote";
+  kind: string; // answer | vote | pulse | report | rate | again
   target_pair: string;
   value: number;
 }
@@ -82,7 +82,6 @@ export function computeScores(state: LiveState, actions: ActionRow[]) {
     totals[p.id] = 0;
     perContest[p.id] = state.program.map(() => 0);
   });
-  const pairOf = (personId: string) => state.pairs.find((p) => p.a.id === personId || p.b.id === personId);
 
   state.program.forEach((c, ci) => {
     // Only score contests that have started; for the current one only revealed questions count.
@@ -116,7 +115,6 @@ export function computeScores(state: LiveState, actions: ActionRow[]) {
     }
   });
   for (const id of Object.keys(perContest)) totals[id] = perContest[id].reduce((s, v) => s + v, 0);
-  void pairOf;
   return { totals, perContest };
 }
 

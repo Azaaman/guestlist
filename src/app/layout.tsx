@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import Link from "next/link";
 import Nav from "@/components/Nav";
 
 export const metadata: Metadata = {
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
     "Invite-only parties for adults 30–40. Guests approve guests, couples compete, the best pair wins a trip.",
 };
 
-export const viewport: Viewport = { themeColor: "#07051a", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#150a1d", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -16,6 +17,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="antialiased">
         <Nav />
         <main>{children}</main>
+        <footer className="border-t border-line/60">
+          <div className="mx-auto flex max-w-5xl flex-wrap gap-x-6 gap-y-2 px-4 py-6 text-sm text-white/55">
+            <span>Guestlist, Season 1 in Austin. A Business Cup 2.0 demo: payments run in Stripe test mode.</span>
+            <Link href="/host" className="hover:text-white">For hosts</Link>
+            <Link href="/season" className="hover:text-white">Standings</Link>
+          </div>
+        </footer>
       </body>
     </html>
   );

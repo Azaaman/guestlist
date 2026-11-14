@@ -10,7 +10,17 @@ export interface LiveData {
   players: { id: string; name: string; gender: string }[];
   scores: { totals: Record<string, number>; perContest: Record<string, number[]> };
   responses: number;
-  me: { pairId: string | null; answered: number | null; votes: Record<string, number> } | null;
+  room: { vibe: number | null; vibeCount: number; reports: number; partyRating: number | null; hostRating: number | null; ratingCount: number };
+  me: {
+    pairId: string | null;
+    answered: number | null;
+    votes: Record<string, number>;
+    pulse: number | null;
+    reported: boolean;
+    rates: Record<string, number>;
+    again: string[];
+    matches: { id: string; name: string; demo: boolean }[];
+  } | null;
 }
 
 export function useLive(sid: string, playerId?: string | null, intervalMs = 1500) {
