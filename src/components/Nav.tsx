@@ -14,7 +14,7 @@ export default function Nav() {
   return (
     <header className="sticky top-0 z-30 border-b border-line/60 bg-ink/90 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        <Link href="/" className="display text-xl text-white">Guestlist</Link>
+        <Link href="/" className="display text-xl text-white">Nestly</Link>
         <nav className="flex items-center gap-1 text-sm font-semibold">
           {links.map((l) => (
             <Link key={l.href} href={l.href}
@@ -22,7 +22,7 @@ export default function Nav() {
               {l.label}
             </Link>
           ))}
-          <Link href="/pass" className="ml-1 whitespace-nowrap rounded-lg bg-paper px-3 py-1.5 text-[#4a33c9] hover:bg-white">Season Pass</Link>
+          <Link href="/pass" className="ml-1 whitespace-nowrap rounded-lg bg-hi px-3 py-1.5 text-[#17103f] hover:bg-white">Season Pass</Link>
         </nav>
       </div>
     </header>

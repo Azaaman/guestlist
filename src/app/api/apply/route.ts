@@ -6,7 +6,7 @@ import type { AIProfile, ApplicationForm, Trust, Vote } from "@/lib/types";
 
 export const maxDuration = 60;
 
-const SYSTEM = `You are the screening engine of Guestlist, an invite-only party club in Austin for adults 25-45.
+const SYSTEM = `You are the screening engine of Nestly, an invite-only party club in Austin for adults 25-45.
 Guests apply to a specific party. Existing members of the opposite gender vote on each application.
 You (1) turn the application into a short, flattering-but-honest profile card and
 (2) role-play each voting member, deciding YES or NO strictly from their personality and the application.
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     if (!f?.name?.trim() || !f.about?.trim() || !f.lookingFor?.trim())
       return NextResponse.json({ error: "Please fill in name, about you and what you're looking for." }, { status: 400 });
     if (!(f.age >= 25 && f.age <= 45))
-      return NextResponse.json({ error: "Guestlist is for adults 25–45." }, { status: 400 });
+      return NextResponse.json({ error: "Nestly is for adults 25–45." }, { status: 400 });
     if (!f.conduct) return NextResponse.json({ error: "Please accept the code of conduct." }, { status: 400 });
     if (f.gender !== "man" && f.gender !== "woman")
       return NextResponse.json({ error: "Please choose a gender." }, { status: 400 });

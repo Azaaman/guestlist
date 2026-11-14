@@ -72,7 +72,7 @@ export default function ApplyForm({ partyId }: { partyId: string }) {
         <div className="mt-1 grid grid-cols-2 gap-2">
           {["man", "woman"].map((g) => (
             <button type="button" key={g} onClick={() => setF({ ...f, gender: g })}
-              className={`min-h-12 rounded-xl border px-4 py-3 font-semibold capitalize ${f.gender === g ? "border-white bg-white/20" : "border-line"}`}>{g}</button>
+              className={`min-h-12 rounded-xl border px-4 py-3 font-semibold capitalize ${f.gender === g ? "border-brand-2 bg-brand/40" : "border-line"}`}>{g}</button>
           ))}
         </div>
       </div>

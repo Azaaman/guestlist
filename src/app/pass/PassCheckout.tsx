@@ -6,7 +6,7 @@ import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-
 
 const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = pk ? loadStripe(pk) : null;
-const appearance = { theme: "night" as const, variables: { colorPrimary: "#ffffff", colorBackground: "#4c35c4", colorText: "#ffffff", colorTextPlaceholder: "#cfc7ff", borderRadius: "10px" } };
+const appearance = { theme: "night" as const, variables: { colorPrimary: "#8f7dff", colorBackground: "#0f0a3d", colorText: "#ffffff", colorTextPlaceholder: "#cfc7ff", borderRadius: "10px" } };
 
 export default function PassCheckout({ price, season, weeks }: { price: number; season: string; weeks: number }) {
   const [secret, setSecret] = useState<string | null>(null);

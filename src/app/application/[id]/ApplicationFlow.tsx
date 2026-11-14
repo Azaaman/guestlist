@@ -13,7 +13,7 @@ const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = pk ? loadStripe(pk) : null;
 export const stripeAppearance = {
   theme: "night" as const,
-  variables: { colorPrimary: "#ffffff", colorBackground: "#4c35c4", colorText: "#ffffff", colorTextPlaceholder: "#cfc7ff", borderRadius: "10px" },
+  variables: { colorPrimary: "#8f7dff", colorBackground: "#0f0a3d", colorText: "#ffffff", colorTextPlaceholder: "#cfc7ff", borderRadius: "10px" },
 };
 
 const STEPS = ["Profile", "Card hold", "Members vote", "Ticket"];

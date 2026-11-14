@@ -72,7 +72,7 @@ function Join({ sid, title, ticket, onJoined }: { sid: string; title: string; ti
                 <div className="mt-1 grid grid-cols-2 gap-2">
                   {["man", "woman"].map((g) => (
                     <button type="button" key={g} onClick={() => setGender(g)} aria-pressed={gender === g}
-                      className={`rounded-xl border px-4 py-3 font-semibold capitalize ${gender === g ? "border-white bg-white/20" : "border-line"}`}>{g}</button>
+                      className={`rounded-xl border px-4 py-3 font-semibold capitalize ${gender === g ? "border-brand-2 bg-brand/40" : "border-line"}`}>{g}</button>
                   ))}
                 </div>
               </div>
@@ -189,7 +189,7 @@ function Current({ data, myPairId, act }: { data: LiveData; myPairId: string | n
               const wrongPick = revealed && picked && !correct;
               return (
                 <button key={i} disabled={!myPairId || answered !== null || s.phase !== "open"} onClick={() => act("answer", i)}
-                  className={`rounded-xl border p-4 text-left font-semibold ${correct ? "border-mint bg-mint/20" : wrongPick ? "border-hot bg-hot/20" : picked ? "border-white bg-white/20" : "border-line bg-night"} disabled:cursor-default`}>
+                  className={`rounded-xl border p-4 text-left font-semibold ${correct ? "border-mint bg-mint/20" : wrongPick ? "border-hot bg-hot/20" : picked ? "border-brand-2 bg-brand/40" : "border-line bg-night"} disabled:cursor-default`}>
                   <span className="mr-2 text-brand-2">{"ABCD"[i]}</span>{o}
                 </button>
               );
@@ -251,9 +251,9 @@ function Pulse({ data, act, hostName }: { data: LiveData; act: Act; hostName: st
       )}
       <div className="mt-4">
         {data.me?.reported ? (
-          <p className="text-sm text-white/70">Reported. The host and the Guestlist safety team have been alerted.</p>
+          <p className="text-sm text-white/70">Reported. The host and the Nestly safety team have been alerted.</p>
         ) : (
-          <button onClick={() => { if (confirm("Alert the host and the Guestlist safety team?")) act("report", 1); }} className="text-sm font-semibold text-white/60 underline underline-offset-4 hover:text-white">
+          <button onClick={() => { if (confirm("Alert the host and the Nestly safety team?")) act("report", 1); }} className="text-sm font-semibold text-white/60 underline underline-offset-4 hover:text-white">
             Something is wrong, alert the host
           </button>
         )}

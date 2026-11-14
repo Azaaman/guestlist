@@ -9,7 +9,7 @@ export async function POST() {
       amount: SEASON.passPrice * 100,
       currency: "usd",
       automatic_payment_methods: { enabled: true, allow_redirects: "never" },
-      description: `Guestlist Season Pass, ${SEASON.name}`,
+      description: `Nestly Season Pass, ${SEASON.name}`,
       metadata: { product: "season_pass" },
     });
     return NextResponse.json({ clientSecret: pi.client_secret });

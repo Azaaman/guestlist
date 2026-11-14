@@ -18,14 +18,15 @@ export interface HookParty {
 // Free Pexels clip (Ramon Martinez): aerial of a villa with a pool. Shown for tonight's pool party.
 const VIDEO = "https://videos.pexels.com/video-files/16580831/16580831-hd_1920_1080_30fps.mp4";
 
-const VENUE_ICON: Record<string, string> = { "Pool house": "🏊", "Loft kitchen": "🍳", "Art barn": "🎨", Rooftop: "🌆", "Lake house": "🛶" };
+const VENUE_ICON: Record<string, string> = { "Pool house": "🏊", "Loft kitchen": "🍳", "Art barn": "🎨", Rooftop: "🌆", "Lake house": "🛶", Garden: "🌿", "Glass house": "🪟", Villa: "🏛️" };
 const CONTEST_ICON: Record<string, string> = {
   "American History Quiz": "🇺🇸", "Dance-off": "💃", "Logic Battle": "🧩", "Cooking Duel": "👩‍🍳", "Paint Together": "🖌️", "Swim Relay": "🏅",
 };
 
 export default function Hook({ parties }: { parties: HookParty[] }) {
   const [id, setId] = useState(parties[0].id);
-  const [filter, setFilter] = useState<string | null>(null);
+  // Which single chip is lit: "v0:<party id>" or "c0:<contest>". The marquee repeats its chips, so the copy index matters.
+  const [lit, setLit] = useState<string>(`v0:${parties[0].id}`);
   const [videoOk, setVideoOk] = useState(true);
   const [photoOk, setPhotoOk] = useState(true);
   const root = useRef<HTMLElement>(null);
@@ -54,37 +55,48 @@ export default function Hook({ parties }: { parties: HookParty[] }) {
 
   useEffect(() => setPhotoOk(true), [id]);
 
-  function pickContest(c: string) {
-    setFilter(c);
+  function pickContest(c: string, key: string) {
+    setLit(key);
     const matches = parties.filter((p) => p.contests.includes(c));
     const next = matches.find((p) => p.id !== id) ?? matches[0];
     if (next) setId(next.id);
   }
 
-  const venueChips = venues.map((v) => (
-    <button key={v.id} type="button" className="chip" aria-pressed={v.id === id} onClick={() => { setFilter(null); setId(v.id); }}>
-      <span aria-hidden>{VENUE_ICON[v.label] ?? "🏠"}</span>{v.label}
-    </button>
-  ));
-  const contestChips = contests.map((c) => (
-    <button key={c} type="button" className="chip" aria-pressed={filter === c} onClick={() => pickContest(c)}>
-      <span aria-hidden>{CONTEST_ICON[c] ?? "🎲"}</span>{c}
-    </button>
-  ));
+  const COPIES = [0, 1, 2, 3];
+  const venueChips = COPIES.flatMap((n) =>
+    venues.map((v) => {
+      const key = `v${n}:${v.id}`;
+      return (
+        <button key={key} type="button" className="chip" aria-pressed={lit === key} tabIndex={n === 0 ? 0 : -1} onClick={() => { setLit(key); setId(v.id); }}>
+          <span aria-hidden>{VENUE_ICON[v.label] ?? "🏠"}</span>{v.label}
+        </button>
+      );
+    }),
+  );
+  const contestChips = COPIES.flatMap((n) =>
+    contests.map((c) => {
+      const key = `c${n}:${c}`;
+      return (
+        <button key={key} type="button" className="chip" aria-pressed={lit === key} tabIndex={n === 0 ? 0 : -1} onClick={() => pickContest(c, key)}>
+          <span aria-hidden>{CONTEST_ICON[c] ?? "🎲"}</span>{c}
+        </button>
+      );
+    }),
+  );
 
   return (
     <section ref={root} className="glow overflow-hidden pb-14 pt-10 sm:pt-16">
       <div className="mx-auto max-w-5xl px-4 text-center">
         <h1 className="text-5xl sm:text-7xl">Get on the list.</h1>
-        <p className="mx-auto mt-4 max-w-md text-lg text-white/85">Secret house parties. Pick a vibe.</p>
+        <p className="mx-auto mt-4 max-w-xl text-lg text-white/85">Secret house parties for adults in their thirties. Members decide who gets in, couples compete all season. Pick a place or a contest to find your night.</p>
       </div>
 
       <div className="marquee mt-8 space-y-3" aria-label="Filter parties by place or contest">
         <div className="marquee-shift" style={{ ["--dir" as string]: -1 }}>
-          <div className="marquee-track px-2">{venueChips}{venueChips.map((c, i) => <span key={`a${i}`} aria-hidden className="contents">{c}</span>)}{venueChips.map((c, i) => <span key={`b${i}`} aria-hidden className="contents">{c}</span>)}{venueChips.map((c, i) => <span key={`c${i}`} aria-hidden className="contents">{c}</span>)}</div>
+          <div className="marquee-track px-2">{venueChips}</div>
         </div>
         <div className="marquee-shift" style={{ ["--dir" as string]: 1 }}>
-          <div className="marquee-track rev px-2">{contestChips}{contestChips.map((c, i) => <span key={`a${i}`} aria-hidden className="contents">{c}</span>)}{contestChips.map((c, i) => <span key={`b${i}`} aria-hidden className="contents">{c}</span>)}{contestChips.map((c, i) => <span key={`c${i}`} aria-hidden className="contents">{c}</span>)}</div>
+          <div className="marquee-track rev px-2">{contestChips}</div>
         </div>
       </div>
 

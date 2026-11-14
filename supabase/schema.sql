@@ -1,4 +1,4 @@
--- Guestlist schema. Paste into Supabase → SQL Editor → Run.
+-- Nestly schema. Paste into Supabase → SQL Editor → Run.
 -- RLS is on with no policies: only the server (secret key) can read/write.
 
 create table if not exists applications (

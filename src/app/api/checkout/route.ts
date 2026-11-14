@@ -25,7 +25,7 @@ export async function POST(req: Request) {
       currency: "usd",
       capture_method: "manual",
       automatic_payment_methods: { enabled: true, allow_redirects: "never" },
-      description: `Guestlist · ${party.title}`,
+      description: `Nestly · ${party.title}`,
       metadata: { applicationId, partyId: party.id },
     });
     await db().from("applications").update({ payment_intent_id: pi.id }).eq("id", applicationId);

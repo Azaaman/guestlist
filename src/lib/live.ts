@@ -118,7 +118,7 @@ export function computeScores(state: LiveState, actions: ActionRow[]) {
   return { totals, perContest };
 }
 
-const SETUP_SYSTEM = `You are the party engine of Guestlist, an invite-only party club where couples compete in contests.
+const SETUP_SYSTEM = `You are the party engine of Nestly, an invite-only party club where couples compete in contests.
 You form pairs for tonight and design the contest program. Pairs should be man+woman where possible,
 balance contest skills, and each real (non-demo) guest should be paired thoughtfully. Contests are always
 done as a pair, never individual strength contests. Quiz facts must be accurate. Write in English.`;

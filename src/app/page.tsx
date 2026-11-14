@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { PARTIES, SEASON, dynamicPrice, spotsLeft } from "@/lib/data";
-import { PartyRow } from "@/components/ui";
+import { PARTIES, SEASON, SEASON_PAIRS, dynamicPrice, spotsLeft } from "@/lib/data";
+import { Avatar, PartyRow } from "@/components/ui";
 import Hook, { type HookParty } from "@/components/Hook";
 
 export const dynamic = "force-dynamic";
@@ -12,15 +12,12 @@ function when(iso: string, live?: boolean) {
   return live ? `Tonight, ${time}` : `${d.toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: TZ })}, ${time}`;
 }
 
-const dot = "inline-block h-7 w-7 rounded-full";
 const how = [
-  { t: "Pick a night", art: <div className="a-pick flex items-end gap-1.5">{[0, 1, 2].map((i) => <i key={i} className="block h-10 w-7 rounded-md bg-white/25" />)}</div> },
-  { t: "Members vote you in", art: <div className="a-vote flex gap-1.5">{[0, 1, 2].map((i) => <i key={i} className={`${dot} flex items-center justify-center bg-mint text-sm font-bold not-italic text-[#17103f]`}>✓</i>)}</div> },
-  { t: "AI pairs you up", art: <div className="a-pair flex"><i className={`${dot} bg-white`} /><i className={`${dot} bg-hi`} /></div> },
-  { t: "Win the trip", art: <div className="a-fly text-3xl"><span aria-hidden>✈️</span></div> },
+  { t: "Pick a night", d: "A different house in Austin every week. You see the theme and the contests, not the address." },
+  { t: "Members vote you in", d: "They read your application. Your card is only held, and a no costs you nothing." },
+  { t: "AI pairs you up", d: "At the door you get a partner. You compete as a couple in quizzes, dance-offs and cook-offs." },
+  { t: "Win the season", d: "Points add up over twelve weeks. The top three couples win trips." },
 ];
-
-const prizes = ["✈️", "🌺", "🏕️"];
 
 const tryIt = [
   { t: "Apply as a guest", href: "/apply/tonight" },
@@ -33,36 +30,53 @@ export default function Home() {
     id: p.id, title: p.title, when: when(p.date, p.live), place: p.neighborhood, price: dynamicPrice(p), left: spotsLeft(p),
     photo: p.photo, venue: p.venue, contests: p.contests, live: !!p.live,
   }));
+  const board = SEASON_PAIRS.map((p) => ({ ...p, total: p.weeks.reduce((a, b) => a + b, 0) })).sort((a, b) => b.total - a.total).slice(0, 5);
+  const medal = ["text-gold", "text-silver", "text-bronze"];
   return (
     <div>
       <Hook parties={hook} />
 
       <section className="mx-auto max-w-5xl px-4 py-14">
-        <ol className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {how.map((s, i) => (
-            <li key={s.t} className="reveal card flex flex-col items-center gap-4 px-3 py-6 text-center" style={{ transitionDelay: `${i * 90}ms` }}>
-              <div className="flex h-14 items-center justify-center">{s.art}</div>
-              <div className="font-semibold"><span className="text-brand-2">{i + 1}.</span> {s.t}</div>
+        <h2 className="reveal text-3xl sm:text-4xl">How it works</h2>
+        <ol className="mt-6 grid gap-x-10 sm:grid-cols-2">
+          {how.map((h, i) => (
+            <li key={h.t} className="reveal flex gap-4 border-t border-line py-5">
+              <span className="display text-3xl text-brand-2">{i + 1}</span>
+              <div>
+                <div className="text-lg font-semibold">{h.t}</div>
+                <p className="mt-1 text-white/75">{h.d}</p>
+              </div>
             </li>
           ))}
         </ol>
       </section>
 
       <section className="bg-night">
-        <div className="mx-auto max-w-5xl px-4 py-14 text-center">
-          <h2 className="reveal text-3xl sm:text-5xl">Three couples win a trip.</h2>
-          <ul className="mt-8 grid gap-4 sm:grid-cols-3">
-            {SEASON.prizes.map((p, i) => (
-              <li key={p.place} style={{ transitionDelay: `${i * 110}ms` }} className="reveal card px-4 py-6">
-                <div className="text-4xl" aria-hidden>{prizes[i]}</div>
-                <div className={`display mt-3 text-2xl ${p.color === "gold" ? "text-gold" : p.color === "silver" ? "text-silver" : "text-bronze"}`}>{p.title}</div>
-                <div className="mt-1 text-white/85">{p.prize}</div>
+        <div className="mx-auto max-w-5xl px-4 py-14">
+          <div className="reveal flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-3xl sm:text-4xl">Season leaderboard</h2>
+              <p className="mt-2 text-white/75">Week {SEASON.currentWeek} of {SEASON.weeks}. The top three couples win the trips.</p>
+            </div>
+            <Link href="/season" className="font-semibold text-brand-2 hover:underline">Full standings</Link>
+          </div>
+          <ol className="mt-6">
+            {board.map((r, i) => (
+              <li key={r.id} className="reveal flex items-center gap-3 border-t border-line py-3 sm:gap-4">
+                <span className={`display w-7 text-center text-2xl ${medal[i] ?? "text-white/50"}`}>{i + 1}</span>
+                <div className="flex -space-x-2"><Avatar name={r.members[0]} size={34} /><Avatar name={r.members[1]} size={34} /></div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-semibold">{r.name}</div>
+                  <div className="truncate text-sm text-white/65">{r.members.join(" and ")}</div>
+                </div>
+                {i < 3 && <span className={`hidden rounded-full bg-white/10 px-3 py-1 text-sm font-semibold sm:inline ${medal[i]}`}>{SEASON.prizes[i].prize}</span>}
+                <span className="display price w-16 text-right text-2xl">{r.total}</span>
               </li>
             ))}
-          </ul>
-          <div className="reveal mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link href="/season" className="btn btn-ghost">See the standings</Link>
-            <Link href="/pass" className="btn btn-primary">Season Pass, ${SEASON.passPrice.toLocaleString()}</Link>
+          </ol>
+          <div className="reveal mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Link href="/pass" className="btn btn-primary">Join with a Season Pass, ${SEASON.passPrice}</Link>
+            <span className="text-sm text-white/65">All {SEASON.weeks} parties, about ${Math.round(SEASON.passPrice / SEASON.weeks)} a night.</span>
           </div>
         </div>
       </section>

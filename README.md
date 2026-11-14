@@ -1,4 +1,4 @@
-# Guestlist — get on the list, win the season
+# Nestly — get on the list, win the season
 
 Business Cup 2.0 · Track 02 Entertainment · B2C · Web only · US adults 25–45
 
@@ -18,7 +18,7 @@ applied to social nights. Hosts provide the house; everything else is software.
 5. Big screen: `/live/tonight`. Phones: scan the QR (`/play/tonight`). Host presses **Pair everyone & start** → AI pairs and generates quiz + contests → phones answer/vote → live leaderboard.
 
 6. When the party ends, phones rate the night and the host (this releases the host payout at 4.2+) and pick who they'd like to see again; mutual picks become matches.
-7. `/pass` sells the Season Pass ($1,499, Stripe test). `/host` shows host checks and live numbers from real applications.
+7. `/pass` sells the Season Pass ($499, Stripe test). `/host` shows host checks and live numbers from real applications.
 
 Also worth trying: on the application form, "Fill in one that gets rejected" shows the screening saying no and the card hold being released.
 
