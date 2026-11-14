@@ -17,16 +17,13 @@ function dateParts(iso: string) {
   };
 }
 
-export function Avatar({ name, size = 40, tone = 0 }: { name: string; size?: number; tone?: number }) {
+export function Avatar({ name, size = 40 }: { name: string; size?: number; tone?: number }) {
   const initials = name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-  const hues = [250, 262, 276, 236, 292, 222];
-  let h = 0;
-  for (const ch of name) h = (h + ch.charCodeAt(0) + tone) % hues.length;
   return (
     <div
       aria-hidden
-      className="flex shrink-0 items-center justify-center rounded-full font-bold text-white ring-2 ring-ink"
-      style={{ width: size, height: size, fontSize: size * 0.38, background: `linear-gradient(140deg, hsl(${hues[h]} 70% 62%), hsl(${hues[(h + 2) % hues.length]} 62% 38%))` }}
+      className="flex shrink-0 items-center justify-center rounded-full bg-paper font-bold text-[#4a33c9] ring-2 ring-ink"
+      style={{ width: size, height: size, fontSize: size * 0.38 }}
     >
       {initials}
     </div>
@@ -34,7 +31,7 @@ export function Avatar({ name, size = 40, tone = 0 }: { name: string; size?: num
 }
 
 export function Superhost() {
-  return <span className="ml-1.5 rounded-full bg-gold/15 px-2 py-0.5 text-xs font-bold text-gold">Superhost</span>;
+  return <span className="ml-1.5 rounded-full bg-white/15 px-2 py-0.5 text-xs font-bold text-gold">Superhost</span>;
 }
 
 // One night in the season line-up: example photo, date, the night itself, price.
@@ -51,9 +48,10 @@ export function PartyRow({ p }: { p: Party }) {
           {p.live && <span className="inline-flex items-center gap-1.5 text-hot"><span className="live-dot h-2 w-2 rounded-full bg-hot" />Live now</span>}
         </div>
         <h3 className="display mt-1 text-2xl group-hover:text-brand-2 sm:text-3xl">{p.title}</h3>
-        <p className="mt-1.5 text-white/70">{p.neighborhood}. The address unlocks once members approve you.</p>
-        <p className="mt-2 text-sm text-white/55">{p.contests.join(", ")}</p>
-        <p className="mt-2 text-sm text-white/70">Hosted by {host.name}, rated {host.rating}{host.superhost && <Superhost />}</p>
+        <p className="mt-1 text-white/75">{p.neighborhood}, host rated {host.rating}{host.superhost && <Superhost />}</p>
+        <ul className="mt-3 flex flex-wrap gap-1.5">
+          {p.contests.map((c) => <li key={c} className="rounded-full bg-white/12 px-3 py-1 text-sm font-medium">{c}</li>)}
+        </ul>
       </div>
       <div className="flex items-baseline gap-3 sm:block sm:text-right">
         <div className="display price text-3xl">${dynamicPrice(p)}</div>

@@ -1,97 +1,73 @@
 import Link from "next/link";
-import { MEMBERS, PARTIES, SEASON, getParty, spotsLeft } from "@/lib/data";
+import { PARTIES, SEASON, dynamicPrice, spotsLeft } from "@/lib/data";
 import { PartyRow } from "@/components/ui";
+import Hook, { type HookParty } from "@/components/Hook";
 
 export const dynamic = "force-dynamic";
 
+const TZ = "America/Chicago";
+function when(iso: string, live?: boolean) {
+  const d = new Date(iso);
+  const time = d.toLocaleString("en-US", { hour: "numeric", minute: "2-digit", timeZone: TZ });
+  return live ? `Tonight, ${time}` : `${d.toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: TZ })}, ${time}`;
+}
+
+const dot = "inline-block h-7 w-7 rounded-full";
 const how = [
-  { t: "Pick a night", d: "A different house in Austin every week. You see the theme and the contests, never the address." },
-  { t: "Get approved", d: "Members read your application and vote. Your card is only held. If they say no, you pay nothing." },
-  { t: "Get paired", d: "At the door, AI pairs you with a partner. You compete as a couple: quizzes, dance-offs, cook-offs." },
-  { t: "Win the season", d: "Points add up over twelve weeks. The Golden Couple flies to Europe." },
+  { t: "Pick a night", art: <div className="a-pick flex items-end gap-1.5">{[0, 1, 2].map((i) => <i key={i} className="block h-10 w-7 rounded-md bg-white/25" />)}</div> },
+  { t: "Members vote you in", art: <div className="a-vote flex gap-1.5">{[0, 1, 2].map((i) => <i key={i} className={`${dot} flex items-center justify-center bg-mint text-sm font-bold not-italic text-[#17103f]`}>✓</i>)}</div> },
+  { t: "AI pairs you up", art: <div className="a-pair flex"><i className={`${dot} bg-white`} /><i className={`${dot} bg-hi`} /></div> },
+  { t: "Win the trip", art: <div className="a-fly text-3xl"><span aria-hidden>✈️</span></div> },
 ];
 
-const jury = [
-  { t: "Apply as a guest", d: "Use the sample guest. AI writes your profile, members vote, a Stripe test card is held and the address unlocks.", href: "/apply/tonight", cta: "Apply to tonight's party" },
-  { t: "Open the big screen", d: "This is what the room sees at the party. Put it on a laptop or projector.", href: "/live/tonight", cta: "Open the big screen" },
-  { t: "Join from your phone", d: "Scan the code on the big screen. You get a partner, answer the quiz and judge the dance-off live.", href: "/play/tonight", cta: "Join on this device" },
+const prizes = ["✈️", "🌺", "🏕️"];
+
+const tryIt = [
+  { t: "Apply as a guest", href: "/apply/tonight" },
+  { t: "Open the big screen", href: "/live/tonight" },
+  { t: "Join from a phone", href: "/play/tonight" },
 ];
 
 export default function Home() {
-  const tonight = getParty("tonight")!;
-  const list = MEMBERS.slice(0, 7);
+  const hook: HookParty[] = PARTIES.map((p) => ({
+    id: p.id, title: p.title, when: when(p.date, p.live), place: p.neighborhood, price: dynamicPrice(p), left: spotsLeft(p),
+    photo: p.photo, venue: p.venue, contests: p.contests, live: !!p.live,
+  }));
   return (
     <div>
-      <section className="glow">
-        <div className="mx-auto grid max-w-5xl gap-10 px-4 pb-16 pt-12 md:grid-cols-[1.15fr_1fr] md:items-center md:pt-20">
-          <div>
-            <h1 className="text-6xl sm:text-7xl md:text-7xl">Get on<br />the list.</h1>
-            <p className="mt-6 max-w-md text-lg text-white/80">
-              Secret house parties for adults in their thirties. Members decide who gets in. Couples compete all season, and the best pair flies to Europe.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/parties" className="btn btn-primary">See this season&apos;s parties</Link>
-              <Link href="/live/tonight" className="btn btn-ghost">Watch tonight live</Link>
-            </div>
-            <p className="mt-4 text-sm text-white/55">No sign-up needed to try it.</p>
-          </div>
+      <Hook parties={hook} />
 
-          {/* The door list: the thing everyone wants to be on. */}
-          <div className="paper mx-auto w-full max-w-sm p-6">
-            <div className="flex items-baseline justify-between">
-              <div className="display text-2xl">Door list</div>
-              <div className="text-sm font-semibold">Tonight, 9 pm</div>
-            </div>
-            <div className="mt-1 text-sm text-paper-ink/70">{tonight.title}, {tonight.neighborhood}</div>
-            <ul className="mt-4">
-              {list.map((m) => (
-                <li key={m.id} className="rule flex items-center justify-between py-2">
-                  <span className="font-semibold">{m.name}</span>
-                  <span className="text-sm text-paper-ink/60">approved <span className="font-bold text-[#1f8a5b]">✓</span></span>
-                </li>
-              ))}
-              <li className="rule flex items-center justify-between py-2">
-                <span className="font-semibold text-paper-ink/45">Your name</span>
-                <span className="text-sm font-semibold text-[#d43a5c]">{spotsLeft(tonight)} spots left</span>
-              </li>
-            </ul>
-            <Link href="/apply/tonight" className="btn btn-paper mt-4 w-full">Apply for tonight</Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-5xl px-4 py-16">
-        <h2 className="reveal text-3xl sm:text-4xl">How a season works</h2>
-        <ol className="mt-8 grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="mx-auto max-w-5xl px-4 py-14">
+        <ol className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {how.map((s, i) => (
-            <li key={s.t} className="reveal border-t-2 border-brand pt-4" style={{ transitionDelay: `${i * 90}ms` }}>
-              <div className="display text-4xl text-brand-2">{i + 1}</div>
-              <div className="mt-2 text-lg font-bold">{s.t}</div>
-              <p className="mt-1 text-white/70">{s.d}</p>
+            <li key={s.t} className="reveal card flex flex-col items-center gap-4 px-3 py-6 text-center" style={{ transitionDelay: `${i * 90}ms` }}>
+              <div className="flex h-14 items-center justify-center">{s.art}</div>
+              <div className="font-semibold"><span className="text-brand-2">{i + 1}.</span> {s.t}</div>
             </li>
           ))}
         </ol>
       </section>
 
-      <section className="border-y border-line bg-night">
-        <div className="mx-auto grid max-w-5xl gap-8 px-4 py-14 md:grid-cols-[1fr_1.4fr] md:items-center">
-          <div className="reveal">
-            <h2 className="text-3xl sm:text-4xl">Three couples.<br />Three trips.</h2>
-            <p className="mt-4 text-white/70">Prizes go to the couples with the most contest points after {SEASON.weeks} weeks. Skill decides it, not luck.</p>
-            <Link href="/season" className="btn btn-ghost mt-6">See the standings</Link>
-          </div>
-          <ul>
+      <section className="bg-night">
+        <div className="mx-auto max-w-5xl px-4 py-14 text-center">
+          <h2 className="reveal text-3xl sm:text-5xl">Three couples win a trip.</h2>
+          <ul className="mt-8 grid gap-4 sm:grid-cols-3">
             {SEASON.prizes.map((p, i) => (
-              <li key={p.place} style={{ transitionDelay: `${i * 90}ms` }} className="reveal flex items-baseline gap-4 border-t border-line py-4 last:border-b">
-                <span className={`display w-40 shrink-0 text-xl sm:w-48 sm:text-2xl ${p.color === "gold" ? "text-gold" : p.color === "silver" ? "text-silver" : "text-bronze"}`}>{p.title}</span>
-                <span className="text-lg text-white/85">{p.prize}</span>
+              <li key={p.place} style={{ transitionDelay: `${i * 110}ms` }} className="reveal card px-4 py-6">
+                <div className="text-4xl" aria-hidden>{prizes[i]}</div>
+                <div className={`display mt-3 text-2xl ${p.color === "gold" ? "text-gold" : p.color === "silver" ? "text-silver" : "text-bronze"}`}>{p.title}</div>
+                <div className="mt-1 text-white/85">{p.prize}</div>
               </li>
             ))}
           </ul>
+          <div className="reveal mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link href="/season" className="btn btn-ghost">See the standings</Link>
+            <Link href="/pass" className="btn btn-primary">Season Pass, ${SEASON.passPrice.toLocaleString()}</Link>
+          </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-5xl px-4 py-16">
+      <section className="mx-auto max-w-5xl px-4 py-14">
         <div className="reveal flex items-end justify-between gap-4">
           <h2 className="text-3xl sm:text-4xl">Coming up in Austin</h2>
           <Link href="/parties" className="shrink-0 font-semibold text-brand-2 hover:underline">All parties</Link>
@@ -102,35 +78,17 @@ export default function Home() {
       </section>
 
       <section className="mx-auto max-w-5xl px-4 pb-16">
-        <h2 className="reveal text-3xl sm:text-4xl">Try the whole thing in three minutes</h2>
-        <p className="mt-3 max-w-xl text-white/70">Everything below runs for real: the AI screening, the card hold, the pairing and the live scoring.</p>
-        <ol className="mt-8 grid gap-6 md:grid-cols-3">
-          {jury.map((s, i) => (
-            <li key={s.t} className="reveal card flex flex-col p-5" style={{ transitionDelay: `${i * 90}ms` }}>
-              <div className="display text-3xl text-brand-2">{i + 1}</div>
-              <div className="mt-1 text-lg font-bold">{s.t}</div>
-              <p className="mt-1 flex-1 text-white/70">{s.d}</p>
-              <Link href={s.href} className="btn btn-ghost mt-4 w-full">{s.cta}</Link>
+        <h2 className="reveal text-3xl sm:text-4xl">Try it in three minutes</h2>
+        <ol className="mt-6 grid gap-3 sm:grid-cols-3">
+          {tryIt.map((s, i) => (
+            <li key={s.t} className="reveal" style={{ transitionDelay: `${i * 90}ms` }}>
+              <Link href={s.href} className="btn btn-ghost w-full justify-start gap-3 py-4 text-left text-lg">
+                <span className="display text-2xl text-brand-2">{i + 1}</span>{s.t}
+              </Link>
             </li>
           ))}
         </ol>
-      </section>
-
-      <section className="mx-auto max-w-5xl px-4 pb-20">
-        <div className="reveal grid gap-8 border-t border-line pt-10 sm:grid-cols-3">
-          <div>
-            <div className="text-lg font-bold">Everyone is screened</div>
-            <p className="mt-1 text-white/70">Guests are checked before the party, approved by members and rated after it. A ban follows your ID, not your email.</p>
-          </div>
-          <div>
-            <div className="text-lg font-bold">Hosts earn their payout</div>
-            <p className="mt-1 text-white/70">Verified hosts provide the house. Their money stays in escrow until guests rate the night.</p>
-          </div>
-          <div>
-            <div className="text-lg font-bold">Season Pass, <span className="price">${SEASON.passPrice.toLocaleString()}</span></div>
-            <p className="mt-1 text-white/70">A seat at all {SEASON.weeks} parties, priority approval and your place in the race for the trips. <Link href="/pass" className="font-semibold text-brand-2 hover:underline">Get the pass</Link></p>
-          </div>
-        </div>
+        <p className="reveal mt-3 text-sm text-white/60">No sign-up. Payments run on a Stripe test card.</p>
       </section>
     </div>
   );

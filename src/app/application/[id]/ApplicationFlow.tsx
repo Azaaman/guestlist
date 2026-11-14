@@ -13,7 +13,7 @@ const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = pk ? loadStripe(pk) : null;
 export const stripeAppearance = {
   theme: "night" as const,
-  variables: { colorPrimary: "#7c6cf2", colorBackground: "#0d0a2a", colorText: "#f3f1ff", borderRadius: "10px" },
+  variables: { colorPrimary: "#ffffff", colorBackground: "#4c35c4", colorText: "#ffffff", colorTextPlaceholder: "#cfc7ff", borderRadius: "10px" },
 };
 
 const STEPS = ["Profile", "Card hold", "Members vote", "Ticket"];
@@ -230,7 +230,7 @@ function Ticket({ app, partyTitle, partyId, partyWhen, live }: { app: App; party
   const [qr, setQr] = useState("");
   const path = `/play/${partyId}?ticket=${app.id}`;
   useEffect(() => {
-    QRCode.toDataURL(`${window.location.origin}${path}`, { margin: 0, width: 240, color: { dark: "#120e33", light: "#f4f2ff" } }).then(setQr);
+    QRCode.toDataURL(`${window.location.origin}${path}`, { margin: 0, width: 240, color: { dark: "#17103f", light: "#f2f2f2" } }).then(setQr);
   }, [path]);
   return (
     <div className="paper pop grid sm:grid-cols-[1fr_auto]">

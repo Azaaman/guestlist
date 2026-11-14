@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     "Invite-only parties for adults 30–40. Guests approve guests, couples compete, the best pair wins a trip.",
 };
 
-export const viewport: Viewport = { themeColor: "#07051a", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#5b42dc", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

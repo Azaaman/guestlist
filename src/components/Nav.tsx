@@ -22,7 +22,7 @@ export default function Nav() {
               {l.label}
             </Link>
           ))}
-          <Link href="/pass" className="ml-1 whitespace-nowrap rounded-lg bg-brand px-3 py-1.5 text-white hover:bg-[#7d6ef0]">Season Pass</Link>
+          <Link href="/pass" className="ml-1 whitespace-nowrap rounded-lg bg-paper px-3 py-1.5 text-[#4a33c9] hover:bg-white">Season Pass</Link>
         </nav>
       </div>
     </header>

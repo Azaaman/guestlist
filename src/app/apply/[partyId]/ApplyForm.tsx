@@ -72,7 +72,7 @@ export default function ApplyForm({ partyId }: { partyId: string }) {
         <div className="mt-1 grid grid-cols-2 gap-2">
           {["man", "woman"].map((g) => (
             <button type="button" key={g} onClick={() => setF({ ...f, gender: g })}
-              className={`min-h-12 rounded-xl border px-4 py-3 font-semibold capitalize ${f.gender === g ? "border-brand-2 bg-brand-2/15" : "border-line"}`}>{g}</button>
+              className={`min-h-12 rounded-xl border px-4 py-3 font-semibold capitalize ${f.gender === g ? "border-white bg-white/20" : "border-line"}`}>{g}</button>
           ))}
         </div>
       </div>
@@ -92,7 +92,7 @@ export default function ApplyForm({ partyId }: { partyId: string }) {
         <label className="block"><span className="label">Invite code (optional)</span><input className="input mt-1" value={f.inviteCode} onChange={set("inviteCode")} placeholder="From a member" /></label>
       </div>
       <label className="flex items-start gap-3 text-sm text-white/80">
-        <input type="checkbox" className="mt-1 h-4 w-4 accent-[#7c6cf2]" checked={conduct} onChange={(e) => setConduct(e.target.checked)} />
+        <input type="checkbox" className="mt-1 h-4 w-4 accent-[#17103f]" checked={conduct} onChange={(e) => setConduct(e.target.checked)} />
         <span>I accept the code of conduct: respect, consent, no harassment. Breaking it means a permanent ban tied to my ID.</span>
       </label>
       {err && <div className="rounded-xl bg-hot/15 p-3 text-sm">{err}</div>}

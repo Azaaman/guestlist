@@ -18,7 +18,7 @@ export default function BigScreen({ sid, title }: { sid: string; title: string }
   useEffect(() => {
     const url = `${window.location.origin}/play/${sid}`;
     setJoinUrl(url);
-    QRCode.toDataURL(url, { margin: 1, width: 360, color: { dark: "#120e33", light: "#f4f2ff" } }).then(setQr);
+    QRCode.toDataURL(url, { margin: 1, width: 360, color: { dark: "#17103f", light: "#f2f2f2" } }).then(setQr);
     try { setPin(localStorage.getItem("gl_host_pin") ?? ""); } catch {}
   }, [sid]);
 

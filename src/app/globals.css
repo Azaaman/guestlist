@@ -1,22 +1,22 @@
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
 
-/* Guestlist: deep navy, one purple, and a single gold highlight reserved for prices and points. */
+/* Guestlist: one bright blue-violet (Zimran's #5b42dc), white type, light-grey surfaces, and gold only for prices and points. */
 @theme {
-  --color-ink: #07051a;
-  --color-night: #0d0a2a;
-  --color-panel: #141038;
-  --color-line: #2a2466;
-  --color-brand: #6c5ce7;
-  --color-brand-2: #a99bff;
-  --color-hi: #ffd166;
-  --color-hot: #ff6b8a;
-  --color-paper: #f4f2ff;
-  --color-paper-ink: #120e33;
-  --color-gold: #f5c542;
-  --color-silver: #cfd5e3;
-  --color-bronze: #d98d55;
-  --color-mint: #5fd4a0;
+  --color-ink: #5b42dc;
+  --color-night: #4c35c4;
+  --color-panel: #6b54e6;
+  --color-line: #8d7bf0;
+  --color-brand: #1d1259;
+  --color-brand-2: #e0d9ff;
+  --color-hi: #ffd84d;
+  --color-hot: #ffc0cc;
+  --color-paper: #f2f2f2;
+  --color-paper-ink: #17103f;
+  --color-gold: #ffd84d;
+  --color-silver: #eceef6;
+  --color-bronze: #ffb98a;
+  --color-mint: #8df5c8;
   /* San Francisco on Apple devices; Inter (the closest open face) everywhere else. */
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter Variable", "Segoe UI", Roboto, sans-serif;
   --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter Variable", "Segoe UI", Roboto, sans-serif;
@@ -24,7 +24,7 @@
 }
 
 html { scroll-behavior: smooth; }
-html, body { background: var(--color-ink); color: #f3f1ff; }
+html, body { background: var(--color-ink); color: #ffffff; }
 body { min-height: 100vh; font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 
 h1, h2, .display {
@@ -35,8 +35,8 @@ h1, h2, .display {
 }
 
 .card { background: var(--color-panel); border: 1px solid var(--color-line); border-radius: 16px; }
-.paper { background: var(--color-paper); color: var(--color-paper-ink); border-radius: 16px; box-shadow: 0 24px 60px -24px rgba(108, 92, 231, 0.55); }
-.paper .label { color: #6a6690; }
+.paper { background: var(--color-paper); color: var(--color-paper-ink); border-radius: 16px; box-shadow: 0 24px 60px -28px rgba(15, 8, 60, 0.7); }
+.paper .label { color: #615c85; }
 .rule { border-top: 1px dashed rgba(18, 14, 51, 0.22); }
 
 /* Buttons: one height, one radius, text always centred and never wider than its container. */
@@ -50,25 +50,59 @@ h1, h2, .display {
 .btn:active { transform: scale(.98); }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 .btn:focus-visible, a:focus-visible, button:focus-visible { outline: 2px solid var(--color-brand-2); outline-offset: 2px; }
-.btn-primary { background: var(--color-brand); color: #fff; box-shadow: 0 8px 24px -10px rgba(108, 92, 231, 0.9); }
-.btn-primary:hover { background: #7d6ef0; }
-.btn-ghost { border-color: var(--color-line); color: #ebe8ff; }
-.btn-ghost:hover { background: var(--color-panel); }
+.btn-primary { background: var(--color-paper); color: #4a33c9; box-shadow: 0 10px 28px -14px rgba(15, 8, 60, 0.8); }
+.btn-primary:hover { background: #ffffff; }
+.btn-ghost { border-color: rgba(255, 255, 255, 0.45); color: #ffffff; }
+.btn-ghost:hover { background: rgba(255, 255, 255, 0.12); }
 .btn-paper { background: var(--color-paper-ink); color: var(--color-paper); }
-.btn-paper:hover { background: #221a5c; }
+.btn-paper:hover { background: #2a1d78; }
 
 .input { width: 100%; min-height: 3rem; background: var(--color-night); border: 1px solid var(--color-line); border-radius: 12px; padding: .7rem .9rem; color: white; }
-.input:focus { outline: 2px solid var(--color-brand); outline-offset: 0; }
-.label { font-size: .8125rem; font-weight: 600; color: #a7a1d6; }
+.input:focus { outline: 2px solid #ffffff; outline-offset: 0; }
+.input::placeholder { color: rgba(255, 255, 255, 0.5); }
+.label { font-size: .8125rem; font-weight: 600; color: #ddd6ff; }
 
 /* The one highlight: prices and points glow softly in gold. */
-.price { color: var(--color-hi); text-shadow: 0 0 22px rgba(255, 209, 102, 0.38); }
-.paper .price { color: #6c5ce7; text-shadow: none; }
+.price { color: var(--color-hi); text-shadow: 0 0 22px rgba(255, 216, 77, 0.45); }
+.paper .price { color: #4a33c9; text-shadow: none; }
 
+/* Light shards across the violet, like a spotlight sweeping the room. */
 .glow { background:
-  radial-gradient(56rem 30rem at 80% -10%, rgba(108, 92, 231, 0.32), transparent 62%),
-  radial-gradient(36rem 24rem at 0% 0%, rgba(108, 92, 231, 0.14), transparent 60%),
+  linear-gradient(115deg, transparent 0 38%, rgba(255, 255, 255, 0.07) 38% 52%, transparent 52%),
+  linear-gradient(245deg, transparent 0 62%, rgba(255, 255, 255, 0.05) 62% 74%, transparent 74%),
   var(--color-ink); }
+
+/* Hero marquee: rows drift on their own and slide further as the page scrolls. */
+.marquee-shift { transform: translate3d(calc(var(--p, 0) * var(--dir, -1) * 180px), 0, 0); will-change: transform; }
+.marquee-track { display: flex; width: max-content; gap: .75rem; animation: drift 38s linear infinite; }
+.marquee-track.rev { animation-direction: reverse; animation-duration: 46s; }
+.marquee:hover .marquee-track { animation-play-state: paused; }
+@keyframes drift { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+.chip { display: inline-flex; align-items: center; gap: .5rem; min-height: 2.75rem; padding: .5rem 1.1rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.4); font-weight: 600; white-space: nowrap; transition: background .15s, color .15s, transform .15s; }
+.chip:hover { background: rgba(255, 255, 255, 0.14); }
+.chip[aria-pressed="true"] { background: var(--color-paper); color: #4a33c9; border-color: transparent; transform: scale(1.04); }
+.hero-media { transform: scale(calc(.9 + var(--p, 0) * .1)); border-radius: calc(28px - var(--p, 0) * 10px); will-change: transform; }
+@keyframes kenburns { from { transform: scale(1.02) } to { transform: scale(1.14) } }
+.kenburns { animation: kenburns 9s ease-out both; }
+@keyframes fadein { from { opacity: 0 } to { opacity: 1 } }
+.fadein { animation: fadein .5s ease-out both; }
+
+/* Tiny looping illustrations for "how it works". */
+@keyframes pick { 0%, 30% { transform: translateY(0); background: rgba(255,255,255,.25) } 40%, 70% { transform: translateY(-8px); background: #fff } 80%, 100% { transform: translateY(0); background: rgba(255,255,255,.25) } }
+.a-pick > i { animation: pick 3.6s infinite; }
+.a-pick > i:nth-child(2) { animation-delay: 1.2s; }
+.a-pick > i:nth-child(3) { animation-delay: 2.4s; }
+@keyframes tick { 0%, 15% { transform: scale(0); opacity: 0 } 30%, 85% { transform: scale(1); opacity: 1 } 100% { transform: scale(0); opacity: 0 } }
+.a-vote > i { animation: tick 3.2s infinite; }
+.a-vote > i:nth-child(2) { animation-delay: .35s; }
+.a-vote > i:nth-child(3) { animation-delay: .7s; }
+@keyframes join-l { 0%, 20% { transform: translateX(-22px) } 50%, 85% { transform: translateX(6px) } 100% { transform: translateX(-22px) } }
+@keyframes join-r { 0%, 20% { transform: translateX(22px) } 50%, 85% { transform: translateX(-6px) } 100% { transform: translateX(22px) } }
+.a-pair > i:first-child { animation: join-l 3.2s ease-in-out infinite; }
+.a-pair > i:last-child { animation: join-r 3.2s ease-in-out infinite; }
+@keyframes fly { 0% { transform: translate(-34px, 14px) rotate(-8deg); opacity: 0 } 20% { opacity: 1 } 80% { opacity: 1 } 100% { transform: translate(34px, -14px) rotate(-8deg); opacity: 0 } }
+.a-fly > span { animation: fly 3.2s ease-in-out infinite; display: inline-block; }
+
 
 /* Scroll reveal. Content is only hidden once the script has confirmed it is running. */
 html.reveal-on .reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); will-change: opacity, transform; }
@@ -80,6 +114,7 @@ html.reveal-on .reveal.in { opacity: 1; transform: none; }
 .live-dot { animation: pulse-dot 1.2s infinite; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .pop, .live-dot { animation: none; }
+  .pop, .live-dot, .marquee-track, .kenburns, .fadein, .a-pick > i, .a-vote > i, .a-pair > i, .a-fly > span { animation: none; }
+  .marquee-shift, .hero-media { transform: none; }
   html.reveal-on .reveal { opacity: 1; transform: none; transition: none; }
 }

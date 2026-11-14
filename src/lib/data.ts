@@ -21,6 +21,7 @@ export interface Party {
   theme: string;
   date: string; // ISO
   neighborhood: string;
+  venue: string; // venue type, used as a filter on the home page
   photo: string; // example venue photo, the real house stays hidden until approval
   address: string; // revealed only after approval + payment
   dressCode: string;
@@ -131,6 +132,7 @@ function day(offset: number, hour = 20) {
 export const PARTIES: Party[] = [
   {
     id: "tonight",
+    venue: "Pool house",
     photo: photo("1544984243-ec57ea16fe25"),
     title: "Hill Country Pool Party",
     theme: "Summer-in-November pool party with a couples quiz, dance-off and cook-off",
@@ -149,6 +151,7 @@ export const PARTIES: Party[] = [
   },
   {
     id: "taco-duel-2",
+    venue: "Loft kitchen",
     photo: photo("1696986681606-b156ccd761c5"),
     title: "Taco Duel Night",
     theme: "Pairs cook street tacos in 25 minutes, guests judge; trivia between rounds",
@@ -166,6 +169,7 @@ export const PARTIES: Party[] = [
   },
   {
     id: "paint-pour",
+    venue: "Art barn",
     photo: photo("1527359443443-84a48aec73d2"),
     title: "Paint & Pour: Couples Canvas",
     theme: "Each pair paints one canvas together, live acoustic set, art-history trivia",
@@ -183,6 +187,7 @@ export const PARTIES: Party[] = [
   },
   {
     id: "neon-disco",
+    venue: "Rooftop",
     photo: photo("1714381633320-e5c3fd0f14db"),
     title: "Neon Disco Rooftop",
     theme: "80s disco night: synchronized dance-off, music trivia, logic escape puzzle",
@@ -200,6 +205,7 @@ export const PARTIES: Party[] = [
   },
   {
     id: "lake-relay",
+    venue: "Lake house",
     photo: photo("1613977257365-aaae5a9817ff"),
     title: "Lake Travis Relay Day",
     theme: "Daytime lake house: two-person swim relay, BBQ cook-off, sunset quiz",
