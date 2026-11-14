@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CONTEST_SKILLS } from "@/lib/data";
+import { INTERESTS } from "@/lib/room";
 
 const SAMPLE = {
   name: "Alex Rivera",
@@ -9,9 +9,9 @@ const SAMPLE = {
   gender: "man",
   instagram: "@alex.rivera.atx",
   inviteCode: "SARAH-K",
-  skill: "Cooking",
+  into: "Food",
   lookingFor: "New friends in Austin and maybe someone special — I miss having a crew for Friday nights.",
-  about: "Moved here from Denver for a job in renewable energy. I make a mean green-chile stew, run the Town Lake loop on weekends, and I'm the guy who knows the answer to the obscure trivia question.",
+  about: "Moved here from Denver for a job in renewable energy. I make a mean green-chile stew, run the Town Lake loop on weekends, and I'm happiest hosting a long dinner for people who just met.",
 };
 
 // A low-effort, disrespectful application: shows that screening and the vote can say no.
@@ -21,14 +21,14 @@ const RUDE = {
   gender: "man",
   instagram: "",
   inviteCode: "",
-  skill: "Dancing",
+  into: "Music",
   lookingFor: "hot girls, whatever",
-  about: "I don't do rules. Just here to drink and see who I can take home. Don't waste my time with quizzes.",
+  about: "I don't do rules. Just here to drink and see who I can take home. Don't waste my time with small talk.",
 };
 
 export default function ApplyForm({ partyId }: { partyId: string }) {
   const router = useRouter();
-  const [f, setF] = useState({ name: "", age: "", gender: "", instagram: "", inviteCode: "", skill: "Trivia", lookingFor: "", about: "" });
+  const [f, setF] = useState({ name: "", age: "", gender: "", instagram: "", inviteCode: "", into: INTERESTS[0], lookingFor: "", about: "" });
   const [conduct, setConduct] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -76,9 +76,9 @@ export default function ApplyForm({ partyId }: { partyId: string }) {
           ))}
         </div>
       </div>
-      <label className="reveal block"><span className="label">Best contest skill</span>
-        <select className="input mt-1" value={f.skill} onChange={set("skill")}>
-          {CONTEST_SKILLS.map((s) => <option key={s}>{s}</option>)}
+      <label className="reveal block"><span className="label">I&apos;m into</span>
+        <select className="input mt-1" value={f.into} onChange={set("into")}>
+          {INTERESTS.map((s) => <option key={s}>{s}</option>)}
         </select>
       </label>
       <label className="reveal block"><span className="label">What are you looking for?</span>

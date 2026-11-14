@@ -13,10 +13,10 @@ function when(iso: string, live?: boolean) {
 }
 
 const how = [
-  { t: "Pick a night", d: "A different house in Austin every week. You see the theme and the contests, not the address." },
+  { t: "Pick a night", d: "A different house in Austin every week. You see the theme and the vibe, not the address." },
   { t: "Members vote you in", d: "They read your application. Your card is only held, and a no costs you nothing." },
-  { t: "AI pairs you up", d: "At the door you get a partner. You compete as a couple in quizzes, dance-offs and cook-offs." },
-  { t: "Get a Season Pass, win a trip", d: "A pass covers all twelve parties and enters you in the prize draw for three trips." },
+  { t: "Meet the right people", d: "When you check in, AI gives you three people to meet and a line to open with. After the party, mutual picks become matches." },
+  { t: "Everyone stays accountable", d: "You rate the host and can report a guest. Three reports, or one the host confirms, is a permanent ban." },
 ];
 
 const tryIt = [
@@ -28,7 +28,7 @@ const tryIt = [
 export default function Home() {
   const hook: HookParty[] = PARTIES.map((p) => ({
     id: p.id, title: p.title, when: when(p.date, p.live), place: p.neighborhood, price: dynamicPrice(p), left: spotsLeft(p),
-    photo: p.photo, venue: p.venue, contests: p.contests, live: !!p.live,
+    photo: p.photo, venue: p.venue, vibes: p.vibes, live: !!p.live,
   }));
   const medal = ["text-gold", "text-silver", "text-bronze"];
   return (

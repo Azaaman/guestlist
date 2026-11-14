@@ -3,9 +3,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import QRCode from "qrcode";
 import { Avatar } from "@/components/ui";
-import { ranked, useLive, type LiveData } from "@/components/useLive";
-
-const PAYOUT_THRESHOLD = 4.2;
+import { useLive, type LiveData } from "@/components/useLive";
+import { PAYOUT_THRESHOLD, REPORTS_TO_BAN } from "@/lib/room";
 
 export default function BigScreen({ sid, title }: { sid: string; title: string }) {
   const { data, error, refresh } = useLive(sid);
@@ -23,11 +22,11 @@ export default function BigScreen({ sid, title }: { sid: string; title: string }
     setPin(new URLSearchParams(window.location.search).get("pin") ?? "");
   }, [sid]);
 
-  async function host(action: string) {
-    setBusy(action);
+  async function host(action: string, target?: string) {
+    setBusy(target ? `${action}:${target}` : action);
     setHostErr("");
     try {
-      const res = await fetch(`/api/live/${sid}/host`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, pin, partyId: sid }) });
+      const res = await fetch(`/api/live/${sid}/host`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, pin, partyId: sid, target }) });
       const d = await res.json();
       if (!res.ok) setHostErr(d.error || "That didn't work. Try again.");
       await refresh();
@@ -38,27 +37,21 @@ export default function BigScreen({ sid, title }: { sid: string; title: string }
     }
   }
 
-  const s = data?.state;
+  const status = data?.status;
   return (
-    <div className="glow min-h-screen px-6 pb-28 pt-6 lg:px-10">
+    <div className="glow min-h-screen px-6 pb-32 pt-6 lg:px-10">
       <div className="flex items-start justify-between gap-6">
         <div>
           <Link href="/" className="wordmark text-3xl leading-none text-white/80">Nestly</Link>
-          <div className="mt-1 flex items-center gap-3">
+          <div className="mt-2 flex items-center gap-3">
             <span className="live-dot h-3 w-3 rounded-full bg-hot" />
             <h1 className="text-3xl lg:text-5xl">{title}</h1>
           </div>
-          {data && s?.status !== "lobby" && (
-            <p className="mt-2 text-white/65">
-              {data.room.vibe !== null ? `Room pulse ${data.room.vibe} out of 5 from ${data.room.vibeCount} ${data.room.vibeCount === 1 ? "guest" : "guests"}` : "Room pulse appears when guests rate the night on their phones"}
-              {data.room.reports > 0 && <span className="ml-3 font-bold text-hot">{data.room.reports} safety {data.room.reports === 1 ? "alert" : "alerts"} sent to the host</span>}
-            </p>
-          )}
         </div>
-        {s && s.status !== "lobby" && qr && (
+        {status && status !== "lobby" && qr && (
           <div className="flex shrink-0 items-center gap-3">
-            <div className="text-right text-sm text-white/70">Scan to join<br />as a judge</div>
-            <img src={qr} alt="QR code to join the party" className="h-24 w-24 rounded-md" />
+            <div className="text-right text-sm text-white/70">Just arrived?<br />Scan to check in</div>
+            <img src={qr} alt="QR code to check in" className="h-24 w-24 rounded-md" />
           </div>
         )}
       </div>
@@ -66,17 +59,17 @@ export default function BigScreen({ sid, title }: { sid: string; title: string }
       {error && <div className="mt-4 rounded-lg bg-hot/15 p-3">{error}</div>}
       {!data && !error && <div className="mt-20 text-center text-white/60">Connecting…</div>}
 
-      {data && s?.status === "lobby" && (
+      {data && status === "lobby" && (
         <div className="mt-10 grid items-start gap-10 lg:grid-cols-[auto_1fr]">
           <div className="paper p-6 text-center">
-            <div className="display text-2xl">Scan to join the party</div>
-            {qr && <img src={qr} alt="QR code to join the party" className="mx-auto mt-3 h-72 w-72" />}
+            <div className="display text-2xl">Scan to check in</div>
+            {qr && <img src={qr} alt="QR code to check in" className="mx-auto mt-3 h-72 w-72" />}
             <div className="mt-2 break-all text-sm text-paper-ink/70">{joinUrl}</div>
           </div>
           <div>
-            <div className="display text-7xl">{data.players.length}</div>
-            <div className="text-xl text-white/70">{data.players.length === 1 ? "guest has" : "guests have"} joined from their phones</div>
-            <p className="mt-4 max-w-lg text-white/65">When everyone is in, the host starts the night. AI pairs the room into couples and writes tonight&apos;s contests. Season members fill the remaining places.</p>
+            <div className="display price text-7xl">{data.players.length}</div>
+            <div className="text-xl text-white/75">{data.players.length === 1 ? "guest has" : "guests have"} checked in from their phones</div>
+            <p className="mt-4 max-w-lg text-white/65">When people have arrived, the host opens the room. AI then gives every guest three people to meet and a line to open with.</p>
             <ul className="mt-6 flex flex-wrap gap-2">
               {data.players.map((p) => (
                 <li key={p.id} className="pop flex items-center gap-2 rounded-full border border-line py-1.5 pl-1.5 pr-4"><Avatar name={p.name} size={30} /><span className="font-semibold">{p.name}</span></li>
@@ -86,124 +79,102 @@ export default function BigScreen({ sid, title }: { sid: string; title: string }
         </div>
       )}
 
-      {data && s?.status === "running" && <Running data={data} />}
-      {data && s?.status === "finished" && <Finished data={data} />}
+      {data && status === "running" && <Running data={data} busy={busy} host={host} />}
+      {data && status === "finished" && <Finished data={data} />}
 
       {/* Host controls */}
       <div className="fixed bottom-4 left-1/2 z-20 flex w-max max-w-[95vw] -translate-x-1/2 flex-wrap items-center gap-2 rounded-2xl border border-line bg-ink/95 p-2 pl-4 backdrop-blur">
         <span className="text-sm font-semibold text-white/55">Host</span>
-        {s?.status === "lobby" && (
-          <button className="btn btn-primary" disabled={!!busy} onClick={() => host("setup")}>
-            {busy === "setup" ? "AI is pairing the room…" : "Pair everyone and start"}
+        {status === "lobby" && (
+          <button className="btn btn-primary" disabled={!!busy} onClick={() => host("open")}>
+            {busy === "open" ? "AI is introducing everyone…" : "Open the room"}
           </button>
         )}
-        {s?.status === "running" && (
-          <button className="btn btn-primary" disabled={!!busy} onClick={() => host("next")}>
-            {s.phase === "open" ? (s.program[s.current]?.type === "quiz" ? "Reveal the answer" : "Close scoring") : "Next"}
-          </button>
+        {status === "running" && (
+          <>
+            <button className="btn btn-ghost" disabled={!!busy} onClick={() => host("open")}>{busy === "open" ? "Matching…" : "Match new arrivals"}</button>
+            <button className="btn btn-primary" disabled={!!busy} onClick={() => host("end")}>End the party</button>
+          </>
         )}
-        <button className="btn btn-ghost" disabled={!!busy} onClick={() => { if (confirm("Reset the party? All guests and scores are cleared.")) host("reset"); }}>Reset</button>
+        <button className="btn btn-ghost" disabled={!!busy} onClick={() => { if (confirm("Reset the party? Guests, reports and demo bans are cleared.")) host("reset"); }}>Reset</button>
         {hostErr && <span className="max-w-md px-2 text-sm text-hot">{hostErr}</span>}
       </div>
     </div>
   );
 }
 
-function Running({ data }: { data: LiveData }) {
-  const s = data.state;
-  const c = s.program[s.current];
-  const q = c?.type === "quiz" ? c.questions?.[s.qIndex] : null;
+function Running({ data, busy, host }: { data: LiveData; busy: string; host: (action: string, target?: string) => void }) {
+  const r = data.room;
+  const live = data.people.filter((p) => !p.demo).length;
   return (
-    <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
+    <div className="mt-8 grid gap-10 lg:grid-cols-[1.5fr_1fr]">
       <div>
-        <div className="flex items-baseline justify-between text-white/65">
-          <span>Round {s.current + 1} of {s.program.length}{q ? `, question ${s.qIndex + 1} of ${c.questions!.length}` : ""}</span>
-          <span>{data.responses} {c?.type === "quiz" ? (data.responses === 1 ? "answer in" : "answers in") : (data.responses === 1 ? "judge has scored" : "judges have scored")}</span>
-        </div>
-        <h2 className="mt-2 text-5xl lg:text-6xl">{c?.emoji} {c?.title}</h2>
-        <p className="mt-3 max-w-2xl text-xl text-white/75">{c?.description}</p>
-        {q && (
-          <div className="mt-8">
-            <div className="text-2xl font-bold lg:text-3xl">{q.q}</div>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {q.options.map((o, i) => {
-                const correct = s.phase === "reveal" && q.answer === i;
-                return (
-                  <div key={i} className={`rounded-xl border p-4 text-xl font-semibold ${correct ? "border-mint bg-mint/20" : "border-line bg-night"} ${s.phase === "reveal" && !correct ? "opacity-40" : ""}`}>
-                    <span className="mr-2 text-brand-2">{"ABCD"[i]}</span>{o}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-        {c?.type === "vote" && (
-          <div className="mt-8 border-l-4 border-brand-2 pl-5 text-2xl">
-            {s.phase === "open" ? "Couples perform. Everyone scores each couple from 1 to 5 on their phone." : "Scoring is closed. Points are on the board."}
+        <dl className="grid grid-cols-3 divide-x divide-line border-y border-line py-4 text-center">
+          <div><dt className="label">In the room</dt><dd className="display mt-1 text-5xl">{data.people.length}</dd><dd className="text-sm text-white/55">{live} checked in by phone</dd></div>
+          <div><dt className="label">Introductions made</dt><dd className="display price mt-1 text-5xl">{r.met}</dd><dd className="text-sm text-white/55">guests tapped “We met”</dd></div>
+          <div><dt className="label">Room pulse</dt><dd className="display mt-1 text-5xl">{r.vibe ?? "–"}</dd><dd className="text-sm text-white/55">{r.vibeCount ? `out of 5, from ${r.vibeCount}` : "no ratings yet"}</dd></div>
+        </dl>
+        <h2 className="mt-8 text-2xl">On the list tonight</h2>
+        <ul className="mt-4 flex flex-wrap gap-2">
+          {data.people.map((p) => (
+            <li key={p.id} className={`flex items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-4 ${p.demo ? "border-line" : "border-hi"}`}>
+              <Avatar name={p.name} size={32} /><span className="font-semibold">{p.name}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 text-sm text-white/50">Gold outline: checked in by phone tonight. The rest are club members, simulated in this demo.</p>
+      </div>
+
+      <div>
+        <h2 className="text-2xl">Reports for the host</h2>
+        <p className="mt-1 text-sm text-white/65">Private. {REPORTS_TO_BAN} reports from different guests ban automatically. One confirmed by the host bans at once.</p>
+        {r.reports.length === 0 && <p className="mt-4 border-t border-line pt-4 text-white/60">No reports. Guests can report someone from their phone.</p>}
+        <ul className="mt-4">
+          {r.reports.map((rep) => (
+            <li key={rep.id} className="pop border-t border-line py-4">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-lg font-bold">{rep.name}</span>
+                <span className="font-semibold text-hot">{rep.count} of {REPORTS_TO_BAN} reports</span>
+              </div>
+              <p className="mt-1 text-white/75">{rep.reasons.join(", ")}</p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button className="btn btn-ghost" disabled={!!busy} onClick={() => host("dismiss", rep.id)}>Dismiss</button>
+                <button className="btn bg-hot text-[#17103f]" disabled={!!busy} onClick={() => host("confirm", rep.id)}>Confirm and ban</button>
+              </div>
+            </li>
+          ))}
+        </ul>
+        {r.banned.length > 0 && (
+          <div className="mt-6 border-t border-line pt-4">
+            <div className="font-semibold text-hot">Banned for good</div>
+            <p className="mt-1 text-white/75">{r.banned.map((b) => b.name).join(", ")}. Removed tonight and blocked from applying again.</p>
           </div>
         )}
       </div>
-      <Leaderboard data={data} />
-    </div>
-  );
-}
-
-function Leaderboard({ data }: { data: LiveData }) {
-  const order = ranked(data);
-  const medal = ["text-gold", "text-silver", "text-bronze"];
-  return (
-    <div>
-      <div className="display text-2xl">Tonight&apos;s board</div>
-      <ol className="mt-2">
-        {order.map((p, i) => (
-          <li key={p.id} className="flex items-center gap-3 border-t border-line py-3">
-            <div className={`display w-8 text-center text-2xl ${medal[i] ?? "text-white/50"}`}>{i + 1}</div>
-            <div className="flex -space-x-2"><Avatar name={p.a.name} size={34} /><Avatar name={p.b.name} size={34} tone={3} /></div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-lg font-bold">{p.name}</div>
-              <div className="truncate text-sm text-white/60">{p.a.name} and {p.b.name}{!p.a.demo || !p.b.demo ? ", joined live" : ""}</div>
-            </div>
-            <div className="display price text-3xl">{data.scores.totals[p.id] ?? 0}</div>
-          </li>
-        ))}
-      </ol>
-      <p className="mt-3 text-sm text-white/45">Guests who joined by phone play for real. The other couples are season members, simulated in this demo.</p>
     </div>
   );
 }
 
 function Finished({ data }: { data: LiveData }) {
-  const order = ranked(data);
-  const titles = ["Golden couple", "Silver couple", "Bronze couple"];
-  const colors = ["text-gold", "text-silver", "text-bronze"];
   const r = data.room;
   const released = r.hostRating !== null && r.hostRating >= PAYOUT_THRESHOLD;
   return (
     <div className="mt-10">
-      <h2 className="text-5xl lg:text-7xl">Tonight&apos;s winners</h2>
-      <ol className="mt-8 grid gap-8 lg:grid-cols-3">
-        {order.slice(0, 3).map((p, i) => (
-          <li key={p.id} className="pop border-t-4 border-line pt-4" style={{ animationDelay: `${(2 - i) * 0.5}s`, borderColor: i === 0 ? "var(--color-gold)" : undefined }}>
-            <div className={`display text-2xl ${colors[i]}`}>{titles[i]}</div>
-            <div className="display mt-1 text-4xl">{p.name}</div>
-            <div className="mt-1 text-lg text-white/70">{p.a.name} and {p.b.name}</div>
-            <div className="display mt-3 text-6xl">{data.scores.totals[p.id] ?? 0}</div>
-            <p className="mt-2 text-white/60">{p.why}</p>
-          </li>
-        ))}
-      </ol>
-      <div className="mt-10 grid gap-6 border-t border-line pt-6 md:grid-cols-2">
-        <p className="text-lg text-white/75">That&apos;s tonight&apos;s game. Scores are for the night only, see you next week.</p>
-        <div>
-          <div className="text-lg font-bold">
-            {r.ratingCount === 0 ? "Host payout is in escrow" : released ? "Host payout released" : "Host payout on hold"}
-          </div>
-          <p className="text-white/65">
-            {r.ratingCount === 0
-              ? "Guests are rating the night on their phones now. The host is paid once ratings come in."
-              : `Guests rated the host ${r.hostRating} out of 5 (${r.ratingCount} ${r.ratingCount === 1 ? "rating" : "ratings"}). The payout needs ${PAYOUT_THRESHOLD} or higher.`}
-          </p>
+      <h2 className="text-5xl lg:text-7xl">That&apos;s the night</h2>
+      <dl className="mt-8 grid gap-6 border-y border-line py-6 text-center sm:grid-cols-3">
+        <div><dt className="label">Introductions made</dt><dd className="display price mt-1 text-6xl">{r.met}</dd></div>
+        <div><dt className="label">Host rating</dt><dd className="display mt-1 text-6xl">{r.hostRating ?? "–"}</dd><dd className="text-sm text-white/55">{r.ratingCount ? `from ${r.ratingCount} ${r.ratingCount === 1 ? "guest" : "guests"}` : "guests are rating now"}</dd></div>
+        <div><dt className="label">Banned tonight</dt><dd className="display mt-1 text-6xl">{r.banned.length}</dd></div>
+      </dl>
+      <div className="mt-6">
+        <div className={`text-xl font-bold ${r.ratingCount === 0 ? "" : released ? "text-mint" : "text-hot"}`}>
+          {r.ratingCount === 0 ? "Host payout is in escrow" : released ? "Host payout released" : "Host payout on hold"}
         </div>
+        <p className="mt-1 text-white/70">
+          {r.ratingCount === 0
+            ? "Guests are rating the host on their phones. The host is paid once ratings come in."
+            : `The payout needs a rating of ${PAYOUT_THRESHOLD} or higher.`}
+        </p>
       </div>
     </div>
   );

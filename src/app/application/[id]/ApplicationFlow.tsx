@@ -70,7 +70,7 @@ function ProfileCard({ app }: { app: App }) {
         </div>
       </div>
       <p className="mt-3">{p.bio}</p>
-      <p className="mt-2 text-sm text-paper-ink/75">{p.vibe}. Good at: {p.strengths?.join(", ")}.</p>
+      <p className="mt-2 text-sm text-paper-ink/75">{p.vibe}. {p.strengths?.join(", ")}.</p>
       <p className="mt-2 text-sm text-paper-ink/65">Ask them: “{p.icebreaker}”</p>
       {t && (
         <div className="rule mt-4 pt-4">

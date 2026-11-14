@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { generateJson } from "@/lib/ai";
 import { db } from "@/lib/db";
 import { getParty, MEMBERS } from "@/lib/data";
+import { isBanned } from "@/lib/live";
 import type { AIProfile, ApplicationForm, Trust, Vote } from "@/lib/types";
 
 export const maxDuration = 60;
 
 const SYSTEM = `You are the screening engine of Nestly, an invite-only party club in Austin for adults 25-45.
+There are no games or contests: the club simply brings screened people together.
 Guests apply to a specific party. Existing members of the opposite gender vote on each application.
 You (1) turn the application into a short, flattering-but-honest profile card and
 (2) role-play each voting member, deciding YES or NO strictly from their personality and the application.
@@ -28,14 +30,17 @@ export async function POST(req: Request) {
     if (f.gender !== "man" && f.gender !== "woman")
       return NextResponse.json({ error: "Please choose a gender." }, { status: 400 });
 
+    if (await isBanned(f.name))
+      return NextResponse.json({ error: "This guest was permanently banned after reports at a previous party and cannot apply." }, { status: 403 });
+
     const voters = MEMBERS.filter((m) => m.gender !== f.gender).slice(0, 5);
 
-    const prompt = `PARTY: "${party.title}" — ${party.theme}. Contests: ${party.contests.join(", ")}.
+    const prompt = `PARTY: "${party.title}" — ${party.theme}. Vibe: ${party.vibes.join(", ")}.
 
 APPLICATION:
 - Name: ${f.name}
 - Age: ${f.age}, ${f.gender}
-- Best contest skill: ${f.skill}
+- Into: ${f.into ?? f.skill ?? "not said"}
 - Looking for: ${f.lookingFor}
 - About: ${f.about}
 - Instagram provided: ${f.instagram ? "yes" : "no"}
@@ -49,7 +54,7 @@ Return JSON exactly in this shape:
   "profile": {
     "headline": "max 8 words",
     "bio": "2 sentences, third person",
-    "strengths": ["3 short strengths useful in couple contests"],
+    "strengths": ["3 short things that make them good company at a party"],
     "vibe": "2-4 words",
     "icebreaker": "one fun question other guests could ask them"
   },

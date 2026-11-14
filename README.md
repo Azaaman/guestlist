@@ -2,29 +2,27 @@
 
 Business Cup 2.0 · Track 02 Entertainment · B2C · Web only · US adults 25–45
 
-Invite-only house parties for adults 30–40 in the US. Guests apply to a party, members of the
-opposite gender vote on the application, the card is only **held** until approval. At the party,
-AI pairs everyone into couples and writes the contest program; guests play and vote from their
-phones; scores are for that night only. A Season Pass ($499) covers all 12 parties and enters the holder in a prize draw for three trips (Europe, Hawaii, Wild West).
+Invite-only house parties for adults 30–40 in the US. Like a dating app, Nestly only brings people together:
+there are no games. Guests apply to a party, members vote on the application, and the card is only **held**
+until approval. At the door AI gives each guest three people to meet. Guests rate the host and can report
+another guest; three reports, or one the host confirms, is a permanent ban.
 
-Inspired by the CeleBreak pickup-football model (the platform organises, you buy a spot, a host runs it),
-applied to social nights. Hosts provide the house; everything else is software.
+Inspired by the CeleBreak pickup-football model (the platform organises, you buy a spot, a host runs it).
+Hosts provide the house; everything else is software.
 
 ## Try it (no sign-up)
-1. `/parties` → open **Hill Country Pool Party** (tonight) → **Apply** → “Fill with a sample guest”.
+1. `/parties` → open **Hill Country Pool Party** (tonight) → **Apply** → "Fill in a strong application".
 2. AI builds your profile card and trust score.
 3. Hold the price with Stripe test card `4242 4242 4242 4242` (any future date, any CVC).
 4. Watch members vote (AI role-plays each member). 3+ yes → card captured, address revealed. Otherwise the hold is released ($0).
-5. Big screen: `/live/tonight`. Phones: scan the QR (`/play/tonight`). Host presses **Pair everyone & start** → AI pairs and generates quiz + contests → phones answer/vote → live leaderboard.
-
-6. When the party ends, phones rate the night and the host (this releases the host payout at 4.2+) and pick who they'd like to see again; mutual picks become matches.
-7. `/pass` sells the Season Pass ($499, Stripe test). `/host` shows host checks and live numbers from real applications.
-
-Also worth trying: on the application form, "Fill in one that gets rejected" shows the screening saying no and the card hold being released.
+5. Big screen: `/live/tonight`. Phones: scan the QR (`/play/tonight`). The host presses **Open the room** → AI gives every guest three people to meet.
+6. On a phone, **Report a guest**. On the big screen the host confirms → that guest is removed and can no longer apply or check in.
+7. **End the party** → phones rate the host (releases the payout at 4.2+) and pick who they'd like to see again; mutual picks become matches.
+8. `/pass` sells the Season Pass ($499, Stripe test) with a prize draw for pass holders. `/host` shows host checks and live numbers.
 
 ## What is real vs simulated
-- **Real:** AI profile + screening, AI member votes, Stripe manual-capture hold/capture/cancel, AI pairing, AI-generated quiz questions and contest program, live answers/votes from phones, scoring and leaderboard, ticket check-in, live room pulse, safety alerts, after-party ratings and mutual matches, Season Pass payment.
-- **Seed data:** Austin parties, hosts, season standings and the season members who vote and fill the room (marked as simulated in the UI). Government ID check is shown as pending (Stripe Identity in production).
+- **Real:** AI profile + screening, AI member votes, Stripe hold/capture/cancel, AI introductions, check-in, room pulse, guest reports, host-confirmed and automatic bans, host ratings, mutual matches, Season Pass payment.
+- **Simulated:** Austin parties, hosts and the club members who vote and fill the room (marked in the UI). Government ID check is shown as pending, so in this demo a ban is tied to the guest's name instead of a verified ID.
 
 ## Stack
 Next.js 15 (App Router, TypeScript, Tailwind) · Supabase Postgres · Stripe (test mode, manual capture) · Gemini or Anthropic API · Vercel.
@@ -40,7 +38,7 @@ Create the tables: paste `supabase/schema.sql` into Supabase → SQL Editor → 
 ## Structure
 - `src/lib/data.ts` — seed data (parties, hosts, members, season) and dynamic pricing
 - `src/lib/ai.ts` — provider-agnostic JSON generation (Gemini/Anthropic with fallback)
-- `src/lib/live.ts` — Party Mode engine: pairing, program, scoring
+- `src/lib/live.ts` — party room engine: introductions, reports, bans
 - `src/app/api/*` — apply, checkout (hold), hold, decide (capture/cancel), live session endpoints
 - `src/app/live/[sid]` — big screen · `src/app/play/[sid]` — phone
 

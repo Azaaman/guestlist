@@ -1,22 +1,28 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export interface PublicQuestion { q: string; options: string[]; answer: number | null }
-export interface PublicContest { type: "quiz" | "vote"; title: string; description: string; emoji: string; questions?: PublicQuestion[] }
-export interface PublicPerson { id: string; name: string; gender: string; demo: boolean; skill?: string }
-export interface PublicPair { id: string; name: string; a: PublicPerson; b: PublicPerson; why: string }
+export interface RoomPerson { id: string; name: string; demo: boolean }
 export interface LiveData {
-  state: { status: "lobby" | "running" | "finished"; pairs: PublicPair[]; program: PublicContest[]; current: number; qIndex: number; phase: "open" | "reveal" };
+  status: "lobby" | "running" | "finished";
+  people: RoomPerson[];
   players: { id: string; name: string; gender: string }[];
-  scores: { totals: Record<string, number>; perContest: Record<string, number[]> };
-  responses: number;
-  room: { vibe: number | null; vibeCount: number; reports: number; partyRating: number | null; hostRating: number | null; ratingCount: number };
+  room: {
+    vibe: number | null;
+    vibeCount: number;
+    met: number;
+    reports: { id: string; name: string; count: number; reasons: string[] }[];
+    banned: { id: string; name: string }[];
+    partyRating: number | null;
+    hostRating: number | null;
+    ratingCount: number;
+  };
   me: {
-    pairId: string | null;
-    answered: number | null;
-    votes: Record<string, number>;
+    banned: boolean;
+    inRoom: boolean;
+    intros: { id: string; name: string; why: string; icebreaker: string }[];
+    met: string[];
+    reported: string[];
     pulse: number | null;
-    reported: boolean;
     rates: Record<string, number>;
     again: string[];
     matches: { id: string; name: string; demo: boolean }[];
@@ -39,7 +45,7 @@ export function useLive(sid: string, playerId?: string | null, intervalMs = 1500
         setData(d);
       }
     } catch {
-      setError("Connection problem — retrying…");
+      setError("Connection problem, retrying…");
     } finally {
       busy.current = false;
     }
@@ -50,8 +56,4 @@ export function useLive(sid: string, playerId?: string | null, intervalMs = 1500
     return () => clearInterval(t);
   }, [refresh, intervalMs]);
   return { data, error, refresh };
-}
-
-export function ranked(d: LiveData) {
-  return [...d.state.pairs].sort((a, b) => (d.scores.totals[b.id] ?? 0) - (d.scores.totals[a.id] ?? 0));
 }

@@ -7,7 +7,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 export const metadata: Metadata = {
   title: "Nestly — Secret house parties in Austin",
   description:
-    "Invite-only parties for adults 30–40. Members approve guests, couples play contests, pass holders can win a trip.",
+    "Invite-only parties for adults 30–40. Members approve every guest. AI introduces you to three people. Bad behaviour means a permanent ban.",
 };
 
 export const viewport: Viewport = { themeColor: "#150f4f", width: "device-width", initialScale: 1 };

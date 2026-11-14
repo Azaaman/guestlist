@@ -28,11 +28,11 @@ export default async function PartyPage({ params }: { params: Promise<{ id: stri
           <div><dt className="label">Address</dt><dd className="display mt-1 text-3xl">Hidden</dd><dd className="text-xs text-white/55">unlocks when you&apos;re approved</dd></div>
         </dl>
 
-        <h2 className="reveal mt-12 text-2xl">What you&apos;ll compete in, as a couple</h2>
+        <h2 className="reveal mt-12 text-2xl">The vibe</h2>
         <ul className="mt-3 flex flex-wrap gap-2">
-          {p.contests.map((c) => <li key={c} className="rounded-full border border-line px-4 py-2 font-semibold">{c}</li>)}
+          {p.vibes.map((c) => <li key={c} className="rounded-full border border-line px-4 py-2 font-semibold">{c}</li>)}
         </ul>
-        <p className="mt-3 text-sm text-white/60">AI pairs you with a partner at the door and writes tonight&apos;s program. Dress code: {p.dressCode.toLowerCase()}.</p>
+        <p className="mt-3 text-sm text-white/60">When you check in, Nestly gives you three people to meet and a line to open with. Dress code: {p.dressCode.toLowerCase()}.</p>
 
         <h2 className="reveal mt-12 text-2xl">Your host</h2>
         <div className="mt-3 flex gap-4">

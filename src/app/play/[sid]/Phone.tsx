@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { CONTEST_SKILLS } from "@/lib/data";
+import { INTERESTS, REPORT_REASONS, REPORTS_TO_BAN } from "@/lib/room";
 import { Avatar } from "@/components/ui";
-import { ranked, useLive, type LiveData } from "@/components/useLive";
+import { useLive, type LiveData } from "@/components/useLive";
 
-type Act = (kind: "answer" | "vote" | "pulse" | "report" | "rate" | "again", value: number, target?: string) => void;
+type Act = (kind: "pulse" | "met" | "report" | "rate" | "again", value: number, target?: string) => Promise<void>;
 
 export default function Phone({ sid, title, hostName, ticket }: { sid: string; title: string; hostName: string; ticket: string | null }) {
   const key = `gl_player_${sid}`;
@@ -20,13 +20,13 @@ export default function Phone({ sid, title, hostName, ticket }: { sid: string; t
 
   if (!ready) return null;
   if (!playerId) return <Join sid={sid} title={title} ticket={ticket} onJoined={joined} />;
-  return <Game sid={sid} title={title} hostName={hostName} playerId={playerId} onLeave={leave} />;
+  return <Room sid={sid} title={title} hostName={hostName} playerId={playerId} onLeave={leave} />;
 }
 
 function Join({ sid, title, ticket, onJoined }: { sid: string; title: string; ticket: string | null; onJoined: (id: string) => void }) {
   const [name, setName] = useState("");
   const [gender, setGender] = useState("");
-  const [skill, setSkill] = useState("Trivia");
+  const [into, setInto] = useState(INTERESTS[0]);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const tried = useRef(false);
@@ -64,216 +64,208 @@ function Join({ sid, title, ticket, onJoined }: { sid: string; title: string; ti
           <p className="mt-6 text-white/75">Checking you in with your ticket…</p>
         ) : (
           <>
-            <p className="mt-3 text-white/75">Join the party from your phone. AI pairs you with a partner for tonight&apos;s contests.</p>
-            <form onSubmit={(e) => { e.preventDefault(); join({ name, gender, skill }); }} className="mt-6 space-y-4">
+            <p className="mt-3 text-white/75">Check in from your phone. Nestly will suggest three people to meet tonight.</p>
+            <form onSubmit={(e) => { e.preventDefault(); join({ name, gender, into }); }} className="mt-6 space-y-4">
               <label className="block"><span className="label">Your first name</span><input className="input mt-1 text-lg" value={name} onChange={(e) => setName(e.target.value)} maxLength={24} required /></label>
               <div>
                 <span className="label">I am a</span>
                 <div className="mt-1 grid grid-cols-2 gap-2">
                   {["man", "woman"].map((g) => (
                     <button type="button" key={g} onClick={() => setGender(g)} aria-pressed={gender === g}
-                      className={`rounded-xl border px-4 py-3 font-semibold capitalize ${gender === g ? "border-brand-2 bg-brand/40" : "border-line"}`}>{g}</button>
+                      className={`min-h-12 rounded-xl border px-4 py-3 font-semibold capitalize ${gender === g ? "border-brand-2 bg-brand/40" : "border-line"}`}>{g}</button>
                   ))}
                 </div>
               </div>
-              <label className="block"><span className="label">I&apos;m best at</span>
-                <select className="input mt-1" value={skill} onChange={(e) => setSkill(e.target.value)}>{CONTEST_SKILLS.map((s) => <option key={s}>{s}</option>)}</select>
+              <label className="block"><span className="label">I&apos;m into</span>
+                <select className="input mt-1" value={into} onChange={(e) => setInto(e.target.value)}>{INTERESTS.map((s) => <option key={s}>{s}</option>)}</select>
               </label>
-              {err && <div className="rounded-lg bg-hot/15 p-3 text-sm text-white">{err}</div>}
-              <button className="btn btn-primary w-full text-lg" disabled={busy || !gender}>{busy ? "Joining…" : "Join the party"}</button>
+              {err && <div className="rounded-lg bg-hot/15 p-3 text-sm">{err}</div>}
+              <button className="btn btn-primary w-full text-lg" disabled={busy || !gender}>{busy ? "Checking in…" : "Check in"}</button>
             </form>
           </>
         )}
-        {ticket && err && <p className="mt-4 text-sm text-white/60">You can still join with your name above.</p>}
+        {ticket && err && <p className="mt-4 text-sm text-white/60">You can still check in with your name above.</p>}
       </div>
     </div>
   );
 }
 
-function Game({ sid, title, hostName, playerId, onLeave }: { sid: string; title: string; hostName: string; playerId: string; onLeave: () => void }) {
+function Room({ sid, title, hostName, playerId, onLeave }: { sid: string; title: string; hostName: string; playerId: string; onLeave: () => void }) {
   const { data, error, refresh } = useLive(sid, playerId, 1500);
   const [msg, setMsg] = useState("");
 
-  const act: Act = async (kind, value, targetPair) => {
+  const act: Act = async (kind, value, target) => {
     setMsg("");
     try {
-      const res = await fetch(`/api/live/${sid}/act`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ playerId, kind, value, targetPair }) });
+      const res = await fetch(`/api/live/${sid}/act`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ playerId, kind, value, target }) });
       const d = await res.json();
       if (!res.ok) setMsg(d.error || "That didn't go through. Try again.");
     } catch {
       setMsg("No connection. Try again.");
     }
-    refresh();
+    await refresh();
   };
 
   if (!data) return <div className="p-8 text-center text-white/60">{error || "Connecting…"}</div>;
-  const s = data.state;
   const me = data.players.find((p) => p.id === playerId);
+
+  if (data.me?.banned) {
+    return (
+      <div className="mx-auto max-w-md px-5 py-16 text-center">
+        <h1 className="text-4xl text-hot">You have been removed</h1>
+        <p className="mt-4 text-white/80">Other guests reported your behaviour and the report was upheld. This ban is permanent and tied to your ID, so you can&apos;t apply to Nestly parties again.</p>
+      </div>
+    );
+  }
   if (!me) {
     return (
       <div className="p-8 text-center">
         <p className="text-white/75">The host restarted the party.</p>
-        <button className="btn btn-primary mt-4" onClick={onLeave}>Join again</button>
+        <button className="btn btn-primary mt-4" onClick={onLeave}>Check in again</button>
       </div>
     );
   }
-  const pair = s.pairs.find((p) => p.id === data.me?.pairId);
-  const partner = pair ? (pair.a.id === playerId ? pair.b : pair.a) : null;
-  const order = ranked(data);
-  const rank = pair ? order.findIndex((p) => p.id === pair.id) + 1 : 0;
 
   return (
-    <div className="mx-auto min-h-[calc(100vh-56px)] max-w-md px-4 pb-10 pt-5">
+    <div className="mx-auto min-h-[calc(100vh-56px)] max-w-md px-4 pb-12 pt-5">
       <div className="flex items-center justify-between text-sm">
         <span className="text-white/60">{title}</span>
-        <span className="font-semibold">{me.name}, checked in</span>
+        <span className="font-semibold text-mint">{me.name}, checked in</span>
       </div>
 
-      {s.status === "lobby" && (
-        <div className="mt-8 text-center">
+      {data.status === "lobby" && (
+        <div className="mt-10 text-center">
           <h1 className="text-5xl">You&apos;re in</h1>
-          <p className="mt-3 text-white/75">Waiting for the host to pair everyone. Keep this screen open.</p>
-          <p className="mt-6 text-sm text-white/55">{data.players.length} {data.players.length === 1 ? "guest has" : "guests have"} joined from their phones</p>
+          <p className="mt-3 text-white/75">When the host opens the room, you&apos;ll get three people to meet. Keep this screen open.</p>
+          <p className="mt-6 text-sm text-white/55">{data.players.length} {data.players.length === 1 ? "guest has" : "guests have"} checked in</p>
         </div>
       )}
 
-      {s.status !== "lobby" && pair && partner && (
-        <div className="paper mt-4 p-4">
-          <div className="flex items-center gap-3">
-            <Avatar name={partner.name} size={48} />
-            <div className="min-w-0 flex-1">
-              <div className="label">Your partner tonight</div>
-              <div className="display text-2xl">{partner.name}</div>
-              <div className="text-sm text-paper-ink/70">Together you are {pair.name}</div>
-            </div>
-            <div className="text-right">
-              <div className="display text-3xl">{data.scores.totals[pair.id] ?? 0}</div>
-              <div className="text-xs text-paper-ink/60">place {rank} of {order.length}</div>
-            </div>
-          </div>
-          {pair.why && <p className="rule mt-3 pt-3 text-sm text-paper-ink/75">{pair.why}</p>}
-        </div>
-      )}
-      {s.status !== "lobby" && !pair && (
-        <div className="card mt-4 p-4 text-white/80">You joined after the pairing, so you are a judge tonight. Score the couples in the judged rounds.</div>
-      )}
-
-      {s.status === "running" && <Current data={data} myPairId={pair?.id ?? null} act={act} />}
+      {data.status === "running" && <Intros data={data} act={act} />}
       {msg && <div className="mt-3 rounded-lg bg-hot/15 p-3 text-sm">{msg}</div>}
-      {s.status === "running" && <Pulse data={data} act={act} hostName={hostName} />}
-      {s.status === "finished" && <After data={data} playerId={playerId} hostName={hostName} pairName={pair?.name ?? null} rank={rank} act={act} />}
+      {data.status === "running" && <Pulse data={data} act={act} hostName={hostName} />}
+      {data.status === "running" && <Report data={data} playerId={playerId} act={act} />}
+      {data.status === "finished" && <After data={data} playerId={playerId} hostName={hostName} act={act} />}
     </div>
   );
 }
 
-function Current({ data, myPairId, act }: { data: LiveData; myPairId: string | null; act: Act }) {
-  const s = data.state;
-  const c = s.program[s.current];
-  if (!c) return null;
-  const q = c.type === "quiz" ? c.questions?.[s.qIndex] : null;
-  const answered = data.me?.answered ?? null;
-
+function Intros({ data, act }: { data: LiveData; act: Act }) {
+  const intros = data.me?.intros ?? [];
+  if (!intros.length)
+    return (
+      <div className="card mt-6 p-5">
+        <div className="text-lg font-semibold">You arrived after the room opened</div>
+        <p className="mt-1 text-white/75">Ask the host to match new arrivals and your three introductions will appear here.</p>
+      </div>
+    );
   return (
-    <div className="mt-5">
-      <div className="label">Round {s.current + 1} of {s.program.length}{q ? `, question ${s.qIndex + 1} of ${c.questions!.length}` : ""}</div>
-      <h2 className="mt-1 text-3xl">{c.emoji} {c.title}</h2>
-      {q && (
-        <>
-          <p className="mt-3 text-lg font-semibold">{q.q}</p>
-          {!myPairId && <p className="mt-2 text-sm text-white/55">Judges sit this round out.</p>}
-          <div className="mt-4 grid gap-2">
-            {q.options.map((o, i) => {
-              const picked = answered === i;
-              const revealed = s.phase === "reveal" && q.answer !== null;
-              const correct = revealed && q.answer === i;
-              const wrongPick = revealed && picked && !correct;
-              return (
-                <button key={i} disabled={!myPairId || answered !== null || s.phase !== "open"} onClick={() => act("answer", i)}
-                  className={`rounded-xl border p-4 text-left font-semibold ${correct ? "border-mint bg-mint/20" : wrongPick ? "border-hot bg-hot/20" : picked ? "border-brand-2 bg-brand/40" : "border-line bg-night"} disabled:cursor-default`}>
-                  <span className="mr-2 text-brand-2">{"ABCD"[i]}</span>{o}
-                </button>
-              );
-            })}
-          </div>
-          {answered !== null && s.phase === "open" && <p className="mt-3 text-center text-sm text-white/60">Answer locked. Wait for the reveal.</p>}
-          {s.phase === "reveal" && answered !== null && (
-            <p className="mt-3 text-center text-lg font-bold">{answered === q.answer ? "Correct, 10 points for your couple tonight" : "Not this one"}</p>
-          )}
-        </>
-      )}
-      {c.type === "vote" && (
-        <>
-          <p className="mt-2 text-white/75">{c.description}</p>
-          {s.phase === "open" ? (
-            <div className="mt-4">
-              {s.pairs.filter((p) => p.id !== myPairId).map((p) => {
-                const mine = data.me?.votes?.[p.id];
-                return (
-                  <div key={p.id} className="border-t border-line py-3">
-                    <div className="font-bold">{p.name}</div>
-                    <div className="text-sm text-white/55">{p.a.name} and {p.b.name}</div>
-                    <div className="mt-2 grid grid-cols-5 gap-1.5" role="group" aria-label={`Score ${p.name}`}>
-                      {[1, 2, 3, 4, 5].map((v) => (
-                        <button key={v} disabled={mine !== undefined} onClick={() => act("vote", v, p.id)}
-                          className={`rounded-lg py-2.5 text-lg font-bold ${mine === v ? "bg-brand" : mine !== undefined ? "bg-night opacity-40" : "bg-panel hover:bg-brand/40"}`}>{v}</button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="mt-4 text-white/70">Scoring is closed. Look at the big screen.</p>
-          )}
-        </>
-      )}
+    <div className="mt-6">
+      <h2 className="text-3xl">Three people to meet</h2>
+      <p className="mt-1 text-sm text-white/65">Picked for you by AI from what everyone shared.</p>
+      <ul className="mt-4 space-y-3">
+        {intros.map((p) => {
+          const met = data.me?.met.includes(p.id);
+          return (
+            <li key={p.id} className="paper p-4">
+              <div className="flex items-center gap-3">
+                <Avatar name={p.name} size={44} />
+                <div className="display flex-1 text-2xl">{p.name}</div>
+                <button disabled={met} onClick={() => act("met", 1, p.id)}
+                  className={`rounded-full px-4 py-2 text-sm font-bold ${met ? "bg-[#1f8a5b] text-white" : "bg-paper-ink text-paper"}`}>{met ? "Met" : "We met"}</button>
+              </div>
+              <p className="mt-3">{p.why}</p>
+              <p className="rule mt-3 pt-3 text-sm text-paper-ink/75">Open with: “{p.icebreaker}”</p>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
 
-// Live pulse and the safety button: how hosts are checked while the party is still running.
 function Pulse({ data, act, hostName }: { data: LiveData; act: Act; hostName: string }) {
   const pulse = data.me?.pulse ?? null;
   return (
-    <div className="mt-8 border-t border-line pt-4">
+    <div className="mt-8 border-t border-line pt-5">
       {pulse === null ? (
         <>
-          <div className="text-sm font-semibold">How is the night so far?</div>
+          <div className="font-semibold">How is the night so far?</div>
           <div className="mt-2 grid grid-cols-5 gap-1.5">
             {[1, 2, 3, 4, 5].map((v) => (
-              <button key={v} onClick={() => act("pulse", v)} className="rounded-lg bg-panel py-2 font-bold hover:bg-brand-2/30">{v}</button>
+              <button key={v} onClick={() => act("pulse", v)} className="min-h-12 rounded-lg bg-panel font-bold hover:bg-brand/50">{v}</button>
             ))}
           </div>
           <p className="mt-1 text-xs text-white/50">1 is flat, 5 is great. {hostName} only sees the average.</p>
         </>
       ) : (
-        <p className="text-sm text-white/60">You rated the night {pulse} out of 5 so far.</p>
+        <p className="text-sm text-white/65">You rated the night {pulse} out of 5 so far.</p>
       )}
-      <div className="mt-4">
-        {data.me?.reported ? (
-          <p className="text-sm text-white/70">Reported. The host and the Nestly safety team have been alerted.</p>
-        ) : (
-          <button onClick={() => { if (confirm("Alert the host and the Nestly safety team?")) act("report", 1); }} className="text-sm font-semibold text-white/60 underline underline-offset-4 hover:text-white">
-            Something is wrong, alert the host
-          </button>
-        )}
-      </div>
     </div>
   );
 }
 
-function After({ data, playerId, hostName, pairName, rank, act }: { data: LiveData; playerId: string; hostName: string; pairName: string | null; rank: number; act: Act }) {
+// Report a specific guest. Reports are private; the host reviews them on the spot.
+function Report({ data, playerId, act }: { data: LiveData; playerId: string; act: Act }) {
+  const [open, setOpen] = useState(false);
+  const [who, setWho] = useState("");
+  const [reason, setReason] = useState(0);
+  const [sent, setSent] = useState("");
+  const others = data.people.filter((p) => p.id !== playerId && !data.me?.reported.includes(p.id));
+
+  async function send() {
+    const name = data.people.find((p) => p.id === who)?.name ?? "the guest";
+    await act("report", reason, who);
+    setSent(name);
+    setOpen(false);
+    setWho("");
+  }
+
+  return (
+    <div className="mt-6 border-t border-line pt-5">
+      {sent && <p className="mb-3 rounded-lg bg-mint/15 p-3 text-sm">Your report about {sent} was sent to the host. It stays private.</p>}
+      {!open ? (
+        <button onClick={() => { setOpen(true); setSent(""); }} className="btn btn-ghost w-full border-hot/60 text-hot">Report a guest</button>
+      ) : (
+        <div className="card p-4">
+          <div className="text-lg font-semibold">Report a guest</div>
+          <p className="mt-1 text-sm text-white/70">The host reviews it right away. {REPORTS_TO_BAN} reports from different guests, or one the host confirms, means a permanent ban.</p>
+          <label className="mt-4 block"><span className="label">Who</span>
+            <select className="input mt-1" value={who} onChange={(e) => setWho(e.target.value)}>
+              <option value="">Choose a guest</option>
+              {others.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </label>
+          <fieldset className="mt-4">
+            <legend className="label">What happened</legend>
+            <div className="mt-1 space-y-1.5">
+              {REPORT_REASONS.map((r, i) => (
+                <label key={r} className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border px-3 ${reason === i ? "border-brand-2 bg-brand/40" : "border-line"}`}>
+                  <input type="radio" name="reason" className="accent-[#b7abff]" checked={reason === i} onChange={() => setReason(i)} />{r}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button className="btn btn-ghost" onClick={() => setOpen(false)}>Cancel</button>
+            <button className="btn btn-primary" disabled={!who} onClick={send}>Send report</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function After({ data, playerId, hostName, act }: { data: LiveData; playerId: string; hostName: string; act: Act }) {
   const me = data.me;
-  const people = data.state.pairs.flatMap((p) => [p.a, p.b]).filter((x) => x.id !== playerId);
-  const place = ["Golden", "Silver", "Bronze"][rank - 1];
+  const people = data.people.filter((x) => x.id !== playerId);
   return (
     <div className="mt-6">
-      <h1 className="text-4xl">{pairName ? (place ? `${place} couple tonight` : `Place ${rank} tonight`) : "That's the night"}</h1>
-      <p className="mt-2 text-white/70">{pairName ? `${pairName} finished the night. Thanks for playing.` : "Thanks for judging."}</p>
+      <h1 className="text-4xl">That&apos;s the night</h1>
 
-      <h2 className="mt-8 text-2xl">Rate the night</h2>
-      <p className="mt-1 text-sm text-white/60">{hostName} is paid only after guest ratings come in.</p>
-      {([["party", "The party overall"], ["host", `${hostName} as a host`]] as const).map(([k, label]) => (
+      <h2 className="mt-8 text-2xl">Rate the host</h2>
+      <p className="mt-1 text-sm text-white/65">{hostName} is paid only after guest ratings come in.</p>
+      {([["host", `${hostName} as a host`], ["party", "The party overall"]] as const).map(([k, label]) => (
         <div key={k} className="mt-3">
           <div className="text-sm font-semibold">{label}</div>
           <div className="mt-1.5 grid grid-cols-5 gap-1.5">
@@ -281,7 +273,7 @@ function After({ data, playerId, hostName, pairName, rank, act }: { data: LiveDa
               const mine = me?.rates?.[k];
               return (
                 <button key={v} disabled={mine !== undefined} onClick={() => act("rate", v, k)}
-                  className={`rounded-lg py-2.5 font-bold ${mine === v ? "bg-brand" : mine !== undefined ? "bg-night opacity-40" : "bg-panel hover:bg-brand/40"}`}>{v}</button>
+                  className={`min-h-12 rounded-lg font-bold ${mine === v ? "bg-hi text-[#17103f]" : mine !== undefined ? "bg-night opacity-40" : "bg-panel hover:bg-brand/50"}`}>{v}</button>
               );
             })}
           </div>
@@ -289,7 +281,7 @@ function After({ data, playerId, hostName, pairName, rank, act }: { data: LiveDa
       ))}
 
       <h2 className="mt-10 text-2xl">Who would you like to see again?</h2>
-      <p className="mt-1 text-sm text-white/60">Private. A name is shared only if they pick you too.</p>
+      <p className="mt-1 text-sm text-white/65">Private. A name is shared only if they pick you too.</p>
       <ul className="mt-3">
         {people.map((x) => {
           const picked = me?.again.includes(x.id);
@@ -298,7 +290,7 @@ function After({ data, playerId, hostName, pairName, rank, act }: { data: LiveDa
               <Avatar name={x.name} size={34} />
               <span className="flex-1 font-semibold">{x.name}</span>
               <button disabled={picked} onClick={() => act("again", 1, x.id)}
-                className={`rounded-full px-4 py-1.5 text-sm font-bold ${picked ? "bg-brand-2 text-paper-ink" : "border border-line hover:bg-panel"}`}>{picked ? "Picked" : "See again"}</button>
+                className={`min-h-10 rounded-full px-4 text-sm font-bold ${picked ? "bg-hi text-[#17103f]" : "border border-line hover:bg-panel"}`}>{picked ? "Picked" : "See again"}</button>
             </li>
           );
         })}
@@ -307,8 +299,8 @@ function After({ data, playerId, hostName, pairName, rank, act }: { data: LiveDa
       {me && me.matches.length > 0 && (
         <div className="paper pop mt-6 p-5">
           <div className="display text-2xl">It&apos;s mutual</div>
-          <p className="mt-1 text-paper-ink/75">You and {me.matches.map((m) => m.name).join(", ")} both want to meet again. You can now message each other.</p>
-          {me.matches.some((m) => m.demo) && <p className="mt-2 text-xs text-paper-ink/55">Season members are simulated in this demo. With two real phones, both people must pick each other.</p>}
+          <p className="mt-1 text-paper-ink/80">You and {me.matches.map((m) => m.name).join(", ")} both want to meet again. You can now message each other.</p>
+          {me.matches.some((m) => m.demo) && <p className="mt-2 text-xs text-paper-ink/60">Club members are simulated in this demo. With two real phones, both people must pick each other.</p>}
         </div>
       )}
     </div>

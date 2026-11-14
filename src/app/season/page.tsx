@@ -39,7 +39,7 @@ export default function Prizes() {
 
         <div className="reveal mt-8 flex flex-col gap-3 border-t border-line pt-8 sm:flex-row sm:items-center">
           <Link href="/pass" className="btn btn-primary">Get the Season Pass, <span className="ml-1">${SEASON.passPrice}</span></Link>
-          <span className="text-sm text-white/65">Contests at the parties are just for the night. They do not affect the draw.</span>
+          <span className="text-sm text-white/65">One entry per pass holder.</span>
         </div>
       </div>
     </div>

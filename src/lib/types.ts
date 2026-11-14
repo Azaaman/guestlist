@@ -5,7 +5,8 @@ export interface ApplicationForm {
   instagram?: string;
   inviteCode?: string;
   lookingFor: string;
-  skill: string;
+  into: string;
+  skill?: string; // older applications
   about: string;
   conduct: boolean;
 }

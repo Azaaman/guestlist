@@ -11,7 +11,7 @@ export interface HookParty {
   left: number;
   photo: string;
   venue: string;
-  contests: string[];
+  vibes: string[];
   live: boolean;
 }
 
@@ -19,13 +19,13 @@ export interface HookParty {
 const VIDEO = "https://videos.pexels.com/video-files/16580831/16580831-hd_1920_1080_30fps.mp4";
 
 const VENUE_ICON: Record<string, string> = { "Pool house": "🏊", "Loft kitchen": "🍳", "Art barn": "🎨", Rooftop: "🌆", "Lake house": "🛶", Garden: "🌿", "Glass house": "🪟", Villa: "🏛️" };
-const CONTEST_ICON: Record<string, string> = {
-  "American History Quiz": "🇺🇸", "Dance-off": "💃", "Logic Battle": "🧩", "Cooking Duel": "👩‍🍳", "Paint Together": "🖌️", "Swim Relay": "🏅",
+const VIBE_ICON: Record<string, string> = {
+  Pool: "💦", Dancing: "💃", "Late night": "🌙", Foodie: "🍽️", Chill: "🛋️", "Small group": "👥", Artsy: "🖌️", "Live music": "🎸", "Dress-up": "✨", Outdoors: "🌲", Daytime: "☀️",
 };
 
 export default function Hook({ parties }: { parties: HookParty[] }) {
   const [id, setId] = useState(parties[0].id);
-  // Which single chip is lit: "v0:<party id>" or "c0:<contest>". The marquee repeats its chips, so the copy index matters.
+  // Which single chip is lit: "v0:<party id>" or "c0:<vibe>". The marquee repeats its chips, so the copy index matters.
   const [lit, setLit] = useState<string>(`v0:${parties[0].id}`);
   const [videoOk, setVideoOk] = useState(true);
   const [photoOk, setPhotoOk] = useState(true);
@@ -33,7 +33,7 @@ export default function Hook({ parties }: { parties: HookParty[] }) {
   const party = parties.find((p) => p.id === id) ?? parties[0];
 
   const venues = useMemo(() => parties.map((p) => ({ label: p.venue, id: p.id })), [parties]);
-  const contests = useMemo(() => [...new Set(parties.flatMap((p) => p.contests))], [parties]);
+  const vibes = useMemo(() => [...new Set(parties.flatMap((p) => p.vibes))], [parties]);
 
   // Scroll progress (0 → 1 over the first 500px) drives the marquee shift and the media zoom.
   useEffect(() => {
@@ -55,9 +55,9 @@ export default function Hook({ parties }: { parties: HookParty[] }) {
 
   useEffect(() => setPhotoOk(true), [id]);
 
-  function pickContest(c: string, key: string) {
+  function pickVibe(c: string, key: string) {
     setLit(key);
-    const matches = parties.filter((p) => p.contests.includes(c));
+    const matches = parties.filter((p) => p.vibes.includes(c));
     const next = matches.find((p) => p.id !== id) ?? matches[0];
     if (next) setId(next.id);
   }
@@ -73,12 +73,12 @@ export default function Hook({ parties }: { parties: HookParty[] }) {
       );
     }),
   );
-  const contestChips = COPIES.flatMap((n) =>
-    contests.map((c) => {
+  const vibeChips = COPIES.flatMap((n) =>
+    vibes.map((c) => {
       const key = `c${n}:${c}`;
       return (
-        <button key={key} type="button" className="chip" aria-pressed={lit === key} tabIndex={n === 0 ? 0 : -1} onClick={() => pickContest(c, key)}>
-          <span aria-hidden>{CONTEST_ICON[c] ?? "🎲"}</span>{c}
+        <button key={key} type="button" className="chip" aria-pressed={lit === key} tabIndex={n === 0 ? 0 : -1} onClick={() => pickVibe(c, key)}>
+          <span aria-hidden>{VIBE_ICON[c] ?? "🎉"}</span>{c}
         </button>
       );
     }),
@@ -88,15 +88,15 @@ export default function Hook({ parties }: { parties: HookParty[] }) {
     <section ref={root} className="glow overflow-hidden pb-14 pt-10 sm:pt-16">
       <div className="mx-auto max-w-5xl px-4 text-center">
         <h1 className="text-5xl sm:text-7xl">Get on the list.</h1>
-        <p className="mx-auto mt-4 max-w-xl text-lg text-white/85">Secret house parties for adults in their thirties. Members decide who gets in, and every night you play contests as a couple. Pick a place or a contest to find your night.</p>
+        <p className="mx-auto mt-4 max-w-xl text-lg text-white/85">Secret house parties for adults in their thirties. Members decide who gets in, and at the door you get three people to meet. Pick a place or a vibe to find your night.</p>
       </div>
 
-      <div className="marquee mt-8 space-y-3" aria-label="Filter parties by place or contest">
+      <div className="marquee mt-8 space-y-3" aria-label="Filter parties by place or vibe">
         <div className="marquee-shift" style={{ ["--dir" as string]: -1 }}>
           <div className="marquee-track px-2">{venueChips}</div>
         </div>
         <div className="marquee-shift" style={{ ["--dir" as string]: 1 }}>
-          <div className="marquee-track rev px-2">{contestChips}</div>
+          <div className="marquee-track rev px-2">{vibeChips}</div>
         </div>
       </div>
 

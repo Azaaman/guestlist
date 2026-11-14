@@ -6,8 +6,8 @@ export const dynamic = "force-dynamic";
 
 const checks = [
   ["Before the first party", "ID check, photos and video of the venue, capacity check, then a trial night with a mystery guest."],
-  ["The same core every night", "Hosts tick off a checklist: food and drinks per guest, music, room for contests, first-aid kit, exit plan. The contest program comes from Nestly AI."],
-  ["While the party runs", "QR check-in shows who arrived and when. Guests rate the night live from their phones and can alert the host if something is wrong."],
+  ["The same core every night", "Hosts tick off a checklist: food and drinks per guest, music, first-aid kit, exit plan. Guest screening and introductions come from Nestly."],
+  ["While the party runs", "QR check-in shows who arrived and when. Guests rate the night live and can report another guest. The host reviews each report on the spot and can ban the person for good."],
   ["After the party", "Guests rate the host. The payout stays in escrow for 24 to 48 hours and is released at 4.2 or higher. Complaints mean refunds, and repeated low ratings mean removal."],
 ];
 
@@ -30,7 +30,7 @@ export default async function HostPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
       <h1 className="text-4xl sm:text-6xl">Hosts bring the house.<br />We bring the rest.</h1>
-      <p className="mt-4 max-w-2xl text-white/70">Hosts keep 70% of ticket revenue, 75% as a Superhost. Nestly handles the guests, screening, payments, pairing and the contest program.</p>
+      <p className="mt-4 max-w-2xl text-white/70">Hosts keep 70% of ticket revenue, 75% as a Superhost. Nestly handles the guests, screening, payments, introductions and safety.</p>
 
       <h2 className="mt-12 text-2xl">How a host is checked</h2>
       <ol className="mt-4 grid gap-x-8 sm:grid-cols-2">

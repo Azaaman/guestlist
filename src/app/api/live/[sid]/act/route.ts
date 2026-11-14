@@ -1,71 +1,60 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { loadState } from "@/lib/live";
+import { banPerson, loadState } from "@/lib/live";
+import { REPORT_REASONS, REPORTS_TO_BAN } from "@/lib/room";
 
-type Kind = "answer" | "vote" | "pulse" | "report" | "rate" | "again";
+type Kind = "pulse" | "met" | "report" | "rate" | "again";
+// Each kind gets its own slot in the (session, player, contest_index, …) unique key.
+const SLOT: Record<Kind, number> = { rate: -1, again: -1, pulse: -2, report: -3, met: -4 };
 
-// Everything a phone can send during and after the party.
+// Everything a guest's phone can send during and after the party.
 export async function POST(req: Request, { params }: { params: Promise<{ sid: string }> }) {
   const { sid } = await params;
-  const body = (await req.json()) as { playerId: string; kind: Kind; value: number; targetPair?: string };
+  const body = (await req.json()) as { playerId: string; kind: Kind; value: number; target?: string };
   if (!body.playerId) return NextResponse.json({ error: "Join the party first" }, { status: 400 });
+  if (!(body.kind in SLOT)) return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   const state = await loadState(sid);
-  const c = state.program[state.current];
-  const myPair = state.pairs.find((p) => p.a.id === body.playerId || p.b.id === body.playerId);
-  const people = state.pairs.flatMap((p) => [p.a, p.b]);
+  if (state.banned.includes(body.playerId)) return NextResponse.json({ error: "You have been removed from this party" }, { status: 403 });
+  if (state.status === "lobby") return NextResponse.json({ error: "The party hasn't started" }, { status: 409 });
 
-  let contestIndex = state.current;
-  let questionIndex = 0;
-  let target = "-";
+  const person = (id?: string) => state.people.find((p) => p.id === id && !state.banned.includes(p.id));
   const value = Math.round(Number(body.value));
+  let target = "-";
 
-  if (body.kind === "answer" || body.kind === "vote") {
-    if (state.status !== "running" || state.phase !== "open" || !c)
-      return NextResponse.json({ error: "This round is closed" }, { status: 409 });
-    if (body.kind === "answer") {
-      if (c.type !== "quiz") return NextResponse.json({ error: "This round is not a quiz" }, { status: 400 });
-      if (!myPair) return NextResponse.json({ error: "Only paired guests answer. You are a judge tonight." }, { status: 403 });
-      questionIndex = state.qIndex;
-    } else {
-      if (c.type !== "vote") return NextResponse.json({ error: "This round is not judged" }, { status: 400 });
-      if (!body.targetPair || !state.pairs.some((p) => p.id === body.targetPair))
-        return NextResponse.json({ error: "Unknown couple" }, { status: 400 });
-      if (myPair?.id === body.targetPair) return NextResponse.json({ error: "You can't score your own couple" }, { status: 403 });
-      if (!(value >= 1 && value <= 5)) return NextResponse.json({ error: "Score from 1 to 5" }, { status: 400 });
-      target = body.targetPair;
-    }
-  } else if (body.kind === "pulse" || body.kind === "report") {
-    if (state.status === "lobby") return NextResponse.json({ error: "The party hasn't started" }, { status: 409 });
-    if (body.kind === "pulse" && !(value >= 1 && value <= 5)) return NextResponse.json({ error: "Rate from 1 to 5" }, { status: 400 });
-    contestIndex = body.kind === "pulse" ? -2 : -3;
-  } else if (body.kind === "rate" || body.kind === "again") {
+  if (body.kind === "pulse") {
+    if (!(value >= 1 && value <= 5)) return NextResponse.json({ error: "Rate from 1 to 5" }, { status: 400 });
+  } else if (body.kind === "rate") {
     if (state.status !== "finished") return NextResponse.json({ error: "Ratings open when the party ends" }, { status: 409 });
-    contestIndex = -1;
-    if (body.kind === "rate") {
-      if (body.targetPair !== "party" && body.targetPair !== "host") return NextResponse.json({ error: "Unknown rating" }, { status: 400 });
-      if (!(value >= 1 && value <= 5)) return NextResponse.json({ error: "Rate from 1 to 5" }, { status: 400 });
-      target = body.targetPair;
-    } else {
-      if (!people.some((x) => x.id === body.targetPair) || body.targetPair === body.playerId)
-        return NextResponse.json({ error: "Unknown guest" }, { status: 400 });
-      target = body.targetPair!;
-    }
+    if (body.target !== "party" && body.target !== "host") return NextResponse.json({ error: "Unknown rating" }, { status: 400 });
+    if (!(value >= 1 && value <= 5)) return NextResponse.json({ error: "Rate from 1 to 5" }, { status: 400 });
+    target = body.target;
   } else {
-    return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+    // met, report, again: all point at another person in the room
+    if (!person(body.target) || body.target === body.playerId) return NextResponse.json({ error: "That guest is not in the room" }, { status: 400 });
+    if (body.kind === "again" && state.status !== "finished") return NextResponse.json({ error: "Opens when the party ends" }, { status: 409 });
+    if (body.kind === "report" && !(value >= 0 && value < REPORT_REASONS.length)) return NextResponse.json({ error: "Choose a reason" }, { status: 400 });
+    target = body.target!;
   }
 
   const { error } = await db().from("live_actions").insert({
     session_id: sid,
     player_id: body.playerId,
-    contest_index: contestIndex,
-    question_index: questionIndex,
+    contest_index: SLOT[body.kind],
+    question_index: 0,
     kind: body.kind,
     target_pair: target,
-    value: body.kind === "again" || body.kind === "report" ? 1 : value,
+    value: body.kind === "met" || body.kind === "again" ? 1 : value,
   });
-  if (error) {
-    if (error.code === "23505") return NextResponse.json({ ok: true, duplicate: true });
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error && error.code !== "23505") return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Enough separate reports ban the guest without waiting for the host.
+  if (body.kind === "report") {
+    const { data } = await db().from("live_actions").select("player_id").eq("session_id", sid).eq("kind", "report").eq("target_pair", target);
+    const reporters = new Set((data ?? []).map((r) => r.player_id)).size;
+    if (reporters >= REPORTS_TO_BAN) {
+      await banPerson(sid, state, target, `${reporters} guests reported them`);
+      return NextResponse.json({ ok: true, banned: true });
+    }
   }
   return NextResponse.json({ ok: true });
 }

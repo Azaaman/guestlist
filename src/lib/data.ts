@@ -30,7 +30,7 @@ export interface Party {
   basePriceUsd: number;
   spots: number;
   taken: number;
-  contests: string[];
+  vibes: string[]; // what the night feels like, used as filters on the home page
   week: number;
   live?: boolean;
 }
@@ -43,7 +43,7 @@ export interface Member {
   job: string;
   bio: string;
   personality: string; // how they judge applications
-  skill: string;
+  into: string;
   badges: string[];
   rating: number;
 }
@@ -74,7 +74,7 @@ export const HOSTS: Host[] = [
       { item: "Venue photos & capacity verified", done: true },
       { item: "ID verified", done: true },
       { item: "Food & drinks for 20 guests", done: true },
-      { item: "Space for 4 contests + screen for leaderboard", done: true },
+      { item: "Screen for the guest wall", done: true },
       { item: "First-aid kit & exit plan", done: true },
       { item: "Music / DJ confirmed", done: false },
     ],
@@ -87,7 +87,7 @@ export const HOSTS: Host[] = [
   {
     id: "derek",
     name: "Derek Alvarez",
-    bio: "Chef and home cook-off champion. East Austin loft with an open kitchen.",
+    bio: "Chef. East Austin loft with an open kitchen and one long table.",
     rating: 4.7,
     parties: 6,
     superhost: false,
@@ -95,11 +95,11 @@ export const HOSTS: Host[] = [
       { item: "Venue photos & capacity verified", done: true },
       { item: "ID verified", done: true },
       { item: "Food & drinks for 16 guests", done: false },
-      { item: "Space for 4 contests + screen for leaderboard", done: true },
+      { item: "Screen for the guest wall", done: true },
       { item: "First-aid kit & exit plan", done: true },
       { item: "Music / DJ confirmed", done: true },
     ],
-    payout: [{ party: "Week 4 · Taco Duel", amount: 880, status: "paid" }],
+    payout: [{ party: "Week 4 · Taco Table", amount: 880, status: "paid" }],
   },
   {
     id: "priya",
@@ -112,7 +112,7 @@ export const HOSTS: Host[] = [
       { item: "Venue photos & capacity verified", done: true },
       { item: "ID verified", done: true },
       { item: "Food & drinks for 18 guests", done: true },
-      { item: "Space for 4 contests + screen for leaderboard", done: true },
+      { item: "Screen for the guest wall", done: true },
       { item: "First-aid kit & exit plan", done: true },
       { item: "Music / DJ confirmed", done: true },
     ],
@@ -135,7 +135,7 @@ export const PARTIES: Party[] = [
     venue: "Pool house",
     photo: photo("1544984243-ec57ea16fe25"),
     title: "Hill Country Pool Party",
-    theme: "Summer-in-November pool party with a couples quiz, dance-off and cook-off",
+    theme: "Summer-in-November pool party: grill, a DJ on the terrace and a heated pool",
     date: day(0, 21),
     neighborhood: "West Lake Hills",
     address: "Private house · 18 Ridgeview Dr, West Lake Hills, TX (demo address)",
@@ -145,7 +145,7 @@ export const PARTIES: Party[] = [
     basePriceUsd: 55,
     spots: 20,
     taken: 18,
-    contests: ["American History Quiz", "Dance-off", "Logic Battle", "Cooking Duel"],
+    vibes: ["Pool", "Dancing", "Late night"],
     week: 5,
     live: true,
   },
@@ -153,36 +153,36 @@ export const PARTIES: Party[] = [
     id: "taco-duel-2",
     venue: "Loft kitchen",
     photo: photo("1696986681606-b156ccd761c5"),
-    title: "Taco Duel Night",
-    theme: "Pairs cook street tacos in 25 minutes, guests judge; trivia between rounds",
+    title: "Taco Table Night",
+    theme: "Open-kitchen loft where the host cooks street tacos and everyone eats at one long table",
     date: day(3, 20),
     neighborhood: "East Austin",
     address: "Loft · 1200 E 6th St, Austin, TX (demo address)",
-    dressCode: "Casual, bring an apron",
+    dressCode: "Casual",
     hostId: "derek",
     priceUsd: 48,
     basePriceUsd: 45,
     spots: 16,
     taken: 9,
-    contests: ["Cooking Duel", "American History Quiz", "Logic Battle"],
+    vibes: ["Foodie", "Chill", "Small group"],
     week: 6,
   },
   {
     id: "paint-pour",
     venue: "Art barn",
     photo: photo("1527359443443-84a48aec73d2"),
-    title: "Paint & Pour: Couples Canvas",
-    theme: "Each pair paints one canvas together, live acoustic set, art-history trivia",
+    title: "Paint & Pour",
+    theme: "Barn studio with wine, canvases to mess around on and a live acoustic set",
     date: day(6, 19),
     neighborhood: "Dripping Springs",
     address: "Barn studio · 400 Mercer St, Dripping Springs, TX (demo address)",
-    dressCode: "Clothes you can get paint on",
+    dressCode: "Casual, paint-friendly",
     hostId: "priya",
     priceUsd: 52,
     basePriceUsd: 50,
     spots: 18,
     taken: 7,
-    contests: ["Paint Together", "American History Quiz", "Dance-off"],
+    vibes: ["Artsy", "Live music", "Chill"],
     week: 6,
   },
   {
@@ -190,7 +190,7 @@ export const PARTIES: Party[] = [
     venue: "Rooftop",
     photo: photo("1714381633320-e5c3fd0f14db"),
     title: "Neon Disco Rooftop",
-    theme: "80s disco night: synchronized dance-off, music trivia, logic escape puzzle",
+    theme: "80s disco on a downtown rooftop: neon, glitter and a dance floor with a skyline",
     date: day(10, 21),
     neighborhood: "Downtown",
     address: "Rooftop · 501 Congress Ave, Austin, TX (demo address)",
@@ -200,15 +200,15 @@ export const PARTIES: Party[] = [
     basePriceUsd: 55,
     spots: 24,
     taken: 15,
-    contests: ["Dance-off", "Logic Battle", "American History Quiz"],
+    vibes: ["Dancing", "Late night", "Dress-up"],
     week: 7,
   },
   {
     id: "lake-relay",
     venue: "Lake house",
     photo: photo("1613977257365-aaae5a9817ff"),
-    title: "Lake Travis Relay Day",
-    theme: "Daytime lake house: two-person swim relay, BBQ cook-off, sunset quiz",
+    title: "Lake Travis Day",
+    theme: "Daytime at a lake house: paddle boards, BBQ and sunset on the dock",
     date: day(13, 15),
     neighborhood: "Lake Travis",
     address: "Lake house · 77 Marina Bay, Lago Vista, TX (demo address)",
@@ -218,15 +218,15 @@ export const PARTIES: Party[] = [
     basePriceUsd: 55,
     spots: 20,
     taken: 4,
-    contests: ["Swim Relay", "Cooking Duel", "American History Quiz"],
+    vibes: ["Outdoors", "Daytime", "Foodie"],
     week: 8,
   },
   {
     id: "garden-lights",
     venue: "Garden",
     photo: photo("1546373702-eb3e6f769df2"),
-    title: "Backyard Trivia Under the Lights",
-    theme: "String lights, fire pit and a couples trivia league in a big East Side garden",
+    title: "Backyard Under the Lights",
+    theme: "String lights, a fire pit and long conversations in a big East Side garden",
     date: day(17, 20),
     neighborhood: "Hyde Park",
     address: "Garden house · 4310 Avenue G, Austin, TX (demo address)",
@@ -236,15 +236,15 @@ export const PARTIES: Party[] = [
     basePriceUsd: 45,
     spots: 18,
     taken: 5,
-    contests: ["American History Quiz", "Logic Battle", "Cooking Duel"],
+    vibes: ["Chill", "Outdoors", "Small group"],
     week: 8,
   },
   {
     id: "glass-house",
     venue: "Glass house",
     photo: photo("1505843513577-22bb7d21e455"),
-    title: "Glass House Game Night",
-    theme: "Modern glass house, escape-room puzzles for two and a late dance-off",
+    title: "Glass House Listening Party",
+    theme: "Modern glass house, vinyl only, cocktails made to order",
     date: day(20, 20),
     neighborhood: "Barton Hills",
     address: "Glass house · 2204 Trailside Dr, Austin, TX (demo address)",
@@ -254,15 +254,15 @@ export const PARTIES: Party[] = [
     basePriceUsd: 55,
     spots: 20,
     taken: 12,
-    contests: ["Logic Battle", "Dance-off", "Paint Together"],
+    vibes: ["Dress-up", "Live music", "Late night"],
     week: 9,
   },
   {
     id: "villa-sunset",
     venue: "Villa",
     photo: photo("1613977257363-707ba9348227"),
-    title: "Villa Sunset Cook-off",
-    theme: "White villa with a terrace: sunset cook-off for couples and a pool relay",
+    title: "Villa Sunset Dinner",
+    theme: "White villa with a terrace: sunset dinner cooked by the host, then the pool",
     date: day(24, 18),
     neighborhood: "Spicewood",
     address: "Villa · 915 Paleface Ranch Rd, Spicewood, TX (demo address)",
@@ -272,26 +272,25 @@ export const PARTIES: Party[] = [
     basePriceUsd: 55,
     spots: 22,
     taken: 13,
-    contests: ["Cooking Duel", "Swim Relay", "Dance-off"],
+    vibes: ["Foodie", "Pool", "Daytime"],
     week: 9,
   },
 ];
 
 // Season members — they vote on new applications and fill the demo party.
 export const MEMBERS: Member[] = [
-  { id: "m1", name: "Sarah K.", age: 32, gender: "woman", job: "UX designer", bio: "Moved from Chicago last year, runs on coffee and salsa classes.", personality: "warm but protective of the group vibe; dislikes arrogance", skill: "Dancing", badges: ["ID verified", "8 parties"], rating: 4.9 },
-  { id: "m2", name: "Jessica L.", age: 35, gender: "woman", job: "Nurse practitioner", bio: "Night shifts, weekend hikes, competitive about trivia.", personality: "practical; wants people who will actually show up and be kind", skill: "Trivia", badges: ["ID verified", "Background check", "6 parties"], rating: 4.8 },
-  { id: "m3", name: "Ana R.", age: 30, gender: "woman", job: "Marketing manager", bio: "Bakes sourdough, paints badly, laughs loudly.", personality: "fun-first; says yes to playful, creative people", skill: "Painting", badges: ["ID verified", "4 parties"], rating: 4.7 },
-  { id: "m4", name: "Rachel T.", age: 38, gender: "woman", job: "Attorney", bio: "Divorced, two dogs, finally has Friday nights free.", personality: "skeptical; red flags are an instant no", skill: "Logic", badges: ["ID verified", "Background check", "9 parties"], rating: 5.0 },
-  { id: "m5", name: "Emily W.", age: 33, gender: "woman", job: "Teacher", bio: "History nerd, karaoke regular.", personality: "values curiosity and good manners", skill: "Trivia", badges: ["ID verified", "5 parties"], rating: 4.9 },
-  { id: "m6", name: "Jake M.", age: 33, gender: "man", job: "Software engineer", bio: "New in Austin, learning to cook brisket.", personality: "easygoing; likes people who bring energy", skill: "Cooking", badges: ["ID verified", "3 parties"], rating: 4.6 },
-  { id: "m7", name: "Marcus D.", age: 36, gender: "man", job: "Firefighter", bio: "Swims every morning, terrible dancer, great teammate.", personality: "looks for respect and team spirit", skill: "Swimming", badges: ["ID verified", "Background check", "7 parties"], rating: 4.9 },
-  { id: "m8", name: "Daniel P.", age: 31, gender: "man", job: "Product manager", bio: "Board-game collector, escape-room record holder.", personality: "analytical; wants thoughtful answers, not one-liners", skill: "Logic", badges: ["ID verified", "5 parties"], rating: 4.7 },
-  { id: "m9", name: "Chris B.", age: 39, gender: "man", job: "Architect", bio: "Sketches everything, cooks Italian on Sundays.", personality: "relaxed but protective of the women in the group", skill: "Painting", badges: ["ID verified", "8 parties"], rating: 4.8 },
-  { id: "m10", name: "Tyler G.", age: 34, gender: "man", job: "Sales lead", bio: "Two-step champion of his office.", personality: "social; likes confident, friendly people", skill: "Dancing", badges: ["ID verified", "4 parties"], rating: 4.6 },
+  { id: "m1", name: "Sarah K.", age: 32, gender: "woman", job: "UX designer", bio: "Moved from Chicago last year, runs on coffee and salsa classes.", personality: "warm but protective of the group vibe; dislikes arrogance", into: "Music", badges: ["ID verified", "8 parties"], rating: 4.9 },
+  { id: "m2", name: "Jessica L.", age: 35, gender: "woman", job: "Nurse practitioner", bio: "Night shifts, weekend hikes, competitive about trivia.", personality: "practical; wants people who will actually show up and be kind", into: "Games", badges: ["ID verified", "Background check", "6 parties"], rating: 4.8 },
+  { id: "m3", name: "Ana R.", age: 30, gender: "woman", job: "Marketing manager", bio: "Bakes sourdough, paints badly, laughs loudly.", personality: "fun-first; says yes to playful, creative people", into: "Art", badges: ["ID verified", "4 parties"], rating: 4.7 },
+  { id: "m4", name: "Rachel T.", age: 38, gender: "woman", job: "Attorney", bio: "Divorced, two dogs, finally has Friday nights free.", personality: "skeptical; red flags are an instant no", into: "Games", badges: ["ID verified", "Background check", "9 parties"], rating: 5.0 },
+  { id: "m5", name: "Emily W.", age: 33, gender: "woman", job: "Teacher", bio: "History nerd, karaoke regular.", personality: "values curiosity and good manners", into: "Games", badges: ["ID verified", "5 parties"], rating: 4.9 },
+  { id: "m6", name: "Jake M.", age: 33, gender: "man", job: "Software engineer", bio: "New in Austin, learning to cook brisket.", personality: "easygoing; likes people who bring energy", into: "Food", badges: ["ID verified", "3 parties"], rating: 4.6 },
+  { id: "m7", name: "Marcus D.", age: 36, gender: "man", job: "Firefighter", bio: "Swims every morning, terrible dancer, great teammate.", personality: "looks for respect and team spirit", into: "Outdoors", badges: ["ID verified", "Background check", "7 parties"], rating: 4.9 },
+  { id: "m8", name: "Daniel P.", age: 31, gender: "man", job: "Product manager", bio: "Board-game collector, escape-room record holder.", personality: "analytical; wants thoughtful answers, not one-liners", into: "Games", badges: ["ID verified", "5 parties"], rating: 4.7 },
+  { id: "m9", name: "Chris B.", age: 39, gender: "man", job: "Architect", bio: "Sketches everything, cooks Italian on Sundays.", personality: "relaxed but protective of the women in the group", into: "Art", badges: ["ID verified", "8 parties"], rating: 4.8 },
+  { id: "m10", name: "Tyler G.", age: 34, gender: "man", job: "Sales lead", bio: "Two-step champion of his office.", personality: "social; likes confident, friendly people", into: "Music", badges: ["ID verified", "4 parties"], rating: 4.6 },
 ];
 
-export const CONTEST_SKILLS = ["Trivia", "Logic", "Dancing", "Cooking", "Painting", "Swimming"];
 
 export function getParty(id: string) {
   return PARTIES.find((p) => p.id === id);
