@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { loadStripe } from "@stripe/stripe-js";
+import { fetchProfile, type SavedProfile } from "@/lib/profile";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 
 const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
@@ -13,6 +14,21 @@ export default function PassCheckout({ price, season, weeks }: { price: number; 
   const [paid, setPaid] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [profile, setProfile] = useState<SavedProfile | null | undefined>(undefined);
+
+  useEffect(() => {
+    fetchProfile().then((p) => {
+      setProfile(p);
+      if (p?.pass) setPaid(true);
+    });
+  }, []);
+
+  // The pass is attached to the saved profile once Stripe confirms the payment.
+  async function attach(paymentIntentId: string) {
+    const res = await fetch("/api/pass/confirm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ profileId: profile?.id, paymentIntentId }) });
+    if (!res.ok) setErr((await res.json()).error || "Paid, but the pass could not be attached to your profile. Reload the page.");
+    else setPaid(true);
+  }
 
   async function start() {
     setBusy(true);
@@ -32,10 +48,10 @@ export default function PassCheckout({ price, season, weeks }: { price: number; 
   if (paid)
     return (
       <div className="paper pop self-start p-6">
-        <div className="font-semibold text-[#1f8a5b]">Paid. Welcome to the season.</div>
+        <div className="font-semibold text-[#1f8a5b]">{profile?.form.name ? `${profile.form.name}, you hold a Season Pass.` : "Paid. Welcome to the season."}</div>
         <div className="display mt-1 text-5xl">Season Pass</div>
         <div className="mt-1 font-semibold">{season}</div>
-        <p className="rule mt-4 pt-4">You have a seat at all {weeks} parties and you are entered in the prize draw for the three trips. Pick your first night.</p>
+        <p className="rule mt-4 pt-4">You have a seat at all {weeks} parties with nothing more to pay, and you are entered in the prize draw for the three trips. Pick your first night.</p>
         <Link href="/parties" className="btn btn-paper mt-5">Choose a party</Link>
       </div>
     );
@@ -49,14 +65,21 @@ export default function PassCheckout({ price, season, weeks }: { price: number; 
       <p className="mt-1 text-sm text-white/60">{weeks} parties, one payment.</p>
       {!stripePromise ? (
         <p className="mt-4">Payments are not configured: the Stripe publishable key is missing.</p>
+      ) : profile === undefined ? (
+        <p className="mt-5 text-white/60">Loading…</p>
+      ) : profile === null ? (
+        <>
+          <p className="mt-4 text-white/80">Create your profile first. The pass is attached to it, so you never enter your details again.</p>
+          <Link href="/profile?next=/pass" className="btn btn-primary mt-4 w-full">Create my profile</Link>
+        </>
       ) : !secret ? (
         <>
           {err && <div className="mt-3 text-sm text-hot">{err}</div>}
-          <button className="btn btn-primary mt-5 w-full" onClick={start} disabled={busy}>{busy ? "Preparing…" : "Get the Season Pass"}</button>
+          <button className="btn btn-primary mt-5 w-full" onClick={start} disabled={busy}>{busy ? "Preparing…" : `Get the Season Pass for ${profile.form.name.split(" ")[0]}`}</button>
         </>
       ) : (
         <Elements stripe={stripePromise} options={{ clientSecret: secret, appearance }}>
-          <PayForm price={price} onPaid={() => setPaid(true)} />
+          <PayForm price={price} onPaid={attach} />
         </Elements>
       )}
       <p className="mt-3 text-sm text-white/50">Test mode. Use card 4242 4242 4242 4242, any future date, any CVC.</p>
@@ -64,7 +87,7 @@ export default function PassCheckout({ price, season, weeks }: { price: number; 
   );
 }
 
-function PayForm({ price, onPaid }: { price: number; onPaid: () => void }) {
+function PayForm({ price, onPaid }: { price: number; onPaid: (paymentIntentId: string) => Promise<void> }) {
   const stripe = useStripe();
   const elements = useElements();
   const [busy, setBusy] = useState(false);
@@ -80,7 +103,8 @@ function PayForm({ price, onPaid }: { price: number; onPaid: () => void }) {
       setBusy(false);
       return;
     }
-    onPaid();
+    await onPaid(paymentIntent.id);
+    setBusy(false);
   }
   return (
     <form onSubmit={pay} className="mt-5 space-y-3">

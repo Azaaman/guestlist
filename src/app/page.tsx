@@ -14,13 +14,13 @@ function when(iso: string, live?: boolean) {
 
 const how = [
   { t: "Pick a night", d: "A different house in Austin every week. You see the theme and the vibe, not the address." },
-  { t: "Members vote you in", d: "They read your application. Your card is only held, and a no costs you nothing." },
+  { t: "Members vote you in", d: "You fill in your profile once. Members read it and vote. Your card is only held, and a no costs you nothing." },
   { t: "Meet the right people", d: "When you check in, AI gives you three people to meet and a line to open with. After the party, mutual picks become matches." },
   { t: "Everyone stays accountable", d: "You rate the host and can report a guest. Three reports, or one the host confirms, is a permanent ban." },
 ];
 
 const tryIt = [
-  { t: "Apply as a guest", href: "/apply/tonight" },
+  { t: "Create a profile and apply", href: "/apply/tonight" },
   { t: "Open the big screen", href: "/live/tonight" },
   { t: "Join from a phone", href: "/play/tonight" },
 ];

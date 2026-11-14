@@ -12,18 +12,19 @@ export async function POST(req: Request) {
     if (error || !data) return NextResponse.json({ error: "Application not found" }, { status: 404 });
     const app = data as ApplicationRow;
     if (app.status === "approved" || app.status === "rejected") return NextResponse.json({ status: app.status });
-    if (!app.payment_intent_id) return NextResponse.json({ error: "No payment hold yet" }, { status: 400 });
-
-    const pi = await stripe().paymentIntents.retrieve(app.payment_intent_id);
-    if (pi.status !== "requires_capture")
-      return NextResponse.json({ error: `Payment is not on hold (status: ${pi.status})` }, { status: 400 });
-
     const yes = (app.votes ?? []).filter((v) => v.vote === "yes").length;
     const flagged = (app.trust?.redFlags ?? []).length > 0;
     const approved = yes >= APPROVALS_NEEDED && !flagged;
 
-    if (approved) await stripe().paymentIntents.capture(pi.id);
-    else await stripe().paymentIntents.cancel(pi.id);
+    // Season Pass holders have nothing on hold; everyone else is captured or released here.
+    if (!app.form.pass) {
+      if (!app.payment_intent_id) return NextResponse.json({ error: "No payment hold yet" }, { status: 400 });
+      const pi = await stripe().paymentIntents.retrieve(app.payment_intent_id);
+      if (pi.status !== "requires_capture")
+        return NextResponse.json({ error: `Payment is not on hold (status: ${pi.status})` }, { status: 400 });
+      if (approved) await stripe().paymentIntents.capture(pi.id);
+      else await stripe().paymentIntents.cancel(pi.id);
+    }
 
     const status = approved ? "approved" : "rejected";
     await db().from("applications").update({ status }).eq("id", applicationId);

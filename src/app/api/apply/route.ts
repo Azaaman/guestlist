@@ -18,17 +18,13 @@ Write in English.`;
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as { partyId: string; form: ApplicationForm };
+    const body = (await req.json()) as { partyId: string; profileId: string };
     const party = getParty(body.partyId);
-    const f = body.form;
     if (!party) return NextResponse.json({ error: "Party not found" }, { status: 404 });
-    if (!f?.name?.trim() || !f.about?.trim() || !f.lookingFor?.trim())
-      return NextResponse.json({ error: "Please fill in name, about you and what you're looking for." }, { status: 400 });
-    if (!(f.age >= 25 && f.age <= 45))
-      return NextResponse.json({ error: "Nestly is for adults 25–45." }, { status: 400 });
-    if (!f.conduct) return NextResponse.json({ error: "Please accept the code of conduct." }, { status: 400 });
-    if (f.gender !== "man" && f.gender !== "woman")
-      return NextResponse.json({ error: "Please choose a gender." }, { status: 400 });
+    const { data: prof } = await db().from("applications").select("form,status").eq("id", body.profileId ?? "").eq("party_id", "profile").maybeSingle();
+    if (!prof) return NextResponse.json({ error: "Create your profile first." }, { status: 400 });
+    const hasPass = prof.status === "pass";
+    const f = prof.form as ApplicationForm;
 
     if (await isBanned(f.name))
       return NextResponse.json({ error: "This guest was permanently banned after reports at a previous party and cannot apply." }, { status: 403 });
@@ -89,7 +85,7 @@ Include exactly one vote for each of the ${voters.length} members.`;
       score,
       redFlags,
       badges: [
-        { label: "Card holder name matches", ok: true, note: "checked at payment" },
+        { label: hasPass ? "Season Pass holder" : "Card holder name matches", ok: true, note: hasPass ? undefined : "checked at payment" },
         { label: "Invited by a member", ok: !!f.inviteCode },
         { label: "Social profile linked", ok: !!f.instagram },
         { label: "Government ID", ok: false, note: "Stripe Identity — before first party" },
@@ -99,7 +95,8 @@ Include exactly one vote for each of the ${voters.length} members.`;
 
     const { data, error } = await db()
       .from("applications")
-      .insert({ party_id: party.id, form: f, profile: ai.profile, votes, trust, status: "reviewed" })
+      // Pass holders have already paid, so their application goes straight to the members' vote.
+      .insert({ party_id: party.id, form: { ...f, pass: hasPass }, profile: ai.profile, votes, trust, status: hasPass ? "held" : "reviewed" })
       .select("id")
       .single();
     if (error) throw error;

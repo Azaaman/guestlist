@@ -1,6 +1,8 @@
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { fetchProfile, setProfileId } from "@/lib/profile";
 import { INTERESTS } from "@/lib/room";
 
 const SAMPLE = {
@@ -26,41 +28,72 @@ const RUDE = {
   about: "I don't do rules. Just here to drink and see who I can take home. Don't waste my time with small talk.",
 };
 
-export default function ApplyForm({ partyId }: { partyId: string }) {
+export default function ProfileForm() {
   const router = useRouter();
+  const next = useSearchParams().get("next");
   const [f, setF] = useState({ name: "", age: "", gender: "", instagram: "", inviteCode: "", into: INTERESTS[0], lookingFor: "", about: "" });
   const [conduct, setConduct] = useState(false);
+  const [id, setId] = useState<string | null>(null);
+  const [pass, setPass] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [err, setErr] = useState("");
-  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setSaved(false);
     setF({ ...f, [k]: e.target.value });
+  };
+
+  // An existing profile is loaded for editing.
+  useEffect(() => {
+    fetchProfile().then((p) => {
+      if (p) {
+        setId(p.id);
+        setPass(p.pass);
+        setConduct(true);
+        setF({ name: p.form.name, age: String(p.form.age), gender: p.form.gender, instagram: p.form.instagram ?? "", inviteCode: p.form.inviteCode ?? "", into: p.form.into ?? INTERESTS[0], lookingFor: p.form.lookingFor, about: p.form.about });
+      }
+      setLoaded(true);
+    });
+  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setErr("");
     setBusy(true);
     try {
-      const res = await fetch("/api/apply", {
+      const res = await fetch("/api/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ partyId, form: { ...f, age: Number(f.age), conduct } }),
+        body: JSON.stringify({ id, form: { ...f, age: Number(f.age), conduct } }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "The application could not be sent. Try again.");
-      router.push(`/application/${data.id}`);
+      if (!res.ok) throw new Error(data.error || "The profile could not be saved. Try again.");
+      setProfileId(data.id);
+      setId(data.id);
+      if (next && next.startsWith("/")) router.push(next);
+      else setSaved(true);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "The application could not be sent. Try again.");
+      setErr(e instanceof Error ? e.message : "The profile could not be saved. Try again.");
+    } finally {
       setBusy(false);
     }
   }
 
+  if (!loaded) return <p className="mt-8 text-white/60">Loading…</p>;
+
   return (
     <form onSubmit={submit} className="mt-8 space-y-5">
+      {id && (
+        <div className="rounded-xl border border-line p-3 text-sm">
+          {pass ? <span className="font-semibold text-hi">Season Pass holder.</span> : <>No Season Pass yet. <Link href="/pass" className="font-semibold text-brand-2 hover:underline">Get one</Link></>} Your details are saved and used for every application and check-in.
+        </div>
+      )}
       <div className="rounded-xl border border-dashed border-line p-3 text-sm">
-        <div className="font-semibold">Trying the demo?</div>
+        <div className="font-semibold">Trying the demo? Fill in a sample guest</div>
         <div className="mt-2 flex flex-wrap gap-2">
-          <button type="button" onClick={() => { setF(SAMPLE); setConduct(true); }} className="btn btn-ghost min-h-0 flex-1 px-3 py-2 text-sm">Fill in a strong application</button>
-          <button type="button" onClick={() => { setF(RUDE); setConduct(true); }} className="btn btn-ghost min-h-0 flex-1 px-3 py-2 text-sm">Fill in one that gets rejected</button>
+          <button type="button" onClick={() => { setF(SAMPLE); setConduct(true); setSaved(false); }} className="btn btn-ghost min-h-0 flex-1 px-3 py-2 text-sm">A guest who gets approved</button>
+          <button type="button" onClick={() => { setF(RUDE); setConduct(true); setSaved(false); }} className="btn btn-ghost min-h-0 flex-1 px-3 py-2 text-sm">A guest who gets rejected</button>
         </div>
       </div>
       <div className="grid grid-cols-3 gap-3">
@@ -71,7 +104,7 @@ export default function ApplyForm({ partyId }: { partyId: string }) {
         <span className="label">I am a</span>
         <div className="mt-1 grid grid-cols-2 gap-2">
           {["man", "woman"].map((g) => (
-            <button type="button" key={g} onClick={() => setF({ ...f, gender: g })}
+            <button type="button" key={g} onClick={() => { setSaved(false); setF({ ...f, gender: g }); }}
               className={`min-h-12 rounded-xl border px-4 py-3 font-semibold capitalize ${f.gender === g ? "border-brand-2 bg-brand/40" : "border-line"}`}>{g}</button>
           ))}
         </div>
@@ -92,12 +125,13 @@ export default function ApplyForm({ partyId }: { partyId: string }) {
         <label className="block"><span className="label">Invite code (optional)</span><input className="input mt-1" value={f.inviteCode} onChange={set("inviteCode")} placeholder="From a member" /></label>
       </div>
       <label className="flex items-start gap-3 text-sm text-white/80">
-        <input type="checkbox" className="mt-1 h-4 w-4 accent-[#17103f]" checked={conduct} onChange={(e) => setConduct(e.target.checked)} />
+        <input type="checkbox" className="mt-1 h-4 w-4 accent-[#17103f]" checked={conduct} onChange={(e) => { setSaved(false); setConduct(e.target.checked); }} />
         <span>I accept the code of conduct: respect, consent, no harassment. Breaking it means a permanent ban tied to my ID.</span>
       </label>
       {err && <div className="rounded-xl bg-hot/15 p-3 text-sm">{err}</div>}
+      {saved && <div className="rounded-xl bg-mint/15 p-3 text-sm">Profile saved. <Link href="/parties" className="font-semibold underline">Choose a party</Link></div>}
       <button className="btn btn-primary w-full text-lg" disabled={busy || !f.gender}>
-        {busy ? "AI is reading your application…" : "Send my application"}
+        {busy ? "Saving…" : id ? "Save changes" : next ? "Save and continue" : "Create my profile"}
       </button>
     </form>
   );

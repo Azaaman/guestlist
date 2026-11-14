@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { INTERESTS, REPORT_REASONS, REPORTS_TO_BAN } from "@/lib/room";
 import { Avatar } from "@/components/ui";
 import { useLive, type LiveData } from "@/components/useLive";
+import { fetchProfile, type SavedProfile } from "@/lib/profile";
 
 type Act = (kind: "pulse" | "met" | "report" | "rate" | "again", value: number, target?: string) => Promise<void>;
 
@@ -30,6 +31,8 @@ function Join({ sid, title, ticket, onJoined }: { sid: string; title: string; ti
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const tried = useRef(false);
+  const [profile, setProfile] = useState<SavedProfile | null>(null);
+  useEffect(() => { fetchProfile().then(setProfile); }, []);
 
   async function join(payload: object) {
     setBusy(true);
@@ -65,6 +68,14 @@ function Join({ sid, title, ticket, onJoined }: { sid: string; title: string; ti
         ) : (
           <>
             <p className="mt-3 text-white/75">Check in from your phone. Nestly will suggest three people to meet tonight.</p>
+            {profile && (
+              <div className="mt-6">
+                <button className="btn btn-primary w-full text-lg" disabled={busy} onClick={() => join({ profileId: profile.id })}>
+                  {busy ? "Checking in…" : `Check in as ${profile.form.name.split(" ")[0]}`}
+                </button>
+                <p className="mt-6 text-sm text-white/55">Or check in as someone else:</p>
+              </div>
+            )}
             <form onSubmit={(e) => { e.preventDefault(); join({ name, gender, into }); }} className="mt-6 space-y-4">
               <label className="block"><span className="label">Your first name</span><input className="input mt-1 text-lg" value={name} onChange={(e) => setName(e.target.value)} maxLength={24} required /></label>
               <div>

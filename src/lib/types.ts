@@ -9,6 +9,7 @@ export interface ApplicationForm {
   skill?: string; // older applications
   about: string;
   conduct: boolean;
+  pass?: boolean; // Season Pass holder at the time of applying: no card hold needed
 }
 
 export interface AIProfile {

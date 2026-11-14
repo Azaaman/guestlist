@@ -6,11 +6,22 @@ import type { ApplicationRow } from "@/lib/types";
 // Two ways in: a ticket (approved application, checked in at the door) or a walk-up name for the demo.
 export async function POST(req: Request, { params }: { params: Promise<{ sid: string }> }) {
   const { sid } = await params;
-  const body = (await req.json()) as { name?: string; gender?: string; into?: string; ticket?: string };
+  const body = (await req.json()) as { name?: string; gender?: string; into?: string; ticket?: string; profileId?: string };
   let name = (body.name ?? "").trim().slice(0, 24);
   let gender = body.gender;
   let about: string | null = body.into ? `Into ${body.into.toLowerCase()}.` : null;
   let checkedIn = false;
+
+  if (body.profileId && !body.ticket) {
+    // Checking in with a saved profile: nothing to type again.
+    const { data } = await db().from("applications").select("form").eq("id", body.profileId).eq("party_id", "profile").maybeSingle();
+    const f = (data?.form ?? null) as ApplicationRow["form"] | null;
+    if (!f) return NextResponse.json({ error: "Profile not found. Enter your name instead." }, { status: 404 });
+    name = f.name.trim().split(/\s+/)[0].slice(0, 24);
+    gender = f.gender;
+    about = `Into ${(f.into ?? "meeting people").toLowerCase()}. ${f.about}`.slice(0, 400);
+    checkedIn = true;
+  }
 
   if (body.ticket) {
     const { data } = await db().from("applications").select("*").eq("id", body.ticket).maybeSingle();

@@ -17,6 +17,7 @@ export const stripeAppearance = {
 };
 
 const STEPS = ["Profile", "Card hold", "Members vote", "Ticket"];
+const PASS_STEPS = ["Profile", "Season Pass", "Members vote", "Ticket"];
 
 export default function ApplicationFlow({ id, partyTitle, partyId, partyWhen, price, live }: { id: string; partyTitle: string; partyId: string; partyWhen: string; price: number; live: boolean }) {
   const [app, setApp] = useState<App | null>(null);
@@ -42,7 +43,7 @@ export default function ApplicationFlow({ id, partyTitle, partyId, partyWhen, pr
   return (
     <div className="mt-6 space-y-6">
       <ol className="flex gap-1 text-sm font-semibold">
-        {STEPS.map((s, i) => (
+        {(app.form.pass ? PASS_STEPS : STEPS).map((s, i) => (
           <li key={s} className={`flex-1 border-t-2 pt-2 ${i <= step ? "border-brand-2 text-white" : "border-line text-white/40"}`}>{s}</li>
         ))}
       </ol>
@@ -61,7 +62,7 @@ function ProfileCard({ app }: { app: App }) {
   if (!p) return null;
   return (
     <div className="paper p-5">
-      <div className="label">Your profile card, written by AI from your application. This is what members read.</div>
+      <div className="label">Your card, written by AI from your profile. This is what members read.</div>
       <div className="mt-3 flex items-center gap-3">
         <Avatar name={app.form.name} size={56} />
         <div>
@@ -241,7 +242,7 @@ function Ticket({ app, partyTitle, partyId, partyWhen, live }: { app: App; party
         <dl className="rule mt-4 space-y-3 pt-4">
           <div><dt className="label">Address, now unlocked</dt><dd className="text-lg font-bold">{app.reveal?.address}</dd></div>
           <div><dt className="label">Dress code</dt><dd>{app.reveal?.dressCode}</dd></div>
-          <div><dt className="label">Admit one</dt><dd>{app.form.name}. Your card has been charged.</dd></div>
+          <div><dt className="label">Admit one</dt><dd>{app.form.name}. {app.form.pass ? "Covered by your Season Pass." : "Your card has been charged."}</dd></div>
         </dl>
         {live && <Link href={path} className="btn btn-paper mt-5 w-full sm:w-auto">Check in and open Party Mode</Link>}
       </div>
@@ -258,7 +259,7 @@ function Rejected({ app }: { app: App }) {
   return (
     <div className="card p-5">
       <h2 className="text-2xl">Not approved this time</h2>
-      <p className="mt-2 text-white/75">{yes} of the {APPROVALS_NEEDED} approvals needed. The hold on your card was released, so you paid $0. Read what members said, improve your application and apply to another night.</p>
+      <p className="mt-2 text-white/75">{yes} of the {APPROVALS_NEEDED} approvals needed. {app.form.pass ? "Your Season Pass is untouched." : "The hold on your card was released, so you paid $0."} Read what members said, edit your profile and apply to another night.</p>
       <ul className="mt-3">
         {(app.votes ?? []).map((v) => (
           <li key={v.voterId} className="border-t border-line py-2 text-white/75">
@@ -267,7 +268,7 @@ function Rejected({ app }: { app: App }) {
           </li>
         ))}
       </ul>
-      <Link href="/parties" className="btn btn-ghost mt-4 w-full sm:w-auto">Browse other parties</Link>
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row"><Link href="/profile" className="btn btn-primary">Edit my profile</Link><Link href="/parties" className="btn btn-ghost">Browse other parties</Link></div>
     </div>
   );
 }
