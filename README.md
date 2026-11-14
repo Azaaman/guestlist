@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Guestlist — get on the list, win the season
 
-## Getting Started
+Business Cup 2.0 · Track 02 Entertainment · B2C · Web only · US adults 25–45
 
-First, run the development server:
+Invite-only house parties for adults 30–40 in the US. Guests apply to a party, members of the
+opposite gender vote on the application, the card is only **held** until approval. At the party,
+AI pairs everyone into couples and writes the contest program; guests play and vote from their
+phones; points stack across a 12-week season. The top 3 couples win trips (Europe, Hawaii, Wild West).
 
+Inspired by the CeleBreak pickup-football model (the platform organises, you buy a spot, a host runs it),
+applied to social nights. Hosts provide the house; everything else is software.
+
+## Try it (no sign-up)
+1. `/parties` → open **Hill Country Pool Party** (tonight) → **Apply** → “Fill with a sample guest”.
+2. AI builds your profile card and trust score.
+3. Hold the price with Stripe test card `4242 4242 4242 4242` (any future date, any CVC).
+4. Watch members vote (AI role-plays each member). 3+ yes → card captured, address revealed. Otherwise the hold is released ($0).
+5. Big screen: `/live/tonight`. Phones: scan the QR (`/play/tonight`). Host presses **Pair everyone & start** → AI pairs and generates quiz + contests → phones answer/vote → live leaderboard.
+
+## What is real vs simulated
+- **Real:** AI profile + screening, AI member votes, Stripe manual-capture hold/capture/cancel, AI pairing, AI-generated quiz questions and contest program, live answers/votes from phones, scoring and leaderboard.
+- **Seed data:** Austin parties, hosts, season standings and the season members who vote and fill the room (marked as simulated in the UI). Government ID check is shown as pending (Stripe Identity in production).
+
+## Stack
+Next.js 15 (App Router, TypeScript, Tailwind) · Supabase Postgres · Stripe (test mode, manual capture) · Gemini or Anthropic API · Vercel.
+
+## Run locally
 ```bash
+cp .env.example .env.local   # fill in keys
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
+Create the tables: paste `supabase/schema.sql` into Supabase → SQL Editor → Run.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Structure
+- `src/lib/data.ts` — seed data (parties, hosts, members, season) and dynamic pricing
+- `src/lib/ai.ts` — provider-agnostic JSON generation (Gemini/Anthropic with fallback)
+- `src/lib/live.ts` — Party Mode engine: pairing, program, scoring
+- `src/app/api/*` — apply, checkout (hold), hold, decide (capture/cancel), live session endpoints
+- `src/app/live/[sid]` — big screen · `src/app/play/[sid]` — phone
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Secrets live only in environment variables; nothing sensitive is committed.

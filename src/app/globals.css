@@ -1,26 +1,36 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-ink: #07051a;
+  --color-night: #0f0b2e;
+  --color-panel: #161040;
+  --color-line: #2c2470;
+  --color-brand: #6c5ce7;
+  --color-brand-2: #8b7cff;
+  --color-gold: #f5c542;
+  --color-silver: #c9d1e0;
+  --color-bronze: #d08a4e;
+  --color-mint: #34d399;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+html, body { background: var(--color-ink); color: #f4f2ff; }
+body { min-height: 100vh; }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+.card { background: var(--color-panel); border: 1px solid var(--color-line); border-radius: 16px; }
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:.5rem; border-radius: 12px; padding: .8rem 1.2rem; font-weight: 700; transition: transform .1s, opacity .2s; }
+.btn:active { transform: scale(.98); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-primary { background: var(--color-brand); color: white; }
+.btn-primary:hover { background: var(--color-brand-2); }
+.btn-ghost { border: 1px solid var(--color-line); color: #e7e3ff; }
+.btn-ghost:hover { background: #1d1652; }
+.input { width: 100%; background: #0c0826; border: 1px solid var(--color-line); border-radius: 10px; padding: .7rem .85rem; color: white; }
+.input:focus { outline: 2px solid var(--color-brand); outline-offset: 0; }
+.label { font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: #a79ff0; font-family: var(--font-mono); }
+.glow { background: radial-gradient(ellipse at top, #2a1d8a 0%, var(--color-ink) 60%); }
+@keyframes pop { from { transform: scale(.85); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+.pop { animation: pop .35s ease-out both; }
+@keyframes pulse-dot { 0%,100% { opacity: 1 } 50% { opacity: .3 } }
+.live-dot { animation: pulse-dot 1.2s infinite; }
