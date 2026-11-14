@@ -3,7 +3,7 @@
 Business Cup 2.0 · Track 02 Entertainment · B2C · Web only · US adults 25–45
 
 Invite-only house parties in Miami for adults 30–40. Like a dating app, Nestly only brings people together:
-there are no games. A guest creates one profile, which is screened by AI and approved by a moderator. Verified
+there are no games. A guest creates one profile, which AI screens and verifies; moderators only handle reports. Verified
 guests then book any party in one tap. Prices rise as a party fills, men and women are always kept within
 60/40, and Season Pass holders pay no ticket and go to the front of every waitlist. Every booking carries a
 refundable damage deposit. At the door AI gives each guest three people to meet. Guests rate the host and can
@@ -13,8 +13,7 @@ decides on a permanent ban.
 Hosts provide the house and keep 50% of ticket revenue; everything else is software.
 
 ## Try it (no sign-up)
-1. `/profile` → "A guest who gets approved" → **Create my profile**. AI screens it.
-2. Open `/moderate` (the moderator desk) and press **Approve**. The profile page updates by itself.
+1. `/profile` → "A guest who gets approved" → **Create my profile**. AI screens and verifies it in a few seconds. Try "A guest who gets rejected" to see AI say no.
 3. `/parties` → **Coral Gables Pool Party** → **Book a place** → hold ticket + $150 deposit with Stripe test card `4242 4242 4242 4242`. The address unlocks.
 4. Try **Glass House Listening Party** as a man: places for men are full under the 60/40 rule, so you join the waitlist.
 5. Book a party that is more than 24 hours away and press **Cancel my booking**: the hold is released. Tonight's party cannot be cancelled.
@@ -26,8 +25,8 @@ Hosts provide the house and keep 50% of ticket revenue; everything else is softw
 11. `/policy` has the house rules.
 
 ## What is real vs simulated
-- **Real:** AI screening, moderator approval, booking with the 60/40 balance check, waitlist with pass priority, Stripe card holds (ticket + deposit), capture after the party, free cancellation over 24 hours out, damage claims against the deposit, Stripe refund on a ban, AI introductions, check-in, room pulse, reports about guests and hosts, removal, appeals, moderator decisions, host ratings, mutual matches.
-- **Simulated:** Miami parties, hosts, the bookings already on each party and the club members who fill the room (marked in the UI). The moderator desk is open instead of behind staff login. Insurance and host protection are described, not purchased.
+- **Real:** AI screening and verification, booking with the 60/40 balance check, waitlist with pass priority, Stripe card holds (ticket + deposit), capture after the party, free cancellation over 24 hours out, damage claims against the deposit, Stripe refund on a ban, AI introductions, check-in, room pulse, reports about guests and hosts, removal, appeals, moderator decisions, host ratings, mutual matches.
+- **Simulated:** Miami parties, hosts, the bookings already on each party and the club members who fill the room (marked in the UI). The moderator desk (conduct cases only) is open instead of behind staff login. Insurance and host protection are described, not purchased.
 - **Not in the MVP:** government ID verification. A ban is tied to the profile and the guest's name, so a banned person could return under another name until ID checks are added.
 
 ## Stack

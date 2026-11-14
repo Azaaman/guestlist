@@ -13,7 +13,7 @@ function when(iso: string, live?: boolean) {
 }
 
 const how = [
-  { t: "Get verified once", d: "Create a profile. AI screens it and a moderator approves it. After that you never fill anything in again." },
+  { t: "Get verified once", d: "Create a profile. AI checks it in a few seconds. After that you never fill anything in again." },
   { t: "Book a night", d: "Pick any party with a free place. Prices rise as it fills, and men and women are always kept within 60/40." },
   { t: "Meet the right people", d: "When you check in, AI gives you three people to meet and a line to open with. After the party, mutual picks become matches." },
   { t: "Everyone stays accountable", d: "You rate the host and can report a guest. Three reports, or one the host confirms, removes them; a moderator decides on a permanent ban." },

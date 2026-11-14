@@ -44,7 +44,7 @@ export default function ApplyStart({ partyId, price, menLeft, womenLeft, left }:
     return (
       <div className="card mt-8 p-5">
         <div className="text-lg font-semibold">
-          {profile.status === "pending" ? "Your profile is waiting for a moderator" : profile.status === "banned" ? "This profile is permanently banned" : "Your profile was not accepted"}
+          {profile.status === "pending" ? "Your profile has not been checked yet" : profile.status === "banned" ? "This profile is permanently banned" : "Your profile was not accepted"}
         </div>
         <p className="mt-1 text-white/75">Only verified guests can book a party.</p>
         <Link href={`/profile?next=/apply/${partyId}`} className="btn btn-primary mt-4">Go to my profile</Link>

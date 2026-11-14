@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     const { data: p } = await db().from("applications").select("*").eq("id", body.profileId ?? "").eq("party_id", PROFILE).maybeSingle();
     const prof = p as ApplicationRow | null;
     if (!prof) return NextResponse.json({ error: "Create your profile first." }, { status: 400 });
-    const status = profileStatus(prof.status);
+    const status = profileStatus(prof.status, prof.trust);
     if (status === "banned") return NextResponse.json({ error: "This profile is permanently banned." }, { status: 403 });
     if (status !== "verified") return NextResponse.json({ error: "Your profile has not been verified yet." }, { status: 403 });
     const f = prof.form;

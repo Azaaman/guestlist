@@ -85,19 +85,6 @@ export default function ProfileForm() {
     }
   }
 
-  // While a moderator is deciding, keep checking so the page updates by itself.
-  useEffect(() => {
-    if (profile?.status !== "pending") return;
-    const t = setInterval(async () => {
-      const fresh = await fetchProfile();
-      if (fresh && fresh.status !== "pending") {
-        setProfile(fresh);
-        if (fresh.status === "verified" && next && next.startsWith("/")) router.push(next);
-      }
-    }, 3000);
-    return () => clearInterval(t);
-  }, [profile?.status, next, router]);
-
   if (!loaded) return <p className="mt-8 text-white/60">Loading…</p>;
 
   return (
@@ -143,7 +130,7 @@ export default function ProfileForm() {
         <span>I accept the <Link href="/policy" className="font-semibold text-brand-2 underline">house rules</Link>: respect, consent, no harassment. Breaking them can mean a permanent ban.</span>
       </label>
       {err && <div className="rounded-xl bg-hot/15 p-3 text-sm">{err}</div>}
-      {saved && <div className="rounded-xl bg-mint/15 p-3 text-sm">Saved and checked by AI. See your status at the top of this page.</div>}
+      {saved && <div className="rounded-xl bg-mint/15 p-3 text-sm">Saved and checked by AI. Your result is at the top of this page.</div>}
       <button className="btn btn-primary w-full text-lg" disabled={busy || !f.gender}>
         {busy ? "AI is checking your profile…" : id ? "Save changes and re-check" : "Create my profile"}
       </button>
@@ -155,7 +142,7 @@ export default function ProfileForm() {
 function Verification({ profile, pass }: { profile: SavedProfile; pass: boolean }) {
   const t = profile.trust;
   const c = profile.card;
-  const label = { pending: "Waiting for a moderator", verified: "Verified", rejected: "Not accepted", banned: "Permanently banned" }[profile.status];
+  const label = { pending: "Not checked yet", verified: "Verified by AI", rejected: "Not accepted", banned: "Permanently banned" }[profile.status];
   const tone = { pending: "text-[#a8690a]", verified: "text-[#1f8a5b]", rejected: "text-[#b0283f]", banned: "text-[#b0283f]" }[profile.status];
   return (
     <div className="paper p-5">
@@ -169,12 +156,9 @@ function Verification({ profile, pass }: { profile: SavedProfile; pass: boolean 
       </div>
       {c && <p className="rule mt-3 pt-3 text-sm">{c.bio}</p>}
       {t && t.redFlags.length > 0 && <p className="mt-3 rounded bg-[#b0283f]/10 p-3 text-sm font-semibold text-[#8f1f33]">AI screening flagged: {t.redFlags.join("; ")}. Edit your profile below to be checked again.</p>}
-      {profile.status === "pending" && (
-        <div className="rule mt-3 pt-3 text-sm">
-          <p>AI screening passed. A moderator now reads your profile, usually within a day. This page updates by itself.</p>
-          <p className="mt-2 text-paper-ink/70">Trying the demo? <Link href="/moderate" target="_blank" className="font-semibold text-[#4a33c9] underline">Open the moderator queue</Link> and approve yourself.</p>
-        </div>
-      )}
+      {profile.status === "pending" && <p className="rule mt-3 pt-3 text-sm">Save your profile below and AI will check it in a few seconds.</p>}
+      {profile.status === "rejected" && t && t.redFlags.length === 0 && <p className="mt-3 rounded bg-[#b0283f]/10 p-3 text-sm font-semibold text-[#8f1f33]">There is too little here for AI to verify you. Tell us more about yourself below and save again.</p>}
+      {c?.moderatorNote && profile.status !== "pending" && <p className="mt-3 text-sm text-paper-ink/70">Why this score: {c.moderatorNote}</p>}
       {profile.status === "verified" && (
         <div className="rule mt-3 flex flex-col gap-2 pt-3 sm:flex-row">
           <Link href="/parties" className="btn btn-paper">Choose a party</Link>

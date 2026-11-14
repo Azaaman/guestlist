@@ -9,7 +9,8 @@ export default function Policy() {
   const sections: [string, string[]][] = [
     ["1. Who can join", [
       "Nestly is for adults aged 25 to 45.",
-      "You create one profile. It is screened by AI and then read by a human moderator. Only verified guests can book a party.",
+      "You create one profile. AI screens it and either verifies or rejects it. Only verified guests can book a party.",
+      "Human moderators do not read new profiles. They deal with reports from parties.",
       "If you edit your profile, it is screened again.",
     ]],
     ["2. Booking a party", [

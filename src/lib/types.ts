@@ -29,7 +29,7 @@ export interface Trust {
 }
 
 // Profiles and bookings share the `applications` table.
-// Profile rows (party_id "profile"): pending → verified | rejected, later possibly banned.
+// Profile rows (party_id "profile"): AI screening sets verified or rejected; a moderator can later ban.
 // Booking rows (party_id = party): reviewed (card step) → approved (ticket) → maybe cancelled; or waitlist.
 export type ProfileStatus = "pending" | "verified" | "rejected" | "banned";
 export type BookingStatus = "reviewed" | "approved" | "waitlist" | "cancelled";
@@ -55,8 +55,12 @@ export interface ApplicationRow {
 }
 
 export const PROFILE = "profile";
-export function profileStatus(raw: string): ProfileStatus {
+// Minimum AI trust score for a profile to be verified without any human involved.
+export const MIN_TRUST = 40;
+export function profileStatus(raw: string, trust?: Trust | null): ProfileStatus {
   if (raw === "verified" || raw === "pass") return "verified"; // "pass" is from an older version
   if (raw === "rejected" || raw === "banned") return raw;
+  // Rows saved by an older version waited for a moderator; AI's verdict now decides them too.
+  if (trust) return trust.redFlags.length === 0 && trust.score >= MIN_TRUST ? "verified" : "rejected";
   return "pending";
 }

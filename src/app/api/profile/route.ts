@@ -2,15 +2,16 @@ import { NextResponse } from "next/server";
 import { generateJson } from "@/lib/ai";
 import { db } from "@/lib/db";
 import { isBanned } from "@/lib/live";
-import { PROFILE, profileStatus, type AIProfile, type ApplicationForm, type ApplicationRow, type Trust } from "@/lib/types";
+import { MIN_TRUST, PROFILE, profileStatus, type AIProfile, type ApplicationForm, type ApplicationRow, type Trust } from "@/lib/types";
 
 export const maxDuration = 60;
 
 const SYSTEM = `You are the first screening step at Nestly, an invite-only house-party club in Miami for adults 25-45.
-There are no games: the club brings screened people together at private houses. Every new profile is checked by you
-and then by a human moderator. You (1) write a short, honest profile card, (2) list red flags, (3) give a trust score,
-(4) leave one line for the moderator. Red flags are: disrespect, aggression, sexual pressure, rule-breaking, anything
-unsafe. Low effort alone is not a red flag but lowers the score. Never invent facts. Write in English.`;
+There are no games: the club brings screened people together at private houses. You alone decide whether a new
+profile is verified; human moderators only deal with reports from parties. You (1) write a short, honest profile card,
+(2) list red flags, (3) give a trust score, (4) say in one line why. Red flags are: disrespect, aggression, sexual
+pressure, rule-breaking, anything unsafe. Low effort alone is not a red flag but lowers the score: an empty or
+one-line profile scores under ${MIN_TRUST}. Never invent facts. Write in English.`;
 
 function validate(f: ApplicationForm): string | null {
   if (!f?.name?.trim() || !f.about?.trim() || !f.lookingFor?.trim()) return "Fill in your name, what you're looking for and a few words about you.";
@@ -26,10 +27,10 @@ export async function GET(req: Request) {
   const { data } = await db().from("applications").select("*").eq("id", id).eq("party_id", PROFILE).maybeSingle();
   if (!data) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
   const row = data as ApplicationRow;
-  return NextResponse.json({ id: row.id, form: row.form, pass: !!row.form.pass || row.status === "pass", status: profileStatus(row.status), card: row.profile, trust: row.trust });
+  return NextResponse.json({ id: row.id, form: row.form, pass: !!row.form.pass || row.status === "pass", status: profileStatus(row.status, row.trust), card: row.profile, trust: row.trust });
 }
 
-// Create or edit a profile. Every save is screened by AI; a new profile then waits for a moderator.
+// Create or edit a profile. Every save is screened by AI, and AI alone verifies or rejects it.
 export async function POST(req: Request) {
   try {
     const { id, form } = (await req.json()) as { id?: string; form: ApplicationForm };
@@ -67,7 +68,7 @@ Return JSON exactly in this shape:
   "profile": { "headline": "max 8 words", "bio": "2 sentences, third person", "strengths": ["3 short things that make them good company"], "vibe": "2-4 words", "icebreaker": "one question others could ask them" },
   "redFlags": ["empty array if none"],
   "trustScore": 0-100 integer,
-  "moderatorNote": "one sentence telling the human moderator what to look at"
+  "moderatorNote": "one sentence explaining the score to the guest"
 }`,
     );
 
@@ -87,9 +88,7 @@ Return JSON exactly in this shape:
         { label: "House rules accepted", ok: true },
       ],
     };
-    // AI can reject outright; it can never approve on its own, except to keep an already-verified profile verified after an edit.
-    const wasVerified = existing ? profileStatus(existing.status) === "verified" : false;
-    const status = redFlags.length ? "rejected" : wasVerified ? "verified" : "pending";
+    const status = redFlags.length || score < MIN_TRUST ? "rejected" : "verified";
     const card = { ...ai.profile, moderatorNote: ai.moderatorNote };
 
     if (existing) {
