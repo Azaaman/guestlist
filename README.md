@@ -1,11 +1,11 @@
-# Nestly — get on the list, win the season
+# Nestly — secret house parties, approved by members
 
 Business Cup 2.0 · Track 02 Entertainment · B2C · Web only · US adults 25–45
 
 Invite-only house parties for adults 30–40 in the US. Guests apply to a party, members of the
 opposite gender vote on the application, the card is only **held** until approval. At the party,
 AI pairs everyone into couples and writes the contest program; guests play and vote from their
-phones; points stack across a 12-week season. The top 3 couples win trips (Europe, Hawaii, Wild West).
+phones; scores are for that night only. A Season Pass ($499) covers all 12 parties and enters the holder in a prize draw for three trips (Europe, Hawaii, Wild West).
 
 Inspired by the CeleBreak pickup-football model (the platform organises, you buy a spot, a host runs it),
 applied to social nights. Hosts provide the house; everything else is software.

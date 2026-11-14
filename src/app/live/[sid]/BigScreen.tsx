@@ -42,7 +42,7 @@ export default function BigScreen({ sid, title }: { sid: string; title: string }
     <div className="glow min-h-screen px-6 pb-28 pt-6 lg:px-10">
       <div className="flex items-start justify-between gap-6">
         <div>
-          <Link href="/" className="display text-xl text-white/70">Nestly</Link>
+          <Link href="/" className="wordmark text-3xl leading-none text-white/80">Nestly</Link>
           <div className="mt-1 flex items-center gap-3">
             <span className="live-dot h-3 w-3 rounded-full bg-hot" />
             <h1 className="text-3xl lg:text-5xl">{title}</h1>
@@ -193,7 +193,7 @@ function Finished({ data }: { data: LiveData }) {
         ))}
       </ol>
       <div className="mt-10 grid gap-6 border-t border-line pt-6 md:grid-cols-2">
-        <p className="text-lg text-white/75">Tonight&apos;s points are added to the Season 1 race for the trip to Europe.</p>
+        <p className="text-lg text-white/75">That&apos;s tonight&apos;s game. Scores are for the night only, see you next week.</p>
         <div>
           <div className="text-lg font-bold">
             {r.ratingCount === 0 ? "Host payout is in escrow" : released ? "Host payout released" : "Host payout on hold"}

@@ -1,5 +1,5 @@
 // Seed data for the demo city (Austin, TX). Static content: hosts, parties,
-// the members who vote on applications, and the season standings so far.
+// and the members who vote on applications.
 // Everything dynamic (applications, live parties, votes) lives in Supabase.
 
 export type Gender = "man" | "woman";
@@ -55,9 +55,9 @@ export const SEASON = {
   weeks: 12,
   currentWeek: 5,
   prizes: [
-    { place: 1, title: "Golden Couple", prize: "Two-week tour of Europe for two", color: "gold" },
-    { place: 2, title: "Silver Couple", prize: "Hawaii getaway for two", color: "silver" },
-    { place: 3, title: "Bronze Couple", prize: "Wild West camping trip for two", color: "bronze" },
+    { place: 1, title: "Grand prize", prize: "Two-week tour of Europe for two", color: "gold" },
+    { place: 2, title: "Second prize", prize: "Hawaii getaway for two", color: "silver" },
+    { place: 3, title: "Third prize", prize: "Wild West camping trip for two", color: "bronze" },
   ],
   passPrice: 499,
 };
@@ -289,24 +289,6 @@ export const MEMBERS: Member[] = [
   { id: "m8", name: "Daniel P.", age: 31, gender: "man", job: "Product manager", bio: "Board-game collector, escape-room record holder.", personality: "analytical; wants thoughtful answers, not one-liners", skill: "Logic", badges: ["ID verified", "5 parties"], rating: 4.7 },
   { id: "m9", name: "Chris B.", age: 39, gender: "man", job: "Architect", bio: "Sketches everything, cooks Italian on Sundays.", personality: "relaxed but protective of the women in the group", skill: "Painting", badges: ["ID verified", "8 parties"], rating: 4.8 },
   { id: "m10", name: "Tyler G.", age: 34, gender: "man", job: "Sales lead", bio: "Two-step champion of his office.", personality: "social; likes confident, friendly people", skill: "Dancing", badges: ["ID verified", "4 parties"], rating: 4.6 },
-];
-
-export interface SeasonPair {
-  id: string;
-  name: string;
-  members: [string, string];
-  weeks: number[]; // points per week
-}
-
-export const SEASON_PAIRS: SeasonPair[] = [
-  { id: "p1", name: "The Two-Steppers", members: ["Sarah K.", "Tyler G."], weeks: [62, 71, 58, 80] },
-  { id: "p2", name: "Brain & Brawn", members: ["Rachel T.", "Marcus D."], weeks: [70, 55, 77, 66] },
-  { id: "p3", name: "History Buffs", members: ["Emily W.", "Daniel P."], weeks: [81, 60, 52, 73] },
-  { id: "p4", name: "Brush Strokes", members: ["Ana R.", "Chris B."], weeks: [49, 76, 66, 61] },
-  { id: "p5", name: "Night Shift", members: ["Jessica L.", "Jake M."], weeks: [55, 58, 71, 60] },
-  { id: "p6", name: "Salt & Pepper", members: ["Olivia N.", "Ben S."], weeks: [44, 63, 59, 57] },
-  { id: "p7", name: "Lone Stars", members: ["Megan H.", "Ryan C."], weeks: [60, 41, 55, 62] },
-  { id: "p8", name: "Plot Twist", members: ["Lauren F.", "Kevin O."], weeks: [38, 52, 61, 49] },
 ];
 
 export const CONTEST_SKILLS = ["Trivia", "Logic", "Dancing", "Cooking", "Painting", "Swimming"];

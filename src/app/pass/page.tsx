@@ -4,7 +4,7 @@ import PassCheckout from "./PassCheckout";
 const perks = [
   ["A seat at every party", `All ${SEASON.weeks} nights of the season, no fighting for the last spots.`],
   ["Priority approval", "Pass holders are reviewed first, and most are approved once for the whole season."],
-  ["Your place in the race", "Only pass holders collect season points and can win the three trips."],
+  ["Entered to win a trip", "Every pass holder is in the finale prize draw for Europe, Hawaii and the Wild West."],
   ["Food, drinks and the house", "Included every night. Per party it works out cheaper than single tickets at peak price."],
 ];
 
@@ -15,7 +15,7 @@ export default function PassPage() {
       <div className="mx-auto grid max-w-5xl gap-10 px-4 py-12 md:grid-cols-[1.1fr_1fr]">
         <div>
           <h1 className="text-5xl sm:text-6xl">Season Pass</h1>
-          <p className="mt-4 max-w-md text-lg text-white/80">One payment for the whole of {SEASON.name}. About ${perNight} a night, with the trips to play for.</p>
+          <p className="mt-4 max-w-md text-lg text-white/80">One payment for the whole of {SEASON.name}. About ${perNight} a night, and a chance to win one of three trips.</p>
           <ul className="mt-8">
             {perks.map(([t, d]) => (
               <li key={t} className="reveal border-t border-line py-4">

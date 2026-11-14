@@ -35,7 +35,7 @@ export default function PassCheckout({ price, season, weeks }: { price: number; 
         <div className="font-semibold text-[#1f8a5b]">Paid. Welcome to the season.</div>
         <div className="display mt-1 text-5xl">Season Pass</div>
         <div className="mt-1 font-semibold">{season}</div>
-        <p className="rule mt-4 pt-4">You have a seat at all {weeks} parties and your points now count toward the trips. Pick your first night.</p>
+        <p className="rule mt-4 pt-4">You have a seat at all {weeks} parties and you are entered in the prize draw for the three trips. Pick your first night.</p>
         <Link href="/parties" className="btn btn-paper mt-5">Choose a party</Link>
       </div>
     );

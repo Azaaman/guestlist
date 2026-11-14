@@ -197,7 +197,7 @@ function Current({ data, myPairId, act }: { data: LiveData; myPairId: string | n
           </div>
           {answered !== null && s.phase === "open" && <p className="mt-3 text-center text-sm text-white/60">Answer locked. Wait for the reveal.</p>}
           {s.phase === "reveal" && answered !== null && (
-            <p className="mt-3 text-center text-lg font-bold">{answered === q.answer ? "Correct, 10 points for your couple" : "Not this one"}</p>
+            <p className="mt-3 text-center text-lg font-bold">{answered === q.answer ? "Correct, 10 points for your couple tonight" : "Not this one"}</p>
           )}
         </>
       )}
@@ -269,7 +269,7 @@ function After({ data, playerId, hostName, pairName, rank, act }: { data: LiveDa
   return (
     <div className="mt-6">
       <h1 className="text-4xl">{pairName ? (place ? `${place} couple tonight` : `Place ${rank} tonight`) : "That's the night"}</h1>
-      <p className="mt-2 text-white/70">{pairName ? `${pairName}'s points now count in the season race for Europe.` : "Thanks for judging."}</p>
+      <p className="mt-2 text-white/70">{pairName ? `${pairName} finished the night. Thanks for playing.` : "Thanks for judging."}</p>
 
       <h2 className="mt-8 text-2xl">Rate the night</h2>
       <p className="mt-1 text-sm text-white/60">{hostName} is paid only after guest ratings come in.</p>

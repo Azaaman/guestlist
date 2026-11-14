@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { PARTIES, SEASON, SEASON_PAIRS, dynamicPrice, spotsLeft } from "@/lib/data";
-import { Avatar, PartyRow } from "@/components/ui";
+import { PARTIES, SEASON, dynamicPrice, spotsLeft } from "@/lib/data";
+import { PartyRow } from "@/components/ui";
 import Hook, { type HookParty } from "@/components/Hook";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ const how = [
   { t: "Pick a night", d: "A different house in Austin every week. You see the theme and the contests, not the address." },
   { t: "Members vote you in", d: "They read your application. Your card is only held, and a no costs you nothing." },
   { t: "AI pairs you up", d: "At the door you get a partner. You compete as a couple in quizzes, dance-offs and cook-offs." },
-  { t: "Win the season", d: "Points add up over twelve weeks. The top three couples win trips." },
+  { t: "Get a Season Pass, win a trip", d: "A pass covers all twelve parties and enters you in the prize draw for three trips." },
 ];
 
 const tryIt = [
@@ -30,7 +30,6 @@ export default function Home() {
     id: p.id, title: p.title, when: when(p.date, p.live), place: p.neighborhood, price: dynamicPrice(p), left: spotsLeft(p),
     photo: p.photo, venue: p.venue, contests: p.contests, live: !!p.live,
   }));
-  const board = SEASON_PAIRS.map((p) => ({ ...p, total: p.weeks.reduce((a, b) => a + b, 0) })).sort((a, b) => b.total - a.total).slice(0, 5);
   const medal = ["text-gold", "text-silver", "text-bronze"];
   return (
     <div>
@@ -52,32 +51,24 @@ export default function Home() {
       </section>
 
       <section className="bg-night">
-        <div className="mx-auto max-w-5xl px-4 py-14">
-          <div className="reveal flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 className="text-3xl sm:text-4xl">Season leaderboard</h2>
-              <p className="mt-2 text-white/75">Week {SEASON.currentWeek} of {SEASON.weeks}. The top three couples win the trips.</p>
+        <div className="mx-auto grid max-w-5xl gap-8 px-4 py-14 md:grid-cols-[1fr_1.2fr] md:items-center">
+          <div className="reveal">
+            <h2 className="text-3xl sm:text-4xl">Season Pass</h2>
+            <div className="display price mt-3 text-6xl">${SEASON.passPrice}</div>
+            <p className="mt-3 text-white/80">A seat at all {SEASON.weeks} parties, about ${Math.round(SEASON.passPrice / SEASON.weeks)} a night. Every pass holder is entered to win one of three trips at the season finale.</p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Link href="/pass" className="btn btn-primary">Get the Season Pass</Link>
+              <Link href="/season" className="btn btn-ghost">How the prizes work</Link>
             </div>
-            <Link href="/season" className="font-semibold text-brand-2 hover:underline">Full standings</Link>
           </div>
-          <ol className="mt-6">
-            {board.map((r, i) => (
-              <li key={r.id} className="reveal flex items-center gap-3 border-t border-line py-3 sm:gap-4">
-                <span className={`display w-7 text-center text-2xl ${medal[i] ?? "text-white/50"}`}>{i + 1}</span>
-                <div className="flex -space-x-2"><Avatar name={r.members[0]} size={34} /><Avatar name={r.members[1]} size={34} /></div>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-semibold">{r.name}</div>
-                  <div className="truncate text-sm text-white/65">{r.members.join(" and ")}</div>
-                </div>
-                {i < 3 && <span className={`hidden rounded-full bg-white/10 px-3 py-1 text-sm font-semibold sm:inline ${medal[i]}`}>{SEASON.prizes[i].prize}</span>}
-                <span className="display price w-16 text-right text-2xl">{r.total}</span>
+          <ul>
+            {SEASON.prizes.map((p, i) => (
+              <li key={p.place} className="reveal flex items-baseline gap-4 border-t border-line py-4 last:border-b">
+                <span className={`w-32 shrink-0 font-semibold ${medal[i]}`}>{p.title}</span>
+                <span className="text-lg">{p.prize}</span>
               </li>
             ))}
-          </ol>
-          <div className="reveal mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Link href="/pass" className="btn btn-primary">Join with a Season Pass, ${SEASON.passPrice}</Link>
-            <span className="text-sm text-white/65">All {SEASON.weeks} parties, about ${Math.round(SEASON.passPrice / SEASON.weeks)} a night.</span>
-          </div>
+          </ul>
         </div>
       </section>
 
@@ -92,7 +83,8 @@ export default function Home() {
       </section>
 
       <section className="mx-auto max-w-5xl px-4 pb-16">
-        <h2 className="reveal text-3xl sm:text-4xl">Try it in three minutes</h2>
+        <h2 className="reveal text-3xl sm:text-4xl">Walk through the demo</h2>
+        <p className="reveal mt-2 text-white/75">Three steps show the whole product working, in about three minutes.</p>
         <ol className="mt-6 grid gap-3 sm:grid-cols-3">
           {tryIt.map((s, i) => (
             <li key={s.t} className="reveal" style={{ transitionDelay: `${i * 90}ms` }}>

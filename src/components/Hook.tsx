@@ -88,7 +88,7 @@ export default function Hook({ parties }: { parties: HookParty[] }) {
     <section ref={root} className="glow overflow-hidden pb-14 pt-10 sm:pt-16">
       <div className="mx-auto max-w-5xl px-4 text-center">
         <h1 className="text-5xl sm:text-7xl">Get on the list.</h1>
-        <p className="mx-auto mt-4 max-w-xl text-lg text-white/85">Secret house parties for adults in their thirties. Members decide who gets in, couples compete all season. Pick a place or a contest to find your night.</p>
+        <p className="mx-auto mt-4 max-w-xl text-lg text-white/85">Secret house parties for adults in their thirties. Members decide who gets in, and every night you play contests as a couple. Pick a place or a contest to find your night.</p>
       </div>
 
       <div className="marquee mt-8 space-y-3" aria-label="Filter parties by place or contest">
