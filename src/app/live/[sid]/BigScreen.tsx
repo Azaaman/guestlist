@@ -19,7 +19,8 @@ export default function BigScreen({ sid, title }: { sid: string; title: string }
     const url = `${window.location.origin}/play/${sid}`;
     setJoinUrl(url);
     QRCode.toDataURL(url, { margin: 1, width: 360, color: { dark: "#17103f", light: "#f2f2f2" } }).then(setQr);
-    try { setPin(localStorage.getItem("gl_host_pin") ?? ""); } catch {}
+    // Optional host PIN comes from the link (?pin=...), only needed if LIVE_HOST_PIN is set.
+    setPin(new URLSearchParams(window.location.search).get("pin") ?? "");
   }, [sid]);
 
   async function host(action: string) {
@@ -102,8 +103,7 @@ export default function BigScreen({ sid, title }: { sid: string; title: string }
           </button>
         )}
         <button className="btn btn-ghost" disabled={!!busy} onClick={() => { if (confirm("Reset the party? All guests and scores are cleared.")) host("reset"); }}>Reset</button>
-        <input className="input w-20 text-sm" placeholder="PIN" aria-label="Host PIN" value={pin} onChange={(e) => { setPin(e.target.value); try { localStorage.setItem("gl_host_pin", e.target.value); } catch {} }} />
-        {hostErr && <span className="px-2 text-sm text-hot">{hostErr}</span>}
+        {hostErr && <span className="max-w-md px-2 text-sm text-hot">{hostErr}</span>}
       </div>
     </div>
   );
