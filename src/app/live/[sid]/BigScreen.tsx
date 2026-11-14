@@ -4,7 +4,7 @@ import Link from "next/link";
 import QRCode from "qrcode";
 import { Avatar } from "@/components/ui";
 import { useLive, type LiveData } from "@/components/useLive";
-import { PAYOUT_THRESHOLD, REPORTS_TO_BAN } from "@/lib/room";
+import { DEPOSIT, PAYOUT_THRESHOLD, REPORTS_TO_BAN } from "@/lib/room";
 
 export default function BigScreen({ sid, title }: { sid: string; title: string }) {
   const { data, error, refresh } = useLive(sid);
@@ -22,11 +22,11 @@ export default function BigScreen({ sid, title }: { sid: string; title: string }
     setPin(new URLSearchParams(window.location.search).get("pin") ?? "");
   }, [sid]);
 
-  async function host(action: string, target?: string) {
+  async function host(action: string, target?: string, extra?: { amount: number; note: string }) {
     setBusy(target ? `${action}:${target}` : action);
     setHostErr("");
     try {
-      const res = await fetch(`/api/live/${sid}/host`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, pin, partyId: sid, target }) });
+      const res = await fetch(`/api/live/${sid}/host`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, pin, partyId: sid, target, ...extra }) });
       const d = await res.json();
       if (!res.ok) setHostErr(d.error || "That didn't work. Try again.");
       await refresh();
@@ -96,14 +96,14 @@ export default function BigScreen({ sid, title }: { sid: string; title: string }
             <button className="btn btn-primary" disabled={!!busy} onClick={() => host("end")}>End the party</button>
           </>
         )}
-        <button className="btn btn-ghost" disabled={!!busy} onClick={() => { if (confirm("Reset the party? Guests, reports and demo bans are cleared.")) host("reset"); }}>Reset</button>
+        <button className="btn btn-ghost" disabled={!!busy} onClick={() => { if (confirm("Reset the party? Guests, reports, cases and demo bans are cleared.")) host("reset"); }}>Reset</button>
         {hostErr && <span className="max-w-md px-2 text-sm text-hot">{hostErr}</span>}
       </div>
     </div>
   );
 }
 
-function Running({ data, busy, host }: { data: LiveData; busy: string; host: (action: string, target?: string) => void }) {
+function Running({ data, busy, host }: { data: LiveData; busy: string; host: (action: string, target?: string, extra?: { amount: number; note: string }) => void }) {
   const r = data.room;
   const live = data.people.filter((p) => !p.demo).length;
   return (
@@ -127,7 +127,7 @@ function Running({ data, busy, host }: { data: LiveData; busy: string; host: (ac
 
       <div>
         <h2 className="text-2xl">Reports for the host</h2>
-        <p className="mt-1 text-sm text-white/65">Private. {REPORTS_TO_BAN} reports from different guests ban automatically. One confirmed by the host bans at once.</p>
+        <p className="mt-1 text-sm text-white/65">Private. {REPORTS_TO_BAN} reports from different guests remove the person automatically; so does one you confirm. A Nestly moderator then decides on a permanent ban.</p>
         {r.reports.length === 0 && <p className="mt-4 border-t border-line pt-4 text-white/60">No reports. Guests can report someone from their phone.</p>}
         <ul className="mt-4">
           {r.reports.map((rep) => (
@@ -139,21 +139,24 @@ function Running({ data, busy, host }: { data: LiveData; busy: string; host: (ac
               <p className="mt-1 text-white/75">{rep.reasons.join(", ")}</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <button className="btn btn-ghost" disabled={!!busy} onClick={() => host("dismiss", rep.id)}>Dismiss</button>
-                <button className="btn bg-hot text-[#17103f]" disabled={!!busy} onClick={() => host("confirm", rep.id)}>Confirm and ban</button>
+                <button className="btn bg-hot text-[#17103f]" disabled={!!busy} onClick={() => host("confirm", rep.id)}>Confirm and remove</button>
               </div>
             </li>
           ))}
         </ul>
-        {r.banned.length > 0 && (
+        {r.removed.length > 0 && (
           <div className="mt-6 border-t border-line pt-4">
-            <div className="font-semibold text-hot">Banned for good</div>
-            <ul className="mt-1 text-white/75">
-              {r.banned.map((b) => (
-                <li key={b.id}>{b.name}: removed and blocked from booking again.{b.pass ? ` Season Pass cancelled, $${b.refund} refunded, $${b.fee} conduct fee kept.` : ""}</li>
+            <div className="font-semibold text-hot">Removed tonight</div>
+            <ul className="mt-1 text-white/80">
+              {r.removed.map((b) => (
+                <li key={b.id}>
+                  {b.name}: {b.status === "open" ? "with the moderator, who decides on a permanent ban." : b.status === "cleared" ? "cleared by the moderator." : `permanently banned.${b.outcome?.pass ? ` Season Pass cancelled, $${b.outcome.refund} refunded, $${b.outcome.fee} conduct fee kept.` : ""}`}
+                </li>
               ))}
             </ul>
           </div>
         )}
+        <DamageClaim data={data} busy={busy} host={host} />
       </div>
     </div>
   );
@@ -168,7 +171,7 @@ function Finished({ data }: { data: LiveData }) {
       <dl className="mt-8 grid gap-6 border-y border-line py-6 text-center sm:grid-cols-3">
         <div><dt className="label">Introductions made</dt><dd className="display price mt-1 text-6xl">{r.met}</dd></div>
         <div><dt className="label">Host rating</dt><dd className="display mt-1 text-6xl">{r.hostRating ?? "–"}</dd><dd className="text-sm text-white/55">{r.ratingCount ? `from ${r.ratingCount} ${r.ratingCount === 1 ? "guest" : "guests"}` : "guests are rating now"}</dd></div>
-        <div><dt className="label">Banned tonight</dt><dd className="display mt-1 text-6xl">{r.banned.length}</dd></div>
+        <div><dt className="label">Removed tonight</dt><dd className="display mt-1 text-6xl">{r.removed.length}</dd></div>
       </dl>
       <div className="mt-6">
         <div className={`text-xl font-bold ${r.ratingCount === 0 ? "" : released ? "text-mint" : "text-hot"}`}>
@@ -179,7 +182,41 @@ function Finished({ data }: { data: LiveData }) {
             ? "Guests are rating the host on their phones. The host is paid once ratings come in."
             : `The payout needs a rating of ${PAYOUT_THRESHOLD} or higher.`}
         </p>
+        <p className="mt-3 text-white/70">Tickets have been charged, including no-shows, and damage deposits released{r.damage.length ? `, except ${r.damage.length} with a damage claim` : ""}.</p>
       </div>
+    </div>
+  );
+}
+
+// The host records damage by one guest. Up to the deposit comes off that guest's card hold.
+function DamageClaim({ data, busy, host }: { data: LiveData; busy: string; host: (action: string, target?: string, extra?: { amount: number; note: string }) => void }) {
+  const [who, setWho] = useState("");
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  const claimed = new Set(data.room.damage.map((d) => d.id));
+  const guests = data.people.filter((p) => !p.demo && !claimed.has(p.id));
+  return (
+    <div className="mt-8 border-t border-line pt-5">
+      <h2 className="text-2xl">Damage claim</h2>
+      <p className="mt-1 text-sm text-white/65">Every booking carries a ${DEPOSIT} deposit hold. A claim is taken from it; anything above is covered by Nestly.</p>
+      {data.room.damage.map((d) => (
+        <p key={d.id} className="mt-3 rounded-xl border border-line p-3 text-white/85">
+          {d.name}: {d.note}, ${d.amount}. {d.card ? `$${d.kept} kept from the deposit` : "No card hold on file (walk-up check-in)"}{d.covered > 0 ? `, $${d.covered} covered by Nestly host protection.` : "."}
+        </p>
+      ))}
+      {guests.length > 0 ? (
+        <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_7rem]">
+          <select className="input" value={who} onChange={(e) => setWho(e.target.value)} aria-label="Guest">
+            <option value="">Choose a guest</option>
+            {guests.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+          <input className="input" inputMode="numeric" placeholder="Cost, $" aria-label="Cost in dollars" value={amount} onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))} />
+          <input className="input sm:col-span-2" placeholder="What was damaged" aria-label="What was damaged" value={note} onChange={(e) => setNote(e.target.value)} maxLength={200} />
+          <button className="btn btn-ghost sm:col-span-2" disabled={!!busy || !who || !amount} onClick={() => { host("damage", who, { amount: Number(amount), note }); setWho(""); setAmount(""); setNote(""); }}>File the claim</button>
+        </div>
+      ) : (
+        <p className="mt-3 text-sm text-white/55">Claims can be filed against guests who checked in tonight.</p>
+      )}
     </div>
   );
 }

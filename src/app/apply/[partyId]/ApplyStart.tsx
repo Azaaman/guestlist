@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui";
 import { fetchProfile, type SavedProfile } from "@/lib/profile";
+import { DEPOSIT } from "@/lib/room";
 
 // Booking is one tap for a verified guest: no form, no vote.
 export default function ApplyStart({ partyId, price, menLeft, womenLeft, left }: { partyId: string; price: number; menLeft: number; womenLeft: number; left: number }) {
@@ -65,15 +66,15 @@ export default function ApplyStart({ partyId, price, menLeft, womenLeft, left }:
       <p className="text-white/80">
         {open
           ? profile.pass
-            ? "A place is free and your Season Pass covers it. Nothing to pay."
-            : `A place is free. You pay $${price} and the address unlocks straight away.`
+            ? `A place is free and your Season Pass covers the ticket. Only the $${DEPOSIT} damage deposit is held on your card, and released after the party.`
+            : `A place is free. The $${price} ticket and a $${DEPOSIT} damage deposit are held on your card. The address unlocks straight away.`
           : left <= 0
             ? `The party is full. You can join the waitlist${profile.pass ? " at the front, ahead of guests without a pass." : "."}`
             : `Places for ${f.gender === "man" ? "men" : "women"} are full under the 60/40 balance rule. You can join the waitlist${profile.pass ? " at the front, ahead of guests without a pass." : "."}`}
       </p>
       {err && <div className="rounded-xl bg-hot/15 p-3 text-sm">{err}</div>}
       <button className="btn btn-primary w-full text-lg" onClick={book} disabled={busy}>
-        {busy ? "Booking…" : open ? (profile.pass ? "Book with my Season Pass" : `Book and pay $${price}`) : "Join the waitlist"}
+        {busy ? "Booking…" : open ? (profile.pass ? "Book with my Season Pass" : `Book for $${price}`) : "Join the waitlist"}
       </button>
     </div>
   );

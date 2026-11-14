@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { genderCap, getParty } from "@/lib/data";
+import { dynamicPrice, genderCap, getParty } from "@/lib/data";
+import { DEPOSIT } from "@/lib/room";
 import { PROFILE, profileStatus, type ApplicationRow, type BookingMeta } from "@/lib/types";
 
 // Book a place at a party with a verified profile.
 // Order of checks: verified → not already booked → room left overall → 60/40 balance for this guest's gender.
-// A Season Pass holder pays nothing and goes to the front of any waitlist.
+// A Season Pass holder pays nothing for the ticket and goes to the front of any waitlist.
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as { partyId: string; profileId: string };
@@ -45,7 +46,9 @@ export async function POST(req: Request) {
         reason: full ? "The party is full." : `Places for ${f.gender === "man" ? "men" : "women"} are full: the 60/40 balance rule caps each at ${genderCap(party)} of ${party.spots}.`,
       };
     } else {
-      bookingStatus = hasPass ? "approved" : "reviewed"; // without a pass, the ticket is paid next
+      // Next step for everyone: one card hold. Ticket (free with a pass) plus the damage deposit.
+      bookingStatus = "reviewed";
+      meta = { price: hasPass ? 0 : dynamicPrice(party), deposit: DEPOSIT };
     }
 
     const { data, error } = await db()

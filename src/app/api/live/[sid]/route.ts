@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { hash, loadState, type ActionRow } from "@/lib/live";
+import { hash, loadCases, loadState, type ActionRow } from "@/lib/live";
 import { REPORT_REASONS } from "@/lib/room";
 
 export const dynamic = "force-dynamic";
@@ -19,10 +19,14 @@ export async function GET(req: Request, { params }: { params: Promise<{ sid: str
     const acts = (actions ?? []) as ActionRow[];
     const nameOf = (id: string) => state.people.find((p) => p.id === id)?.name ?? "Guest";
     const present = state.people.filter((p) => !state.banned.includes(p.id));
+    // Cases are only read when someone has actually been removed.
+    const cases = state.banned.length ? (await loadCases()).filter((c) => c.sid === sid) : [];
+    const caseOf = (id: string) => cases.find((c) => c.personId === id);
 
-    // Open reports, grouped by the guest they are about. Shown to the host only on the big screen.
+    // Open reports about guests, grouped by guest. Shown to the host on the big screen.
+    // Reports about the host are not here: they go straight to Nestly.
     const byTarget = new Map<string, ActionRow[]>();
-    for (const a of acts.filter((x) => x.kind === "report")) {
+    for (const a of acts.filter((x) => x.kind === "report" && x.target_pair !== "host")) {
       if (state.banned.includes(a.target_pair) || state.dismissed.includes(a.target_pair)) continue;
       byTarget.set(a.target_pair, [...(byTarget.get(a.target_pair) ?? []), a]);
     }
@@ -41,7 +45,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ sid: str
       vibeCount: pulses.length,
       met: acts.filter((a) => a.kind === "met").length,
       reports,
-      banned: state.banned.map((id) => ({ id, name: nameOf(id), ...(state.banInfo[id] ?? { pass: false, refund: 0, fee: 0 }) })),
+      removed: state.banned.map((id) => {
+        const c = caseOf(id);
+        return { id, name: nameOf(id), status: c?.status ?? "open", outcome: c?.outcome ?? null };
+      }),
+      damage: Object.entries(state.damage).map(([id, d]) => ({ id, name: nameOf(id), ...d })),
       partyRating: avg(partyRatings),
       hostRating: avg(hostRatings),
       ratingCount: hostRatings.length,
@@ -61,10 +69,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ sid: str
             : acts.some((a) => a.kind === "again" && a.player_id === x.id && a.target_pair === playerId),
         )
         .map((x) => ({ id: x.id, name: x.name, demo: x.demo }));
+      const c = caseOf(playerId);
       me = {
-        banned: state.banned.includes(playerId),
-        ban: state.banInfo[playerId] ?? null,
-        inRoom: state.people.some((p) => p.id === playerId),
+        removed: state.banned.includes(playerId),
+        conduct: c ? { status: c.status, reasons: c.reasons, appealed: !!c.appeal, outcome: c.outcome ?? null } : null,
+        damage: state.damage[playerId] ?? null,
         intros: (state.intros[playerId] ?? [])
           .filter((i) => !state.banned.includes(i.id))
           .map((i) => ({ ...i, name: nameOf(i.id) })),

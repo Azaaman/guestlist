@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { HOSTS, dynamicPrice, getParty } from "@/lib/data";
+import { DEPOSIT, HOST_SHARE } from "@/lib/room";
 import { Avatar, Superhost } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
@@ -7,8 +8,10 @@ export const dynamic = "force-dynamic";
 const checks = [
   ["Before the first party", "ID check, photos and video of the venue, capacity check, then a trial night with a mystery guest."],
   ["The same core every night", "Hosts tick off a checklist: food and drinks per guest, music, first-aid kit, exit plan. Guest screening and introductions come from Nestly."],
-  ["While the party runs", "QR check-in shows who arrived and when. Guests rate the night live and can report another guest. The host reviews each report on the spot and can ban the person for good."],
-  ["After the party", "Guests rate the host. The payout stays in escrow for 24 to 48 hours and is released at 4.2 or higher. Complaints mean refunds, and repeated low ratings mean removal."],
+  ["While the party runs", "QR check-in shows who arrived and when. Guests rate the night live and can report another guest. The host reviews each report on the spot and can remove the person. Reports about the host go straight to Nestly."],
+  ["If something gets broken", `Every booking carries a $${DEPOSIT} deposit hold. The host files a claim on the night; up to the deposit comes from the guest, and Nestly's host protection covers the rest.`],
+  ["Insurance and neighbours", "Nestly buys event liability cover for every party, since a normal home policy does not cover paid events. Guest numbers are capped, music stops at 11 pm and the pool closes then too."],
+  ["After the party", "Guests rate the host. The payout stays in escrow for 24 to 48 hours and is released at 4.2 or higher. If a host cancels, guests are refunded in full and the host pays a fee. Repeated low ratings mean removal."],
 ];
 
 // Real numbers from tonight's applications; the page still renders if the database is unreachable.
@@ -30,7 +33,7 @@ export default async function HostPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
       <h1 className="text-4xl sm:text-6xl">Hosts bring the house.<br />We bring the rest.</h1>
-      <p className="mt-4 max-w-2xl text-white/70">Hosts keep 70% of ticket revenue, 75% as a Superhost. Nestly handles the guests, screening, payments, introductions and safety.</p>
+      <p className="mt-4 max-w-2xl text-white/70">Hosts keep {HOST_SHARE * 100}% of ticket revenue. Nestly handles the guests, screening, payments, introductions, insurance and safety.</p>
 
       <h2 className="mt-12 text-2xl">How a host is checked</h2>
       <ol className="mt-4 grid gap-x-8 sm:grid-cols-2">
@@ -45,7 +48,7 @@ export default async function HostPage() {
           <div><dt className="label">Tickets booked on this site</dt><dd className="display mt-1 text-4xl text-mint">{stats.approved}</dd></div>
           <div><dt className="label">On the waitlist</dt><dd className="display mt-1 text-4xl">{stats.waitlist}</dd></div>
           <div><dt className="label">Waiting to pay</dt><dd className="display mt-1 text-4xl">{stats.unpaid}</dd></div>
-          <div><dt className="label">Host share from these tickets</dt><dd className="display price mt-1 text-4xl">${Math.round(stats.approved * price * 0.75)}</dd></div>
+          <div><dt className="label">Host share from these tickets</dt><dd className="display price mt-1 text-4xl">${Math.round(stats.approved * price * HOST_SHARE)}</dd></div>
         </dl>
       ) : (
         <p className="mt-4 text-white/60">Live numbers are unavailable right now. Reload to try again.</p>

@@ -4,14 +4,16 @@ import Link from "next/link";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import QRCode from "qrcode";
+import { CANCEL_HOURS, DEPOSIT } from "@/lib/room";
 
 interface Booking {
   id: string;
   party_id: string;
-  status: "reviewed" | "approved" | "waitlist";
+  status: "reviewed" | "approved" | "waitlist" | "cancelled";
   form: { name: string; pass: boolean };
-  meta: { position?: number; reason?: string } | null;
+  meta: { position?: number; reason?: string; price?: number; deposit?: number; settled?: string } | null;
   reveal: { address: string; dressCode: string } | null;
+  refundable: boolean;
 }
 
 const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
@@ -41,16 +43,25 @@ export default function ApplicationFlow({ id, partyTitle, partyId, partyWhen, pr
   return (
     <div className="mt-6 space-y-6">
       {b.status === "approved" && <Ticket b={b} partyTitle={partyTitle} partyId={partyId} partyWhen={partyWhen} live={live} />}
-      {b.status === "reviewed" && <PayStep id={id} price={price} onPaid={load} />}
+      {b.status === "reviewed" && <PayStep id={id} ticket={b.meta?.price ?? price} deposit={b.meta?.deposit ?? DEPOSIT} onPaid={load} />}
       {b.status === "waitlist" && <Waitlist b={b} />}
+      {b.status === "cancelled" && (
+        <div className="card p-5">
+          <h2 className="text-2xl">Booking cancelled</h2>
+          <p className="mt-2 text-white/80">The hold on your card was released. Nothing was charged.</p>
+          <Link href="/parties" className="btn btn-primary mt-4">Choose another party</Link>
+        </div>
+      )}
+      {(b.status === "approved" || b.status === "reviewed") && <Cancel b={b} onDone={load} />}
     </div>
   );
 }
 
-function PayStep({ id, price, onPaid }: { id: string; price: number; onPaid: () => void }) {
+function PayStep({ id, ticket, deposit, onPaid }: { id: string; ticket: number; deposit: number; onPaid: () => void }) {
   const [secret, setSecret] = useState<string | null>(null);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const total = ticket + deposit;
 
   async function start() {
     setBusy(true);
@@ -58,7 +69,7 @@ function PayStep({ id, price, onPaid }: { id: string; price: number; onPaid: () 
     try {
       const res = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ applicationId: id }) });
       const data = await res.json();
-      if (!res.ok) setErr(data.error || "The payment could not be started. Try again.");
+      if (!res.ok) setErr(data.error || "The card step could not be started. Try again.");
       else setSecret(data.clientSecret);
     } catch {
       setErr("No connection. Try again.");
@@ -71,20 +82,23 @@ function PayStep({ id, price, onPaid }: { id: string; price: number; onPaid: () 
 
   return (
     <div className="card p-5">
-      <h2 className="text-2xl">A place is free. Pay <span className="price">${price}</span> to book it</h2>
-      <p className="mt-2 text-white/75">The address unlocks as soon as the payment goes through. The price rises as the party fills up.</p>
+      <h2 className="text-2xl">A place is free. Hold <span className="price">${total}</span> on your card to book it</h2>
+      <dl className="mt-4">
+        <div className="flex justify-between border-t border-line py-3"><dt>Ticket{ticket === 0 ? ", covered by your Season Pass" : ""}</dt><dd className="font-semibold">${ticket}</dd></div>
+        <div className="flex justify-between border-t border-line py-3"><dt>Damage deposit, released after the party</dt><dd className="font-semibold">${deposit}</dd></div>
+      </dl>
+      <p className="mt-2 text-sm text-white/70">Nothing is charged now. After the party {ticket > 0 ? "the ticket is charged and " : ""}the deposit is released, unless the host reports damage you caused.</p>
       {!secret ? (
         <>
           {err && <div className="mt-3 text-sm text-hot">{err}</div>}
-          <button className="btn btn-primary mt-4 w-full" onClick={start} disabled={busy}>{busy ? "Preparing…" : `Pay $${price}`}</button>
+          <button className="btn btn-primary mt-4 w-full" onClick={start} disabled={busy}>{busy ? "Preparing…" : `Hold $${total} and book`}</button>
         </>
       ) : (
         <Elements stripe={stripePromise} options={{ clientSecret: secret, appearance }}>
-          <CardForm id={id} price={price} onPaid={onPaid} />
+          <CardForm id={id} price={total} onPaid={onPaid} />
         </Elements>
       )}
       <p className="mt-3 text-sm text-white/55">Test mode. Use card 4242 4242 4242 4242, any future date, any CVC.</p>
-      <p className="mt-2 text-sm text-white/55">With a <Link href="/pass" className="font-semibold text-brand-2 hover:underline">Season Pass</Link> every party is already paid for.</p>
     </div>
   );
 }
@@ -109,7 +123,7 @@ function CardForm({ id, price, onPaid }: { id: string; price: number; onPaid: ()
     const res = await fetch("/api/hold", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ applicationId: id }) });
     const data = await res.json();
     if (!res.ok) {
-      setErr(data.error || "The payment was not confirmed. Try again.");
+      setErr(data.error || "The card hold was not confirmed. Try again.");
       setBusy(false);
       return;
     }
@@ -120,7 +134,7 @@ function CardForm({ id, price, onPaid }: { id: string; price: number; onPaid: ()
     <form onSubmit={pay} className="mt-4 space-y-3">
       <PaymentElement />
       {err && <div className="text-sm text-hot">{err}</div>}
-      <button className="btn btn-primary w-full" disabled={busy || !stripe}>{busy ? "Paying…" : `Pay $${price}`}</button>
+      <button className="btn btn-primary w-full" disabled={busy || !stripe}>{busy ? "Placing the hold…" : `Hold $${price}`}</button>
     </form>
   );
 }
@@ -160,7 +174,7 @@ function Ticket({ b, partyTitle, partyId, partyWhen, live }: { b: Booking; party
         <dl className="rule mt-4 space-y-3 pt-4">
           <div><dt className="label">Address, now unlocked</dt><dd className="text-lg font-bold">{b.reveal?.address}</dd></div>
           <div><dt className="label">Dress code</dt><dd>{b.reveal?.dressCode}</dd></div>
-          <div><dt className="label">Admit one</dt><dd>{b.form.name}. {b.form.pass ? "Covered by your Season Pass." : "Ticket paid."}</dd></div>
+          <div><dt className="label">Admit one</dt><dd>{b.form.name}. {b.meta?.settled ?? (b.form.pass ? `Covered by your Season Pass. $${b.meta?.deposit ?? DEPOSIT} deposit held.` : `$${b.meta?.price} ticket and $${b.meta?.deposit ?? DEPOSIT} deposit held on your card.`)}</dd></div>
         </dl>
         {live && <Link href={path} className="btn btn-paper mt-5 w-full sm:w-auto">Check in at the party</Link>}
       </div>
@@ -168,6 +182,36 @@ function Ticket({ b, partyTitle, partyId, partyWhen, live }: { b: Booking; party
         {qr && <img src={qr} alt="Check-in QR code" className="h-40 w-40" />}
         <div className="text-center text-sm text-paper-ink/70">Scan at the door<br />to check in</div>
       </div>
+    </div>
+  );
+}
+
+// Free cancellation until 24 hours before the party. After that the ticket is charged even for a no-show.
+function Cancel({ b, onDone }: { b: Booking; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  if (b.meta?.settled) return null;
+  const free = b.refundable || b.status === "reviewed";
+  async function cancel() {
+    if (!confirm("Cancel this booking?")) return;
+    setBusy(true);
+    setErr("");
+    const res = await fetch("/api/cancel", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ applicationId: b.id }) });
+    if (!res.ok) setErr((await res.json()).error || "The booking could not be cancelled.");
+    setBusy(false);
+    onDone();
+  }
+  return (
+    <div className="border-t border-line pt-4 text-sm text-white/70">
+      {free ? (
+        <>
+          <p>Plans changed? Cancel for free until {CANCEL_HOURS} hours before the party.</p>
+          <button className="btn btn-ghost mt-3" disabled={busy} onClick={cancel}>{busy ? "Cancelling…" : "Cancel my booking"}</button>
+        </>
+      ) : (
+        <p>Less than {CANCEL_HOURS} hours to go, so this booking can no longer be cancelled. If you don&apos;t come, the ticket is still charged; the deposit is released.</p>
+      )}
+      {err && <p className="mt-2 text-hot">{err}</p>}
     </div>
   );
 }

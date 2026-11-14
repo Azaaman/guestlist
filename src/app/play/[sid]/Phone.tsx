@@ -120,17 +120,7 @@ function Room({ sid, title, hostName, playerId, onLeave }: { sid: string; title:
   if (!data) return <div className="p-8 text-center text-white/60">{error || "Connecting…"}</div>;
   const me = data.players.find((p) => p.id === playerId);
 
-  if (data.me?.banned) {
-    return (
-      <div className="mx-auto max-w-md px-5 py-16 text-center">
-        <h1 className="text-4xl text-hot">You have been removed</h1>
-        <p className="mt-4 text-white/80">Other guests reported your behaviour and the report was upheld. This ban is permanent and tied to your ID, so you can&apos;t book Nestly parties again.</p>
-        {data.me.ban?.pass && (
-          <p className="mt-4 rounded-xl border border-line p-4 text-left text-white/85">Your Season Pass was cancelled. <span className="price font-semibold">${data.me.ban.refund}</span> for the unused parties has been refunded to your card. A ${data.me.ban.fee} conduct fee was kept, as set out in the house rules.</p>
-        )}
-      </div>
-    );
-  }
+  if (data.me?.removed) return <Removed sid={sid} playerId={playerId} conduct={data.me.conduct} onSent={refresh} />;
   if (!me) {
     return (
       <div className="p-8 text-center">
@@ -155,10 +145,16 @@ function Room({ sid, title, hostName, playerId, onLeave }: { sid: string; title:
         </div>
       )}
 
+      {data.me?.damage && (
+        <div className="card mt-4 border-hot/60 p-4">
+          <div className="font-semibold text-hot">The host filed a damage claim</div>
+          <p className="mt-1 text-white/85">{data.me.damage.note}: ${data.me.damage.amount}. {data.me.damage.card ? `$${data.me.damage.kept} was kept from your deposit.` : "No card hold was on file for you."} You can dispute this with Nestly within 48 hours.</p>
+        </div>
+      )}
       {data.status === "running" && <Intros data={data} act={act} />}
       {msg && <div className="mt-3 rounded-lg bg-hot/15 p-3 text-sm">{msg}</div>}
       {data.status === "running" && <Pulse data={data} act={act} hostName={hostName} />}
-      {data.status === "running" && <Report data={data} playerId={playerId} act={act} />}
+      {data.status === "running" && <Report data={data} playerId={playerId} hostName={hostName} act={act} />}
       {data.status === "finished" && <After data={data} playerId={playerId} hostName={hostName} act={act} />}
     </div>
   );
@@ -220,7 +216,7 @@ function Pulse({ data, act, hostName }: { data: LiveData; act: Act; hostName: st
 }
 
 // Report a specific guest. Reports are private; the host reviews them on the spot.
-function Report({ data, playerId, act }: { data: LiveData; playerId: string; act: Act }) {
+function Report({ data, playerId, hostName, act }: { data: LiveData; playerId: string; hostName: string; act: Act }) {
   const [open, setOpen] = useState(false);
   const [who, setWho] = useState("");
   const [reason, setReason] = useState(0);
@@ -228,7 +224,7 @@ function Report({ data, playerId, act }: { data: LiveData; playerId: string; act
   const others = data.people.filter((p) => p.id !== playerId && !data.me?.reported.includes(p.id));
 
   async function send() {
-    const name = data.people.find((p) => p.id === who)?.name ?? "the guest";
+    const name = who === "host" ? `${hostName} (the host)` : (data.people.find((p) => p.id === who)?.name ?? "the guest");
     await act("report", reason, who);
     setSent(name);
     setOpen(false);
@@ -237,16 +233,17 @@ function Report({ data, playerId, act }: { data: LiveData; playerId: string; act
 
   return (
     <div className="mt-6 border-t border-line pt-5">
-      {sent && <p className="mb-3 rounded-lg bg-mint/15 p-3 text-sm">Your report about {sent} was sent to the host. It stays private.</p>}
+      {sent && <p className="mb-3 rounded-lg bg-mint/15 p-3 text-sm">Your report about {sent} was sent to {sent.endsWith("(the host)") ? "Nestly, not to the host" : "the host"}. It stays private.</p>}
       {!open ? (
-        <button onClick={() => { setOpen(true); setSent(""); }} className="btn btn-ghost w-full border-hot/60 text-hot">Report a guest</button>
+        <button onClick={() => { setOpen(true); setSent(""); }} className="btn btn-ghost w-full border-hot/60 text-hot">Report someone</button>
       ) : (
         <div className="card p-4">
-          <div className="text-lg font-semibold">Report a guest</div>
-          <p className="mt-1 text-sm text-white/70">The host reviews it right away. {REPORTS_TO_BAN} reports from different guests, or one the host confirms, means a permanent ban.</p>
+          <div className="text-lg font-semibold">Report someone</div>
+          <p className="mt-1 text-sm text-white/70">The host reviews it right away. {REPORTS_TO_BAN} reports from different guests, or one the host confirms, removes the person from the party. A moderator then decides on a permanent ban. If anyone is in danger, call 911 first.</p>
           <label className="mt-4 block"><span className="label">Who</span>
             <select className="input mt-1" value={who} onChange={(e) => setWho(e.target.value)}>
-              <option value="">Choose a guest</option>
+              <option value="">Choose a person</option>
+              {!data.me?.reported.includes("host") && <option value="host">{hostName} (the host), goes to Nestly</option>}
               {others.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </label>
@@ -265,6 +262,59 @@ function Report({ data, playerId, act }: { data: LiveData; playerId: string; act
             <button className="btn btn-primary" disabled={!who} onClick={send}>Send report</button>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+// Removed from tonight's party. Nothing is permanent until a moderator has read both sides.
+function Removed({ sid, playerId, conduct, onSent }: { sid: string; playerId: string; conduct: NonNullable<LiveData["me"]>["conduct"]; onSent: () => void }) {
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  async function send() {
+    setBusy(true);
+    setErr("");
+    const res = await fetch(`/api/live/${sid}/appeal`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ playerId, text }) });
+    if (!res.ok) setErr((await res.json()).error || "The appeal could not be sent. Try again.");
+    setBusy(false);
+    onSent();
+  }
+  const status = conduct?.status ?? "open";
+  return (
+    <div className="mx-auto max-w-md px-5 py-12">
+      {status === "open" && (
+        <>
+          <h1 className="text-4xl text-hot">You have been removed from tonight&apos;s party</h1>
+          <p className="mt-4 text-white/85">Reason given: {conduct?.reasons.join(", ") || "reports from other guests"}. Please leave the house now.</p>
+          <p className="mt-3 text-white/75">This is not yet a permanent ban. A Nestly moderator reviews the case and decides. You can tell your side first.</p>
+          {conduct?.appealed ? (
+            <p className="mt-5 rounded-xl bg-mint/15 p-4">Your appeal was sent. The moderator will read it before deciding. This page updates by itself.</p>
+          ) : (
+            <div className="mt-5">
+              <label className="block"><span className="label">Your side of what happened</span>
+                <textarea className="input mt-1 min-h-28" value={text} onChange={(e) => setText(e.target.value)} maxLength={600} />
+              </label>
+              {err && <p className="mt-2 text-sm text-hot">{err}</p>}
+              <button className="btn btn-primary mt-3 w-full" disabled={busy || !text.trim()} onClick={send}>{busy ? "Sending…" : "Send my appeal"}</button>
+            </div>
+          )}
+        </>
+      )}
+      {status === "cleared" && (
+        <>
+          <h1 className="text-4xl text-mint">The moderator cleared you</h1>
+          <p className="mt-4 text-white/85">The reports were not upheld. Your profile is in good standing and you can book parties as before. We are sorry about tonight.</p>
+        </>
+      )}
+      {status === "banned" && (
+        <>
+          <h1 className="text-4xl text-hot">You are permanently banned</h1>
+          <p className="mt-4 text-white/85">A moderator reviewed the reports{conduct?.appealed ? " and your appeal" : ""} and upheld them. You can no longer book or check in to Nestly parties.</p>
+          {conduct?.outcome?.pass && (
+            <p className="mt-4 rounded-xl border border-line p-4 text-white/85">Your Season Pass was cancelled. <span className="price font-semibold">${conduct.outcome.refund}</span> for the unused parties has been refunded to your card. A ${conduct.outcome.fee} conduct fee was kept, as set out in the house rules.</p>
+          )}
+        </>
       )}
     </div>
   );

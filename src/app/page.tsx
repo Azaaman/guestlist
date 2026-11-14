@@ -5,7 +5,7 @@ import Hook, { type HookParty } from "@/components/Hook";
 
 export const dynamic = "force-dynamic";
 
-const TZ = "America/Chicago";
+const TZ = "America/New_York";
 function when(iso: string, live?: boolean) {
   const d = new Date(iso);
   const time = d.toLocaleString("en-US", { hour: "numeric", minute: "2-digit", timeZone: TZ });
@@ -16,7 +16,7 @@ const how = [
   { t: "Get verified once", d: "Create a profile. AI screens it and a moderator approves it. After that you never fill anything in again." },
   { t: "Book a night", d: "Pick any party with a free place. Prices rise as it fills, and men and women are always kept within 60/40." },
   { t: "Meet the right people", d: "When you check in, AI gives you three people to meet and a line to open with. After the party, mutual picks become matches." },
-  { t: "Everyone stays accountable", d: "You rate the host and can report a guest. Three reports, or one the host confirms, is a permanent ban." },
+  { t: "Everyone stays accountable", d: "You rate the host and can report a guest. Three reports, or one the host confirms, removes them; a moderator decides on a permanent ban." },
 ];
 
 const tryIt = [
@@ -74,7 +74,7 @@ export default function Home() {
 
       <section className="mx-auto max-w-5xl px-4 py-14">
         <div className="reveal flex items-end justify-between gap-4">
-          <h2 className="text-3xl sm:text-4xl">Coming up in Austin</h2>
+          <h2 className="text-3xl sm:text-4xl">Coming up in Miami</h2>
           <Link href="/parties" className="shrink-0 font-semibold text-brand-2 hover:underline">All parties</Link>
         </div>
         <div className="mt-6 border-b border-line">

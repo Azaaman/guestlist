@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { banPerson, emptyState, loadState, openRoom, saveState } from "@/lib/live";
+import { claimDamage, clearCasesAndBans, emptyState, loadState, openRoom, removePerson, saveState, settleParty } from "@/lib/live";
+import { REPORT_REASONS } from "@/lib/room";
 
 export const maxDuration = 60;
 
@@ -8,7 +9,7 @@ export const maxDuration = 60;
 export async function POST(req: Request, { params }: { params: Promise<{ sid: string }> }) {
   try {
     const { sid } = await params;
-    const { action, pin, partyId, target } = (await req.json()) as { action: string; pin?: string; partyId?: string; target?: string };
+    const { action, pin, partyId, target, amount, note } = (await req.json()) as { action: string; pin?: string; partyId?: string; target?: string; amount?: number; note?: string };
     if (process.env.LIVE_HOST_PIN && pin !== process.env.LIVE_HOST_PIN)
       return NextResponse.json({ error: "Wrong host PIN" }, { status: 401 });
 
@@ -16,8 +17,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ sid: st
       await db().from("live_actions").delete().eq("session_id", sid);
       await db().from("live_players").delete().eq("session_id", sid);
       await saveState(sid, emptyState());
-      // Demo convenience: a full reset also clears the permanent-ban list so the walkthrough can be repeated.
-      await db().from("live_sessions").delete().eq("id", "bans");
+      // Demo convenience: a full reset also clears conduct cases and bans so the walkthrough can be repeated.
+      await clearCasesAndBans();
       await db().from("applications").update({ status: "verified" }).eq("party_id", "profile").eq("status", "banned");
       return NextResponse.json({ ok: true });
     }
@@ -32,14 +33,24 @@ export async function POST(req: Request, { params }: { params: Promise<{ sid: st
       if (s.status !== "running") return NextResponse.json({ error: "The party is not running" }, { status: 409 });
       s.status = "finished";
       await saveState(sid, s);
+      // Tickets are charged now (no-shows included) and damage deposits are released.
+      const settled = await settleParty(sid);
+      return NextResponse.json({ ok: true, settled });
+    }
+    if (action === "damage") {
+      const dollars = Math.round(Number(amount));
+      if (!target || !(dollars > 0 && dollars <= 20000)) return NextResponse.json({ error: "Choose a guest and enter the cost of the damage." }, { status: 400 });
+      await claimDamage(sid, s, target, dollars, (note ?? "").trim().slice(0, 200) || "Damage at the house");
       return NextResponse.json({ ok: true });
     }
     if (action === "confirm" || action === "dismiss") {
       if (!target || !s.people.some((p) => p.id === target)) return NextResponse.json({ error: "Unknown guest" }, { status: 400 });
-      const { data } = await db().from("live_actions").select("player_id").eq("session_id", sid).eq("kind", "report").eq("target_pair", target);
+      const { data } = await db().from("live_actions").select("player_id,value").eq("session_id", sid).eq("kind", "report").eq("target_pair", target);
       if (!data?.length) return NextResponse.json({ error: "There is no report about this guest" }, { status: 400 });
-      if (action === "confirm") await banPerson(sid, s, target, "Report confirmed by the host");
-      else {
+      if (action === "confirm") {
+        const reasons = [...new Set(data.map((r) => REPORT_REASONS[r.value] ?? REPORT_REASONS[3]))];
+        await removePerson(sid, s, target, "host", reasons, new Set(data.map((r) => r.player_id)).size);
+      } else {
         s.dismissed.push(target);
         await saveState(sid, s);
       }

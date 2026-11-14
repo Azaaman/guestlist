@@ -30,13 +30,16 @@ export interface Trust {
 
 // Profiles and bookings share the `applications` table.
 // Profile rows (party_id "profile"): pending → verified | rejected, later possibly banned.
-// Booking rows (party_id = party): reviewed (awaiting payment) → approved (ticket), or waitlist.
+// Booking rows (party_id = party): reviewed (card step) → approved (ticket) → maybe cancelled; or waitlist.
 export type ProfileStatus = "pending" | "verified" | "rejected" | "banned";
-export type BookingStatus = "reviewed" | "approved" | "waitlist";
+export type BookingStatus = "reviewed" | "approved" | "waitlist" | "cancelled";
 
 export interface BookingMeta {
-  position?: number;
+  position?: number; // waitlist
   reason?: string;
+  price?: number; // ticket price fixed at booking (0 with a Season Pass)
+  deposit?: number; // damage deposit held on the card
+  settled?: string; // what happened to the card hold after the party
 }
 
 export interface ApplicationRow {

@@ -10,11 +10,11 @@ const SAMPLE = {
   name: "Alex Rivera",
   age: "34",
   gender: "man",
-  instagram: "@alex.rivera.atx",
+  instagram: "@alex.rivera.mia",
   inviteCode: "SARAH-K",
   into: "Food",
-  lookingFor: "New friends in Austin and maybe someone special — I miss having a crew for Friday nights.",
-  about: "Moved here from Denver for a job in renewable energy. I make a mean green-chile stew, run the Town Lake loop on weekends, and I'm happiest hosting a long dinner for people who just met.",
+  lookingFor: "New friends in Miami and maybe someone special — I miss having a crew for Friday nights.",
+  about: "Moved here from Denver for a job in renewable energy. I make a mean green-chile stew, run the Venetian Causeway on weekends, and I'm happiest hosting a long dinner for people who just met.",
 };
 
 // A disrespectful profile: shows that AI screening can say no.
@@ -140,7 +140,7 @@ export default function ProfileForm() {
       </div>
       <label className="flex items-start gap-3 text-sm text-white/80">
         <input type="checkbox" className="mt-1 h-4 w-4 accent-[#17103f]" checked={conduct} onChange={(e) => { setSaved(false); setConduct(e.target.checked); }} />
-        <span>I accept the <Link href="/policy" className="font-semibold text-brand-2 underline">house rules</Link>: respect, consent, no harassment. Breaking them means a permanent ban tied to my ID.</span>
+        <span>I accept the <Link href="/policy" className="font-semibold text-brand-2 underline">house rules</Link>: respect, consent, no harassment. Breaking them can mean a permanent ban.</span>
       </label>
       {err && <div className="rounded-xl bg-hot/15 p-3 text-sm">{err}</div>}
       {saved && <div className="rounded-xl bg-mint/15 p-3 text-sm">Saved and checked by AI. See your status at the top of this page.</div>}

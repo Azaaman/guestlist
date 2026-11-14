@@ -2,7 +2,8 @@ import { db } from "@/lib/db";
 import { generateJson } from "@/lib/ai";
 import { getParty, MEMBERS, SEASON } from "@/lib/data";
 import { stripe } from "@/lib/stripe";
-import { passRefund } from "@/lib/room";
+import { DEPOSIT, passRefund } from "@/lib/room";
+import type { ApplicationRow, BookingMeta } from "@/lib/types";
 
 export interface Person {
   id: string;
@@ -12,23 +13,25 @@ export interface Person {
   about?: string;
   profileId?: string; // set when the guest checked in with a saved profile or a ticket
 }
-export interface BanInfo {
-  pass: boolean; // held a Season Pass
-  refund: number; // dollars sent back
-  fee: number; // conduct fee kept
-}
 export interface Intro {
   id: string;
   why: string;
   icebreaker: string;
 }
+export interface Damage {
+  amount: number; // what the host claimed
+  note: string;
+  kept: number; // taken from the guest's deposit
+  covered: number; // the rest, paid by Nestly's host protection
+  card: boolean; // false when the guest had no card hold (demo walk-up)
+}
 export interface LiveState {
   status: "lobby" | "running" | "finished";
   people: Person[];
   intros: Record<string, Intro[]>; // guest id → the people they should meet tonight
-  banned: string[]; // person ids removed tonight (and banned for good)
+  banned: string[]; // person ids removed from tonight's party
   dismissed: string[]; // person ids whose reports the host reviewed and dismissed
-  banInfo: Record<string, BanInfo>; // what happened to a banned guest's Season Pass
+  damage: Record<string, Damage>;
 }
 
 export interface ActionRow {
@@ -41,7 +44,7 @@ export interface ActionRow {
 }
 
 export function emptyState(): LiveState {
-  return { status: "lobby", people: [], intros: {}, banned: [], dismissed: [], banInfo: {} };
+  return { status: "lobby", people: [], intros: {}, banned: [], dismissed: [], damage: {} };
 }
 
 export async function loadState(sid: string): Promise<LiveState> {
@@ -68,45 +71,124 @@ export function hash(s: string) {
   return (h >>> 0) / 4294967295;
 }
 
+async function loadDoc<T>(id: string, fallback: T): Promise<T> {
+  const { data } = await db().from("live_sessions").select("state").eq("id", id).maybeSingle();
+  return (data?.state as T | undefined) ?? fallback;
+}
+async function saveDoc(id: string, state: unknown) {
+  await db().from("live_sessions").upsert({ id, state, updated_at: new Date().toISOString() });
+}
+
 /* ---------- Permanent bans (kept across parties) ---------- */
 
 interface BanRecord { name: string; reason: string; at: string }
 const BANS_ID = "bans";
 const norm = (name: string) => name.trim().toLowerCase().replace(/\s+/g, " ");
 
-async function loadBans(): Promise<BanRecord[]> {
-  const { data } = await db().from("live_sessions").select("state").eq("id", BANS_ID).maybeSingle();
-  return ((data?.state as { list?: BanRecord[] } | undefined)?.list ?? []) as BanRecord[];
-}
-
-// In production a ban is tied to the verified ID; in this demo it is tied to the name.
+// In production a ban is tied to the verified ID; in this MVP it is tied to the profile and the name.
 export async function isBanned(name: string) {
   const first = norm(name).split(" ")[0];
-  return (await loadBans()).some((b) => norm(b.name) === norm(name) || norm(b.name) === first);
+  const { list } = await loadDoc<{ list: BanRecord[] }>(BANS_ID, { list: [] });
+  return list.some((b) => norm(b.name) === norm(name) || norm(b.name) === first);
 }
 
-export async function banPerson(sid: string, state: LiveState, personId: string, reason: string) {
+/* ---------- Conduct cases: removal tonight, then a moderator decides ---------- */
+
+export interface BanOutcome {
+  pass: boolean; // held a Season Pass
+  refund: number; // dollars sent back
+  fee: number; // conduct fee kept
+}
+export interface ConductCase {
+  id: string;
+  sid: string;
+  kind: "guest" | "host";
+  personId: string | null;
+  profileId?: string;
+  demo: boolean;
+  name: string;
+  by: "reports" | "host" | "guest";
+  reasons: string[];
+  reporters: number;
+  appeal?: string;
+  status: "open" | "banned" | "cleared";
+  outcome?: BanOutcome;
+  at: string;
+}
+const CASES_ID = "cases";
+export async function loadCases(): Promise<ConductCase[]> {
+  return (await loadDoc<{ list: ConductCase[] }>(CASES_ID, { list: [] })).list;
+}
+async function saveCases(list: ConductCase[]) {
+  await saveDoc(CASES_ID, { list });
+}
+export async function clearCasesAndBans() {
+  await db().from("live_sessions").delete().in("id", [CASES_ID, BANS_ID]);
+}
+
+// Take a guest out of tonight's party and hand the case to a moderator.
+// Nothing permanent happens here: three guests could be wrong, and so could a host.
+export async function removePerson(sid: string, state: LiveState, personId: string, by: "reports" | "host", reasons: string[], reporters: number) {
   const person = state.people.find((p) => p.id === personId);
   if (!person || state.banned.includes(personId)) return;
   state.banned.push(personId);
-  state.banInfo[personId] = await cancelMembership(person);
   await saveState(sid, state);
-  if (!person.demo) {
-    const list = await loadBans();
-    list.push({ name: person.name, reason, at: new Date().toISOString() });
-    await db().from("live_sessions").upsert({ id: BANS_ID, state: { list }, updated_at: new Date().toISOString() });
-  }
+  const cases = await loadCases();
+  cases.unshift({
+    id: crypto.randomUUID(), sid, kind: "guest", personId, profileId: person.profileId, demo: person.demo, name: person.name,
+    by, reasons, reporters, status: "open", at: new Date().toISOString(),
+  });
+  await saveCases(cases);
 }
 
-// A banned guest's profile is closed. If they held a Season Pass, the unused parties are refunded
-// through Stripe minus the conduct fee set out in the house rules.
-async function cancelMembership(person: Person): Promise<BanInfo> {
+// A report about the host never goes to the host: it opens a case for Nestly directly.
+export async function reportHost(sid: string, hostName: string, reason: string) {
+  const cases = await loadCases();
+  const open = cases.find((c) => c.sid === sid && c.kind === "host" && c.status === "open");
+  if (open) {
+    open.reporters += 1;
+    if (!open.reasons.includes(reason)) open.reasons.push(reason);
+  } else {
+    cases.unshift({ id: crypto.randomUUID(), sid, kind: "host", personId: null, demo: true, name: hostName, by: "guest", reasons: [reason], reporters: 1, status: "open", at: new Date().toISOString() });
+  }
+  await saveCases(cases);
+}
+
+export async function addAppeal(sid: string, personId: string, text: string) {
+  const cases = await loadCases();
+  const c = cases.find((x) => x.sid === sid && x.personId === personId && x.status === "open");
+  if (!c) return false;
+  c.appeal = text.trim().slice(0, 600);
+  await saveCases(cases);
+  return true;
+}
+
+// The moderator's decision. "ban" is permanent: the profile is closed, the name is blocked, and a
+// Season Pass is cancelled with a refund of the unused parties minus the conduct fee.
+export async function decideCase(caseId: string, action: "ban" | "clear") {
+  const cases = await loadCases();
+  const c = cases.find((x) => x.id === caseId);
+  if (!c || c.status !== "open") return null;
+  if (action === "clear") c.status = "cleared";
+  else {
+    c.status = "banned";
+    c.outcome = c.profileId ? await cancelMembership(c.profileId) : { pass: false, refund: 0, fee: 0 };
+    if (c.kind === "guest" && !c.demo) {
+      const bans = await loadDoc<{ list: BanRecord[] }>(BANS_ID, { list: [] });
+      bans.list.push({ name: c.name, reason: c.reasons.join(", "), at: new Date().toISOString() });
+      await saveDoc(BANS_ID, bans);
+    }
+  }
+  await saveCases(cases);
+  return c;
+}
+
+async function cancelMembership(profileId: string): Promise<BanOutcome> {
   const none = { pass: false, refund: 0, fee: 0 };
-  if (!person.profileId) return none;
-  const { data } = await db().from("applications").select("form,status,payment_intent_id").eq("id", person.profileId).eq("party_id", "profile").maybeSingle();
+  const { data } = await db().from("applications").select("form,status,payment_intent_id").eq("id", profileId).eq("party_id", "profile").maybeSingle();
   if (!data) return none;
   const hadPass = !!data.form?.pass || data.status === "pass";
-  await db().from("applications").update({ status: "banned", form: { ...data.form, pass: false } }).eq("id", person.profileId);
+  await db().from("applications").update({ status: "banned", form: { ...data.form, pass: false } }).eq("id", profileId);
   if (!hadPass) return none;
   const { refund, fee } = passRefund(SEASON.passPrice, SEASON.weeks, SEASON.currentWeek);
   if (refund > 0 && data.payment_intent_id) {
@@ -118,6 +200,56 @@ async function cancelMembership(person: Person): Promise<BanInfo> {
     }
   }
   return { pass: true, refund, fee };
+}
+
+/* ---------- Card holds: ticket + damage deposit ---------- */
+
+type Booking = Pick<ApplicationRow, "id" | "form" | "status" | "payment_intent_id"> & { votes: BookingMeta | null };
+
+async function bookingsFor(partyId: string): Promise<Booking[]> {
+  const { data } = await db().from("applications").select("id,form,status,payment_intent_id,votes").eq("party_id", partyId).eq("status", "approved");
+  return (data ?? []) as Booking[];
+}
+
+async function settle(b: Booking, damage: number, label: string) {
+  if (!b.payment_intent_id || b.votes?.settled) return false;
+  const pi = await stripe().paymentIntents.retrieve(b.payment_intent_id);
+  if (pi.status !== "requires_capture") return false;
+  const dollars = (b.votes?.price ?? 0) + damage;
+  if (dollars > 0) await stripe().paymentIntents.capture(pi.id, { amount_to_capture: dollars * 100 });
+  else await stripe().paymentIntents.cancel(pi.id);
+  await db().from("applications").update({ votes: { ...(b.votes ?? {}), settled: label } }).eq("id", b.id);
+  return true;
+}
+
+// The host reports damage by one guest. Up to the deposit comes from that guest's card hold;
+// anything above it is covered by Nestly, so the host is made whole either way.
+export async function claimDamage(sid: string, state: LiveState, personId: string, amount: number, note: string) {
+  const person = state.people.find((p) => p.id === personId);
+  if (!person) throw new Error("That guest is not in the room");
+  if (state.damage[personId]) throw new Error("A claim for this guest has already been filed");
+  const kept = Math.min(amount, DEPOSIT);
+  let card = false;
+  if (person.profileId) {
+    const booking = (await bookingsFor(sid)).find((b) => b.form.profileId === person.profileId);
+    if (booking) card = await settle(booking, kept, `Ticket charged and $${kept} kept from the deposit for damage`);
+  }
+  state.damage[personId] = { amount, note, kept: card ? kept : 0, covered: card ? amount - kept : amount, card };
+  await saveState(sid, state);
+}
+
+// When the party ends: every remaining booking is charged its ticket (no-shows included)
+// and the damage deposit is released.
+export async function settleParty(sid: string) {
+  let n = 0;
+  for (const b of await bookingsFor(sid)) {
+    try {
+      if (await settle(b, 0, "Ticket charged, deposit released")) n++;
+    } catch (e) {
+      console.error("[settle]", b.id, e);
+    }
+  }
+  return n;
 }
 
 // live_players.skill carries "pid:<profile id>|<about>" for guests who checked in with a profile.
@@ -174,7 +306,7 @@ Mix men and women. Do not suggest the guest to themselves.`;
     if (!Object.values(intros).some((x) => x.length)) throw new Error("AI returned no introductions. Try again.");
   }
 
-  const state: LiveState = { status: "running", people, intros, banned: prev.banned, dismissed: prev.dismissed, banInfo: prev.banInfo };
+  const state: LiveState = { status: "running", people, intros, banned: prev.banned, dismissed: prev.dismissed, damage: prev.damage };
   await saveState(sid, state);
   return state;
 }

@@ -2,7 +2,7 @@ import Link from "next/link";
 import PartyPhoto from "@/components/PartyPhoto";
 import { dynamicPrice, getHost, spotsLeft, type Party } from "@/lib/data";
 
-const TZ = "America/Chicago";
+const TZ = "America/New_York";
 
 export function fmtDate(iso: string) {
   return new Date(iso).toLocaleString("en-US", { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: TZ });

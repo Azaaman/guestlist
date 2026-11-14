@@ -1,4 +1,4 @@
-// Seed data for the demo city (Austin, TX). Static content: hosts, parties,
+// Seed data for the demo city (Miami, FL). Static content: hosts, parties,
 // and the members who vote on applications.
 // Everything dynamic (applications, live parties, votes) lives in Supabase.
 
@@ -53,7 +53,7 @@ export interface Member {
 const photo = (id: string) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=1400&q=70`;
 
 export const SEASON = {
-  name: "Season 1, Austin",
+  name: "Season 1, Miami",
   weeks: 12,
   currentWeek: 5,
   prizes: [
@@ -68,7 +68,7 @@ export const HOSTS: Host[] = [
   {
     id: "maya",
     name: "Maya Collins",
-    bio: "Event producer, owns a hill-country house with a pool. Hosted 14 Nestly nights.",
+    bio: "Event producer, owns a Coral Gables house with a pool. Hosted 14 Nestly nights.",
     rating: 4.9,
     parties: 14,
     superhost: true,
@@ -78,18 +78,19 @@ export const HOSTS: Host[] = [
       { item: "Food & drinks for 20 guests", done: true },
       { item: "Screen for the guest wall", done: true },
       { item: "First-aid kit & exit plan", done: true },
-      { item: "Music / DJ confirmed", done: false },
+      { item: "Alcohol limit set, pool closed after 11 pm", done: true },
+      { item: "Music off by 11 pm (quiet hours)", done: false },
     ],
     payout: [
-      { party: "Week 3 · Neon Disco", amount: 1120, status: "paid" },
-      { party: "Week 4 · Lake Day", amount: 1260, status: "released" },
-      { party: "Week 5 · Tonight", amount: 1330, status: "held" },
+      { party: "Week 3 · Neon Disco", amount: 800, status: "paid" },
+      { party: "Week 4 · Bay Day", amount: 900, status: "released" },
+      { party: "Week 5 · Tonight", amount: 950, status: "held" },
     ],
   },
   {
     id: "derek",
     name: "Derek Alvarez",
-    bio: "Chef. East Austin loft with an open kitchen and one long table.",
+    bio: "Chef. Wynwood loft with an open kitchen and one long table.",
     rating: 4.7,
     parties: 6,
     superhost: false,
@@ -99,14 +100,15 @@ export const HOSTS: Host[] = [
       { item: "Food & drinks for 16 guests", done: false },
       { item: "Screen for the guest wall", done: true },
       { item: "First-aid kit & exit plan", done: true },
-      { item: "Music / DJ confirmed", done: true },
+      { item: "Alcohol limit set, pool closed after 11 pm", done: true },
+      { item: "Music off by 11 pm (quiet hours)", done: true },
     ],
-    payout: [{ party: "Week 4 · Taco Table", amount: 880, status: "paid" }],
+    payout: [{ party: "Week 4 · Taco Table", amount: 630, status: "paid" }],
   },
   {
     id: "priya",
     name: "Priya Shah",
-    bio: "Art teacher. Converted barn studio — paint, wine, live music.",
+    bio: "Art teacher. Converted warehouse studio in Little Haiti: paint, wine, live music.",
     rating: 4.8,
     parties: 9,
     superhost: true,
@@ -116,19 +118,20 @@ export const HOSTS: Host[] = [
       { item: "Food & drinks for 18 guests", done: true },
       { item: "Screen for the guest wall", done: true },
       { item: "First-aid kit & exit plan", done: true },
-      { item: "Music / DJ confirmed", done: true },
+      { item: "Alcohol limit set, pool closed after 11 pm", done: true },
+      { item: "Music off by 11 pm (quiet hours)", done: true },
     ],
-    payout: [{ party: "Week 2 · Paint & Pour", amount: 990, status: "paid" }],
+    payout: [{ party: "Week 2 · Paint & Pour", amount: 700, status: "paid" }],
   },
 ];
 
-// Party times are Austin wall-clock times (US Central, UTC-6 in winter), whatever the server's time zone.
+// Party times are Miami wall-clock times (US Eastern, UTC-5 in winter), whatever the server's time zone.
 function day(offset: number, hour = 20) {
   const [y, m, d] = new Date()
-    .toLocaleDateString("en-CA", { timeZone: "America/Chicago" })
+    .toLocaleDateString("en-CA", { timeZone: "America/New_York" })
     .split("-")
     .map(Number);
-  return new Date(Date.UTC(y, m - 1, d + offset, hour + 6)).toISOString();
+  return new Date(Date.UTC(y, m - 1, d + offset, hour + 5)).toISOString();
 }
 
 export const PARTIES: Party[] = [
@@ -136,11 +139,11 @@ export const PARTIES: Party[] = [
     id: "tonight",
     venue: "Pool house",
     photo: photo("1544984243-ec57ea16fe25"),
-    title: "Hill Country Pool Party",
+    title: "Coral Gables Pool Party",
     theme: "Summer-in-November pool party: grill, a DJ on the terrace and a heated pool",
     date: day(0, 21),
-    neighborhood: "West Lake Hills",
-    address: "Private house · 18 Ridgeview Dr, West Lake Hills, TX (demo address)",
+    neighborhood: "Coral Gables",
+    address: "Private house · 1420 Alhambra Cir, Coral Gables, FL (demo address)",
     dressCode: "Smart casual + swimwear",
     hostId: "maya",
     priceUsd: 72,
@@ -160,8 +163,8 @@ export const PARTIES: Party[] = [
     title: "Taco Table Night",
     theme: "Open-kitchen loft where the host cooks street tacos and everyone eats at one long table",
     date: day(3, 20),
-    neighborhood: "East Austin",
-    address: "Loft · 1200 E 6th St, Austin, TX (demo address)",
+    neighborhood: "Wynwood",
+    address: "Loft · 250 NW 24th St, Miami, FL (demo address)",
     dressCode: "Casual",
     hostId: "derek",
     priceUsd: 48,
@@ -175,13 +178,13 @@ export const PARTIES: Party[] = [
   },
   {
     id: "paint-pour",
-    venue: "Art barn",
+    venue: "Art studio",
     photo: photo("1527359443443-84a48aec73d2"),
     title: "Paint & Pour",
-    theme: "Barn studio with wine, canvases to mess around on and a live acoustic set",
+    theme: "Warehouse art studio with wine, canvases to mess around on and a live acoustic set",
     date: day(6, 19),
-    neighborhood: "Dripping Springs",
-    address: "Barn studio · 400 Mercer St, Dripping Springs, TX (demo address)",
+    neighborhood: "Little Haiti",
+    address: "Studio · 6300 NE 2nd Ave, Miami, FL (demo address)",
     dressCode: "Casual, paint-friendly",
     hostId: "priya",
     priceUsd: 52,
@@ -198,10 +201,10 @@ export const PARTIES: Party[] = [
     venue: "Rooftop",
     photo: photo("1714381633320-e5c3fd0f14db"),
     title: "Neon Disco Rooftop",
-    theme: "80s disco on a downtown rooftop: neon, glitter and a dance floor with a skyline",
+    theme: "80s disco on a Brickell rooftop: neon, glitter and a dance floor with a skyline",
     date: day(10, 21),
-    neighborhood: "Downtown",
-    address: "Rooftop · 501 Congress Ave, Austin, TX (demo address)",
+    neighborhood: "Brickell",
+    address: "Rooftop · 1100 Brickell Bay Dr, Miami, FL (demo address)",
     dressCode: "Neon & glitter",
     hostId: "maya",
     priceUsd: 64,
@@ -215,13 +218,13 @@ export const PARTIES: Party[] = [
   },
   {
     id: "lake-relay",
-    venue: "Lake house",
+    venue: "Bay house",
     photo: photo("1613977257365-aaae5a9817ff"),
-    title: "Lake Travis Day",
-    theme: "Daytime at a lake house: paddle boards, BBQ and sunset on the dock",
+    title: "Biscayne Bay Day",
+    theme: "Daytime at a house on the bay: paddle boards, BBQ and sunset on the dock",
     date: day(13, 15),
-    neighborhood: "Lake Travis",
-    address: "Lake house · 77 Marina Bay, Lago Vista, TX (demo address)",
+    neighborhood: "Key Biscayne",
+    address: "Bay house · 77 Harbor Dr, Key Biscayne, FL (demo address)",
     dressCode: "Swimwear + layers",
     hostId: "priya",
     priceUsd: 58,
@@ -238,10 +241,10 @@ export const PARTIES: Party[] = [
     venue: "Garden",
     photo: photo("1546373702-eb3e6f769df2"),
     title: "Backyard Under the Lights",
-    theme: "String lights, a fire pit and long conversations in a big East Side garden",
+    theme: "String lights, a fire pit and long conversations in a big Coconut Grove garden",
     date: day(17, 20),
-    neighborhood: "Hyde Park",
-    address: "Garden house · 4310 Avenue G, Austin, TX (demo address)",
+    neighborhood: "Coconut Grove",
+    address: "Garden house · 3410 Main Hwy, Miami, FL (demo address)",
     dressCode: "Casual, bring a jacket",
     hostId: "derek",
     priceUsd: 45,
@@ -260,8 +263,8 @@ export const PARTIES: Party[] = [
     title: "Glass House Listening Party",
     theme: "Modern glass house, vinyl only, cocktails made to order",
     date: day(20, 20),
-    neighborhood: "Barton Hills",
-    address: "Glass house · 2204 Trailside Dr, Austin, TX (demo address)",
+    neighborhood: "Miami Beach",
+    address: "Glass house · 4400 N Bay Rd, Miami Beach, FL (demo address)",
     dressCode: "All black",
     hostId: "maya",
     priceUsd: 60,
@@ -280,8 +283,8 @@ export const PARTIES: Party[] = [
     title: "Villa Sunset Dinner",
     theme: "White villa with a terrace: sunset dinner cooked by the host, then the pool",
     date: day(24, 18),
-    neighborhood: "Spicewood",
-    address: "Villa · 915 Paleface Ranch Rd, Spicewood, TX (demo address)",
+    neighborhood: "Pinecrest",
+    address: "Villa · 9150 SW 62nd Ct, Pinecrest, FL (demo address)",
     dressCode: "Linen and light colours",
     hostId: "priya",
     priceUsd: 62,
@@ -302,11 +305,11 @@ export const MEMBERS: Member[] = [
   { id: "m3", name: "Ana R.", age: 30, gender: "woman", job: "Marketing manager", bio: "Bakes sourdough, paints badly, laughs loudly.", personality: "fun-first; says yes to playful, creative people", into: "Art", badges: ["ID verified", "4 parties"], rating: 4.7 },
   { id: "m4", name: "Rachel T.", age: 38, gender: "woman", job: "Attorney", bio: "Divorced, two dogs, finally has Friday nights free.", personality: "skeptical; red flags are an instant no", into: "Games", badges: ["ID verified", "Background check", "9 parties"], rating: 5.0 },
   { id: "m5", name: "Emily W.", age: 33, gender: "woman", job: "Teacher", bio: "History nerd, karaoke regular.", personality: "values curiosity and good manners", into: "Games", badges: ["ID verified", "5 parties"], rating: 4.9 },
-  { id: "m6", name: "Jake M.", age: 33, gender: "man", job: "Software engineer", bio: "New in Austin, learning to cook brisket.", personality: "easygoing; likes people who bring energy", into: "Food", badges: ["ID verified", "3 parties"], rating: 4.6 },
+  { id: "m6", name: "Jake M.", age: 33, gender: "man", job: "Software engineer", bio: "New in Miami, learning to cook a proper Cuban sandwich.", personality: "easygoing; likes people who bring energy", into: "Food", badges: ["ID verified", "3 parties"], rating: 4.6 },
   { id: "m7", name: "Marcus D.", age: 36, gender: "man", job: "Firefighter", bio: "Swims every morning, terrible dancer, great teammate.", personality: "looks for respect and team spirit", into: "Outdoors", badges: ["ID verified", "Background check", "7 parties"], rating: 4.9 },
   { id: "m8", name: "Daniel P.", age: 31, gender: "man", job: "Product manager", bio: "Board-game collector, escape-room record holder.", personality: "analytical; wants thoughtful answers, not one-liners", into: "Games", badges: ["ID verified", "5 parties"], rating: 4.7 },
   { id: "m9", name: "Chris B.", age: 39, gender: "man", job: "Architect", bio: "Sketches everything, cooks Italian on Sundays.", personality: "relaxed but protective of the women in the group", into: "Art", badges: ["ID verified", "8 parties"], rating: 4.8 },
-  { id: "m10", name: "Tyler G.", age: 34, gender: "man", job: "Sales lead", bio: "Two-step champion of his office.", personality: "social; likes confident, friendly people", into: "Music", badges: ["ID verified", "4 parties"], rating: 4.6 },
+  { id: "m10", name: "Tyler G.", age: 34, gender: "man", job: "Sales lead", bio: "Salsa champion of his office.", personality: "social; likes confident, friendly people", into: "Music", badges: ["ID verified", "4 parties"], rating: 4.6 },
 ];
 
 

@@ -18,7 +18,7 @@ export interface HookParty {
 // Free Pexels clip (Ramon Martinez): aerial of a villa with a pool. Shown for tonight's pool party.
 const VIDEO = "https://videos.pexels.com/video-files/16580831/16580831-hd_1920_1080_30fps.mp4";
 
-const VENUE_ICON: Record<string, string> = { "Pool house": "🏊", "Loft kitchen": "🍳", "Art barn": "🎨", Rooftop: "🌆", "Lake house": "🛶", Garden: "🌿", "Glass house": "🪟", Villa: "🏛️" };
+const VENUE_ICON: Record<string, string> = { "Pool house": "🏊", "Loft kitchen": "🍳", "Art studio": "🎨", Rooftop: "🌆", "Bay house": "🛶", Garden: "🌿", "Glass house": "🪟", Villa: "🏛️" };
 const VIBE_ICON: Record<string, string> = {
   Pool: "💦", Dancing: "💃", "Late night": "🌙", Foodie: "🍽️", Chill: "🛋️", "Small group": "👥", Artsy: "🖌️", "Live music": "🎸", "Dress-up": "✨", Outdoors: "🌲", Daytime: "☀️",
 };
