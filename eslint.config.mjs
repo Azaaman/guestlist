@@ -12,13 +12,14 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
-    ignores: [
-      "node_modules/**",
-      ".next/**",
-      "out/**",
-      "build/**",
-      "next-env.d.ts",
-    ],
+    rules: {
+      // Photos come from remote hosts (Unsplash, signed Supabase URLs) and QR codes are data URLs,
+      // so plain <img> is used on purpose instead of next/image.
+      "@next/next/no-img-element": "off",
+    },
+  },
+  {
+    ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts"],
   },
 ];
 

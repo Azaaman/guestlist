@@ -1,3 +1,4 @@
+// GET the live state of a party. Polled by the big screen and by every phone.
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { hash, loadCases, loadState, type ActionRow } from "@/lib/live";
@@ -5,7 +6,8 @@ import { REPORT_REASONS } from "@/lib/room";
 
 export const dynamic = "force-dynamic";
 
-const avg = (xs: number[]) => (xs.length ? Math.round((xs.reduce((s, v) => s + v, 0) / xs.length) * 10) / 10 : null);
+const avg = (xs: number[]) =>
+  xs.length ? Math.round((xs.reduce((s, v) => s + v, 0) / xs.length) * 10) / 10 : null;
 
 export async function GET(req: Request, { params }: { params: Promise<{ sid: string }> }) {
   try {
@@ -14,7 +16,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ sid: str
     const state = await loadState(sid);
     const [{ data: players }, { data: actions }] = await Promise.all([
       db().from("live_players").select("id,name,gender,created_at").eq("session_id", sid).order("created_at"),
-      db().from("live_actions").select("player_id,contest_index,question_index,kind,target_pair,value").eq("session_id", sid),
+      db()
+        .from("live_actions")
+        .select("player_id,contest_index,question_index,kind,target_pair,value")
+        .eq("session_id", sid),
     ]);
     const acts = (actions ?? []) as ActionRow[];
     const nameOf = (id: string) => state.people.find((p) => p.id === id)?.name ?? "Guest";
@@ -39,7 +44,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ sid: str
 
     const pulses = acts.filter((a) => a.kind === "pulse").map((a) => a.value);
     const hostRatings = acts.filter((a) => a.kind === "rate" && a.target_pair === "host").map((a) => a.value);
-    const partyRatings = acts.filter((a) => a.kind === "rate" && a.target_pair === "party").map((a) => a.value);
+    const partyRatings = acts
+      .filter((a) => a.kind === "rate" && a.target_pair === "party")
+      .map((a) => a.value);
     const room = {
       vibe: avg(pulses),
       vibeCount: pulses.length,
@@ -72,7 +79,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ sid: str
       const c = caseOf(playerId);
       me = {
         removed: state.banned.includes(playerId),
-        conduct: c ? { status: c.status, reasons: c.reasons, appealed: !!c.appeal, outcome: c.outcome ?? null } : null,
+        conduct: c
+          ? { status: c.status, reasons: c.reasons, appealed: !!c.appeal, outcome: c.outcome ?? null }
+          : null,
         damage: state.damage[playerId] ?? null,
         intros: (state.intros[playerId] ?? [])
           .filter((i) => !state.banned.includes(i.id))

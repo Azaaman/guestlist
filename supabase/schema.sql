@@ -1,5 +1,7 @@
 -- Nestly schema. Paste into Supabase → SQL Editor → Run.
 -- RLS is on with no policies: only the server (secret key) can read/write.
+-- `applications` holds guest profiles (party_id 'profile'), host applications (party_id 'host')
+-- and bookings (party_id = a party). See "How data is stored" in the README.
 
 create table if not exists applications (
   id uuid primary key default gen_random_uuid(),
@@ -8,7 +10,7 @@ create table if not exists applications (
   profile jsonb,
   votes jsonb,
   trust jsonb,
-  status text not null default 'reviewed', -- reviewed | held | approved | rejected
+  status text not null default 'reviewed', -- meaning depends on the kind of row, see README
   payment_intent_id text,
   created_at timestamptz not null default now()
 );

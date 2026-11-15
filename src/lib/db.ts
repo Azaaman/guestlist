@@ -1,3 +1,4 @@
+// Supabase client for server code.
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 let client: SupabaseClient | null = null;

@@ -1,6 +1,11 @@
 // Shared between server and client: the rules of a party room.
 
-export const REPORT_REASONS = ["Harassment or unwanted contact", "Aggressive behaviour or a threat", "Too drunk to be safe", "Something else"];
+export const REPORT_REASONS = [
+  "Harassment or unwanted contact",
+  "Aggressive behaviour or a threat",
+  "Too drunk to be safe",
+  "Something else",
+];
 // A guest is removed from the party after this many different guests report them, or when the host confirms
 // one report. A moderator then decides whether the ban is permanent; the guest can appeal first.
 export const REPORTS_TO_BAN = 3;

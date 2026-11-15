@@ -1,11 +1,24 @@
+// Page: Season Pass.
 import { SEASON } from "@/lib/data";
 import PassCheckout from "./PassCheckout";
 
 const perks = [
-  ["Every party is paid for", `The ticket for all ${SEASON.weeks} nights of the season. You book in one tap; only the refundable damage deposit is held.`],
-  ["Front of every waitlist", "When a party is full, you are placed ahead of everyone without a pass, even if they joined earlier."],
-  ["Entered to win a trip", `Every pass holder is in the finale draw: ${SEASON.prizeCount} winners each get ${SEASON.prize}.`],
-  ["Food, drinks and the house", "Included every night. Per party it works out cheaper than single tickets at peak price."],
+  [
+    "Every party is paid for",
+    `The ticket for all ${SEASON.weeks} nights of the season. You book in one tap; only the refundable damage deposit is held.`,
+  ],
+  [
+    "Front of every waitlist",
+    "When a party is full, you are placed ahead of everyone without a pass, even if they joined earlier.",
+  ],
+  [
+    "Entered to win a trip",
+    `Every pass holder is in the finale draw: ${SEASON.prizeCount} winners each get ${SEASON.prize}.`,
+  ],
+  [
+    "Food, drinks and the house",
+    "Included every night. Per party it works out cheaper than single tickets at peak price.",
+  ],
 ];
 
 export default function PassPage() {
@@ -15,7 +28,10 @@ export default function PassPage() {
       <div className="mx-auto grid max-w-5xl gap-10 px-4 py-12 md:grid-cols-[1.1fr_1fr]">
         <div>
           <h1 className="text-5xl sm:text-6xl">Season Pass</h1>
-          <p className="mt-4 max-w-md text-lg text-white/80">One payment for the whole of {SEASON.name}. About ${perNight} a night, and a chance to win a trip to Hawaii.</p>
+          <p className="mt-4 max-w-md text-lg text-white/80">
+            One payment for the whole of {SEASON.name}. About ${perNight} a night, and a chance to win a trip
+            to Hawaii.
+          </p>
           <ul className="mt-8">
             {perks.map(([t, d]) => (
               <li key={t} className="reveal border-t border-line py-4">

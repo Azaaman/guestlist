@@ -1,3 +1,4 @@
+// The party engine (server only): room state, AI introductions, reports and conduct cases, bans, card holds and damage claims.
 import { db } from "@/lib/db";
 import { generateJson } from "@/lib/ai";
 import { getParty, MEMBERS, SEASON } from "@/lib/data";
@@ -81,7 +82,11 @@ async function saveDoc(id: string, state: unknown) {
 
 /* ---------- Permanent bans (kept across parties) ---------- */
 
-interface BanRecord { name: string; reason: string; at: string }
+interface BanRecord {
+  name: string;
+  reason: string;
+  at: string;
+}
 const BANS_ID = "bans";
 const norm = (name: string) => name.trim().toLowerCase().replace(/\s+/g, " ");
 
@@ -128,15 +133,32 @@ export async function clearCasesAndBans() {
 
 // Take a guest out of tonight's party and hand the case to a moderator.
 // Nothing permanent happens here: three guests could be wrong, and so could a host.
-export async function removePerson(sid: string, state: LiveState, personId: string, by: "reports" | "host", reasons: string[], reporters: number) {
+export async function removePerson(
+  sid: string,
+  state: LiveState,
+  personId: string,
+  by: "reports" | "host",
+  reasons: string[],
+  reporters: number,
+) {
   const person = state.people.find((p) => p.id === personId);
   if (!person || state.banned.includes(personId)) return;
   state.banned.push(personId);
   await saveState(sid, state);
   const cases = await loadCases();
   cases.unshift({
-    id: crypto.randomUUID(), sid, kind: "guest", personId, profileId: person.profileId, demo: person.demo, name: person.name,
-    by, reasons, reporters, status: "open", at: new Date().toISOString(),
+    id: crypto.randomUUID(),
+    sid,
+    kind: "guest",
+    personId,
+    profileId: person.profileId,
+    demo: person.demo,
+    name: person.name,
+    by,
+    reasons,
+    reporters,
+    status: "open",
+    at: new Date().toISOString(),
   });
   await saveCases(cases);
 }
@@ -149,7 +171,19 @@ export async function reportHost(sid: string, hostName: string, reason: string) 
     open.reporters += 1;
     if (!open.reasons.includes(reason)) open.reasons.push(reason);
   } else {
-    cases.unshift({ id: crypto.randomUUID(), sid, kind: "host", personId: null, demo: true, name: hostName, by: "guest", reasons: [reason], reporters: 1, status: "open", at: new Date().toISOString() });
+    cases.unshift({
+      id: crypto.randomUUID(),
+      sid,
+      kind: "host",
+      personId: null,
+      demo: true,
+      name: hostName,
+      by: "guest",
+      reasons: [reason],
+      reporters: 1,
+      status: "open",
+      at: new Date().toISOString(),
+    });
   }
   await saveCases(cases);
 }
@@ -185,15 +219,27 @@ export async function decideCase(caseId: string, action: "ban" | "clear") {
 
 async function cancelMembership(profileId: string): Promise<BanOutcome> {
   const none = { pass: false, refund: 0, fee: 0 };
-  const { data } = await db().from("applications").select("form,status,payment_intent_id").eq("id", profileId).eq("party_id", "profile").maybeSingle();
+  const { data } = await db()
+    .from("applications")
+    .select("form,status,payment_intent_id")
+    .eq("id", profileId)
+    .eq("party_id", "profile")
+    .maybeSingle();
   if (!data) return none;
   const hadPass = !!data.form?.pass || data.status === "pass";
-  await db().from("applications").update({ status: "banned", form: { ...data.form, pass: false } }).eq("id", profileId);
+  await db()
+    .from("applications")
+    .update({ status: "banned", form: { ...data.form, pass: false } })
+    .eq("id", profileId);
   if (!hadPass) return none;
   const { refund, fee } = passRefund(SEASON.passPrice, SEASON.weeks, SEASON.currentWeek);
   if (refund > 0 && data.payment_intent_id) {
     try {
-      await stripe().refunds.create({ payment_intent: data.payment_intent_id, amount: refund * 100, metadata: { reason: "ban", conductFee: String(fee) } });
+      await stripe().refunds.create({
+        payment_intent: data.payment_intent_id,
+        amount: refund * 100,
+        metadata: { reason: "ban", conductFee: String(fee) },
+      });
     } catch (e) {
       console.error("[ban] refund failed", e);
       return { pass: true, refund: 0, fee };
@@ -204,10 +250,16 @@ async function cancelMembership(profileId: string): Promise<BanOutcome> {
 
 /* ---------- Card holds: ticket + damage deposit ---------- */
 
-type Booking = Pick<ApplicationRow, "id" | "form" | "status" | "payment_intent_id"> & { votes: BookingMeta | null };
+type Booking = Pick<ApplicationRow, "id" | "form" | "status" | "payment_intent_id"> & {
+  votes: BookingMeta | null;
+};
 
 async function bookingsFor(partyId: string): Promise<Booking[]> {
-  const { data } = await db().from("applications").select("id,form,status,payment_intent_id,votes").eq("party_id", partyId).eq("status", "approved");
+  const { data } = await db()
+    .from("applications")
+    .select("id,form,status,payment_intent_id,votes")
+    .eq("party_id", partyId)
+    .eq("status", "approved");
   return (data ?? []) as Booking[];
 }
 
@@ -218,13 +270,22 @@ async function settle(b: Booking, damage: number, label: string) {
   const dollars = (b.votes?.price ?? 0) + damage;
   if (dollars > 0) await stripe().paymentIntents.capture(pi.id, { amount_to_capture: dollars * 100 });
   else await stripe().paymentIntents.cancel(pi.id);
-  await db().from("applications").update({ votes: { ...(b.votes ?? {}), settled: label } }).eq("id", b.id);
+  await db()
+    .from("applications")
+    .update({ votes: { ...(b.votes ?? {}), settled: label } })
+    .eq("id", b.id);
   return true;
 }
 
 // The host reports damage by one guest. Up to the deposit comes from that guest's card hold;
 // anything above it is covered by Nestly, so the host is made whole either way.
-export async function claimDamage(sid: string, state: LiveState, personId: string, amount: number, note: string) {
+export async function claimDamage(
+  sid: string,
+  state: LiveState,
+  personId: string,
+  amount: number,
+  note: string,
+) {
   const person = state.people.find((p) => p.id === personId);
   if (!person) throw new Error("That guest is not in the room");
   if (state.damage[personId]) throw new Error("A claim for this guest has already been filed");
@@ -232,9 +293,16 @@ export async function claimDamage(sid: string, state: LiveState, personId: strin
   let card = false;
   if (person.profileId) {
     const booking = (await bookingsFor(sid)).find((b) => b.form.profileId === person.profileId);
-    if (booking) card = await settle(booking, kept, `Ticket charged and $${kept} kept from the deposit for damage`);
+    if (booking)
+      card = await settle(booking, kept, `Ticket charged and $${kept} kept from the deposit for damage`);
   }
-  state.damage[personId] = { amount, note, kept: card ? kept : 0, covered: card ? amount - kept : amount, card };
+  state.damage[personId] = {
+    amount,
+    note,
+    kept: card ? kept : 0,
+    covered: card ? amount - kept : amount,
+    card,
+  };
   await saveState(sid, state);
 }
 
@@ -273,9 +341,25 @@ export async function openRoom(sid: string, partyId: string) {
   const party = getParty(partyId);
   if (!party) throw new Error("Party not found");
   const prev = await loadState(sid);
-  const { data: players } = await db().from("live_players").select("*").eq("session_id", sid).order("created_at");
-  const real: Person[] = (players ?? []).map((p) => ({ id: p.id, name: p.name, gender: p.gender, demo: false, ...unpackAbout(p.skill) }));
-  const members: Person[] = MEMBERS.map((m) => ({ id: m.id, name: m.name, gender: m.gender, demo: true, about: `${m.job}. ${m.bio} Into ${m.into.toLowerCase()}.` }));
+  const { data: players } = await db()
+    .from("live_players")
+    .select("*")
+    .eq("session_id", sid)
+    .order("created_at");
+  const real: Person[] = (players ?? []).map((p) => ({
+    id: p.id,
+    name: p.name,
+    gender: p.gender,
+    demo: false,
+    ...unpackAbout(p.skill),
+  }));
+  const members: Person[] = MEMBERS.map((m) => ({
+    id: m.id,
+    name: m.name,
+    gender: m.gender,
+    demo: true,
+    about: `${m.job}. ${m.bio} Into ${m.into.toLowerCase()}.`,
+  }));
   const people = [...real, ...members];
   const present = people.filter((p) => !prev.banned.includes(p.id));
   const guests = present.filter((p) => !p.demo);
@@ -303,10 +387,18 @@ Pick people they would genuinely get on with as friends. Do not suggest the gues
         .slice(0, 3)
         .map((m) => ({ id: m.id, why: String(m.why ?? ""), icebreaker: String(m.icebreaker ?? "") }));
     }
-    if (!Object.values(intros).some((x) => x.length)) throw new Error("AI returned no introductions. Try again.");
+    if (!Object.values(intros).some((x) => x.length))
+      throw new Error("AI returned no introductions. Try again.");
   }
 
-  const state: LiveState = { status: "running", people, intros, banned: prev.banned, dismissed: prev.dismissed, damage: prev.damage };
+  const state: LiveState = {
+    status: "running",
+    people,
+    intros,
+    banned: prev.banned,
+    dismissed: prev.dismissed,
+    damage: prev.damage,
+  };
   await saveState(sid, state);
   return state;
 }

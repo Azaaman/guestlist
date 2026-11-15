@@ -1,4 +1,5 @@
 "use client";
+// Season Pass purchase (Stripe test mode). The pass is attached to the saved profile.
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { loadStripe } from "@stripe/stripe-js";
@@ -7,9 +8,26 @@ import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-
 
 const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = pk ? loadStripe(pk) : null;
-const appearance = { theme: "night" as const, variables: { colorPrimary: "#8f7dff", colorBackground: "#0f0a3d", colorText: "#ffffff", colorTextPlaceholder: "#cfc7ff", borderRadius: "10px" } };
+const appearance = {
+  theme: "night" as const,
+  variables: {
+    colorPrimary: "#8f7dff",
+    colorBackground: "#0f0a3d",
+    colorText: "#ffffff",
+    colorTextPlaceholder: "#cfc7ff",
+    borderRadius: "10px",
+  },
+};
 
-export default function PassCheckout({ price, season, weeks }: { price: number; season: string; weeks: number }) {
+export default function PassCheckout({
+  price,
+  season,
+  weeks,
+}: {
+  price: number;
+  season: string;
+  weeks: number;
+}) {
   const [secret, setSecret] = useState<string | null>(null);
   const [paid, setPaid] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -25,8 +43,16 @@ export default function PassCheckout({ price, season, weeks }: { price: number; 
 
   // The pass is attached to the saved profile once Stripe confirms the payment.
   async function attach(paymentIntentId: string) {
-    const res = await fetch("/api/pass/confirm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ profileId: profile?.id, paymentIntentId }) });
-    if (!res.ok) setErr((await res.json()).error || "Paid, but the pass could not be attached to your profile. Reload the page.");
+    const res = await fetch("/api/pass/confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profileId: profile?.id, paymentIntentId }),
+    });
+    if (!res.ok)
+      setErr(
+        (await res.json()).error ||
+          "Paid, but the pass could not be attached to your profile. Reload the page.",
+      );
     else setPaid(true);
   }
 
@@ -48,11 +74,20 @@ export default function PassCheckout({ price, season, weeks }: { price: number; 
   if (paid)
     return (
       <div className="paper pop self-start p-6">
-        <div className="font-semibold text-[#1f8a5b]">{profile?.form.name ? `${profile.form.name}, you hold a Season Pass.` : "Paid. Welcome to the season."}</div>
+        <div className="font-semibold text-[#1f8a5b]">
+          {profile?.form.name
+            ? `${profile.form.name}, you hold a Season Pass.`
+            : "Paid. Welcome to the season."}
+        </div>
         <div className="display mt-1 text-5xl">Season Pass</div>
         <div className="mt-1 font-semibold">{season}</div>
-        <p className="rule mt-4 pt-4">You have a seat at all {weeks} parties with nothing more to pay, and you are entered in the draw for a trip to Hawaii. Pick your first night.</p>
-        <Link href="/parties" className="btn btn-paper mt-5">Choose a party</Link>
+        <p className="rule mt-4 pt-4">
+          You have a seat at all {weeks} parties with nothing more to pay, and you are entered in the draw for
+          a trip to Hawaii. Pick your first night.
+        </p>
+        <Link href="/parties" className="btn btn-paper mt-5">
+          Choose a party
+        </Link>
       </div>
     );
 
@@ -69,25 +104,35 @@ export default function PassCheckout({ price, season, weeks }: { price: number; 
         <p className="mt-5 text-white/60">Loading…</p>
       ) : profile === null ? (
         <>
-          <p className="mt-4 text-white/80">Create your profile first. The pass is attached to it, so you never enter your details again.</p>
-          <Link href="/profile?next=/pass" className="btn btn-primary mt-4 w-full">Create my profile</Link>
+          <p className="mt-4 text-white/80">
+            Create your profile first. The pass is attached to it, so you never enter your details again.
+          </p>
+          <Link href="/profile?next=/pass" className="btn btn-primary mt-4 w-full">
+            Create my profile
+          </Link>
         </>
       ) : profile.status !== "verified" ? (
         <>
           <p className="mt-4 text-white/80">Your profile needs to be verified before you can buy a pass.</p>
-          <Link href="/profile?next=/pass" className="btn btn-primary mt-4 w-full">Go to my profile</Link>
+          <Link href="/profile?next=/pass" className="btn btn-primary mt-4 w-full">
+            Go to my profile
+          </Link>
         </>
       ) : !secret ? (
         <>
           {err && <div className="mt-3 text-sm text-hot">{err}</div>}
-          <button className="btn btn-primary mt-5 w-full" onClick={start} disabled={busy}>{busy ? "Preparing…" : `Get the Season Pass for ${profile.form.name.split(" ")[0]}`}</button>
+          <button className="btn btn-primary mt-5 w-full" onClick={start} disabled={busy}>
+            {busy ? "Preparing…" : `Get the Season Pass for ${profile.form.name.split(" ")[0]}`}
+          </button>
         </>
       ) : (
         <Elements stripe={stripePromise} options={{ clientSecret: secret, appearance }}>
           <PayForm price={price} onPaid={attach} />
         </Elements>
       )}
-      <p className="mt-3 text-sm text-white/50">Test mode. Use card 4242 4242 4242 4242, any future date, any CVC.</p>
+      <p className="mt-3 text-sm text-white/50">
+        Test mode. Use card 4242 4242 4242 4242, any future date, any CVC.
+      </p>
     </div>
   );
 }
@@ -115,7 +160,9 @@ function PayForm({ price, onPaid }: { price: number; onPaid: (paymentIntentId: s
     <form onSubmit={pay} className="mt-5 space-y-3">
       <PaymentElement />
       {err && <div className="text-sm text-hot">{err}</div>}
-      <button className="btn btn-primary w-full" disabled={busy || !stripe}>{busy ? "Paying…" : `Pay $${price.toLocaleString()}`}</button>
+      <button className="btn btn-primary w-full" disabled={busy || !stripe}>
+        {busy ? "Paying…" : `Pay $${price.toLocaleString()}`}
+      </button>
     </form>
   );
 }

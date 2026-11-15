@@ -1,3 +1,4 @@
+// Stripe client for server code (test mode keys).
 import Stripe from "stripe";
 
 let s: Stripe | null = null;

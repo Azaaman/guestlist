@@ -1,3 +1,4 @@
+// Shared types for profiles and bookings, and how they are stored.
 export interface ApplicationForm {
   name: string;
   age: number;

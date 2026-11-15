@@ -1,3 +1,4 @@
+// Root layout: navigation, scroll-reveal script, page content, footer.
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Nav from "@/components/Nav";

@@ -4,19 +4,46 @@
 const KEY = "nestly_profile";
 
 export function getProfileId(): string | null {
-  try { return localStorage.getItem(KEY); } catch { return null; }
+  try {
+    return localStorage.getItem(KEY);
+  } catch {
+    return null;
+  }
 }
 export function setProfileId(id: string) {
-  try { localStorage.setItem(KEY, id); } catch {}
+  try {
+    localStorage.setItem(KEY, id);
+  } catch {}
 }
 
 export interface SavedProfile {
   id: string;
-  form: { name: string; age: number; gender: "man" | "woman"; instagram?: string; inviteCode?: string; lookingFor: string; into: string; about: string; conduct: boolean };
+  form: {
+    name: string;
+    age: number;
+    gender: "man" | "woman";
+    instagram?: string;
+    inviteCode?: string;
+    lookingFor: string;
+    into: string;
+    about: string;
+    conduct: boolean;
+  };
   pass: boolean;
   status: "pending" | "verified" | "rejected" | "banned";
-  card: { headline: string; bio: string; strengths: string[]; vibe: string; icebreaker: string; moderatorNote?: string } | null;
-  trust: { score: number; badges: { label: string; ok: boolean; note?: string }[]; redFlags: string[] } | null;
+  card: {
+    headline: string;
+    bio: string;
+    strengths: string[];
+    vibe: string;
+    icebreaker: string;
+    moderatorNote?: string;
+  } | null;
+  trust: {
+    score: number;
+    badges: { label: string; ok: boolean; note?: string }[];
+    redFlags: string[];
+  } | null;
 }
 
 export async function fetchProfile(): Promise<SavedProfile | null> {

@@ -12,21 +12,36 @@ export async function POST(req: Request) {
     const body = (await req.json()) as { partyId: string; profileId: string };
     const party = getParty(body.partyId);
     if (!party) return NextResponse.json({ error: "Party not found" }, { status: 404 });
-    const { data: p } = await db().from("applications").select("*").eq("id", body.profileId ?? "").eq("party_id", PROFILE).maybeSingle();
+    const { data: p } = await db()
+      .from("applications")
+      .select("*")
+      .eq("id", body.profileId ?? "")
+      .eq("party_id", PROFILE)
+      .maybeSingle();
     const prof = p as ApplicationRow | null;
     if (!prof) return NextResponse.json({ error: "Create your profile first." }, { status: 400 });
     const status = profileStatus(prof.status, prof.trust);
-    if (status === "banned") return NextResponse.json({ error: "This profile is permanently banned." }, { status: 403 });
-    if (status !== "verified") return NextResponse.json({ error: "Your profile has not been verified yet." }, { status: 403 });
+    if (status === "banned")
+      return NextResponse.json({ error: "This profile is permanently banned." }, { status: 403 });
+    if (status !== "verified")
+      return NextResponse.json({ error: "Your profile has not been verified yet." }, { status: 403 });
     const f = prof.form;
     const hasPass = !!f.pass || prof.status === "pass";
 
-    const { data: rows } = await db().from("applications").select("id,form,status,created_at").eq("party_id", party.id).in("status", ["approved", "waitlist", "reviewed"]);
+    const { data: rows } = await db()
+      .from("applications")
+      .select("id,form,status,created_at")
+      .eq("party_id", party.id)
+      .in("status", ["approved", "waitlist", "reviewed"]);
     const bookings = (rows ?? []) as Pick<ApplicationRow, "id" | "form" | "status" | "created_at">[];
     const mine = bookings.find((b) => b.form.profileId === prof.id);
     if (mine) {
       // Booked before buying a pass: bring the booking up to date (the waitlist reads the profile anyway).
-      if (hasPass && !mine.form.pass) await db().from("applications").update({ form: { ...mine.form, pass: true } }).eq("id", mine.id);
+      if (hasPass && !mine.form.pass)
+        await db()
+          .from("applications")
+          .update({ form: { ...mine.form, pass: true } })
+          .eq("id", mine.id);
       return NextResponse.json({ id: mine.id });
     }
 
@@ -50,13 +65,23 @@ export async function POST(req: Request) {
 
     const { data, error } = await db()
       .from("applications")
-      .insert({ party_id: party.id, form, profile: prof.profile, trust: prof.trust, votes: meta, status: bookingStatus })
+      .insert({
+        party_id: party.id,
+        form,
+        profile: prof.profile,
+        trust: prof.trust,
+        votes: meta,
+        status: bookingStatus,
+      })
       .select("id")
       .single();
     if (error) throw error;
     return NextResponse.json({ id: data.id });
   } catch (e) {
     console.error(e);
-    return NextResponse.json({ error: e instanceof Error ? e.message : "The booking could not be made." }, { status: 500 });
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "The booking could not be made." },
+      { status: 500 },
+    );
   }
 }

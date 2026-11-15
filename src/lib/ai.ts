@@ -15,7 +15,12 @@ function withTimeout(ms: number) {
 
 // Gemini model names to try, in order. Any failure (overloaded 503, quota 429, unknown
 // model 404, timeout) moves on to the next one, so one busy model never breaks the demo.
-const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-flash-lite-latest", "gemini-flash-latest"];
+const GEMINI_MODELS = [
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
+  "gemini-flash-lite-latest",
+  "gemini-flash-latest",
+];
 
 async function callGemini(system: string, prompt: string, deadline: number): Promise<string> {
   const key = process.env.GEMINI_API_KEY;
@@ -29,7 +34,10 @@ async function callGemini(system: string, prompt: string, deadline: number): Pro
     if (left < 4000) break;
     const t = withTimeout(Math.min(TIMEOUT_MS, left));
     try {
-      const generationConfig: Record<string, unknown> = { responseMimeType: "application/json", temperature: 0.9 };
+      const generationConfig: Record<string, unknown> = {
+        responseMimeType: "application/json",
+        temperature: 0.9,
+      };
       // 2.5 Flash "thinks" by default, which is slow; these prompts don't need it.
       if (model.startsWith("gemini-2.5-flash")) generationConfig.thinkingConfig = { thinkingBudget: 0 };
       const res = await fetch(
@@ -60,12 +68,16 @@ async function callGemini(system: string, prompt: string, deadline: number): Pro
       }
       return text;
     } catch (e) {
-      errors.push(`${model}: ${e instanceof Error && e.name === "AbortError" ? "timed out" : "network error"}`);
+      errors.push(
+        `${model}: ${e instanceof Error && e.name === "AbortError" ? "timed out" : "network error"}`,
+      );
     } finally {
       t.done();
     }
   }
-  throw new Error(`Gemini is unavailable right now (${errors.join(", ") || "out of time"}). Try again in a minute.`);
+  throw new Error(
+    `Gemini is unavailable right now (${errors.join(", ") || "out of time"}). Try again in a minute.`,
+  );
 }
 
 async function callAnthropic(system: string, prompt: string): Promise<string> {
@@ -97,7 +109,10 @@ async function callAnthropic(system: string, prompt: string): Promise<string> {
 }
 
 export function parseJson<T>(text: string): T {
-  const cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
+  const cleaned = text
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/```\s*$/, "");
   try {
     return JSON.parse(cleaned) as T;
   } catch {
@@ -120,7 +135,8 @@ export async function generateJson<T>(system: string, prompt: string): Promise<T
   for (const p of available) {
     for (let attempt = 0; attempt < 2 && deadline - Date.now() > 4000; attempt++) {
       try {
-        const text = p === "gemini" ? await callGemini(system, prompt, deadline) : await callAnthropic(system, prompt);
+        const text =
+          p === "gemini" ? await callGemini(system, prompt, deadline) : await callAnthropic(system, prompt);
         return parseJson<T>(text);
       } catch (e) {
         lastErr = e;

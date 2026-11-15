@@ -1,3 +1,4 @@
+// Page: the big screen for one party.
 import { notFound } from "next/navigation";
 import { getParty } from "@/lib/data";
 import BigScreen from "./BigScreen";

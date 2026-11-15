@@ -14,6 +14,9 @@ export async function POST() {
     });
     return NextResponse.json({ clientSecret: pi.client_secret });
   } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : "Could not start the payment" }, { status: 500 });
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "Could not start the payment" },
+      { status: 500 },
+    );
   }
 }

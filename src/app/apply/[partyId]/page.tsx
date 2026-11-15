@@ -1,3 +1,4 @@
+// Booking page for one party.
 import { notFound } from "next/navigation";
 import { dynamicPrice, getParty, spotsLeft } from "@/lib/data";
 import ApplyStart from "./ApplyStart";
