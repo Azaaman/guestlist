@@ -24,7 +24,11 @@ export async function POST(req: Request) {
     const { data: rows } = await db().from("applications").select("id,form,status,created_at").eq("party_id", party.id).in("status", ["approved", "waitlist", "reviewed"]);
     const bookings = (rows ?? []) as Pick<ApplicationRow, "id" | "form" | "status" | "created_at">[];
     const mine = bookings.find((b) => b.form.profileId === prof.id);
-    if (mine) return NextResponse.json({ id: mine.id });
+    if (mine) {
+      // Booked before buying a pass: bring the booking up to date (the waitlist reads the profile anyway).
+      if (hasPass && !mine.form.pass) await db().from("applications").update({ form: { ...mine.form, pass: true } }).eq("id", mine.id);
+      return NextResponse.json({ id: mine.id });
+    }
 
     const booked = bookings.filter((b) => b.status === "approved").length;
     const full = party.men + party.women + booked >= party.spots;

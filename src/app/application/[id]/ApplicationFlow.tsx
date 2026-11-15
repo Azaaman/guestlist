@@ -15,7 +15,7 @@ interface Booking {
   meta: { position?: number; reason?: string; price?: number; deposit?: number; settled?: string } | null;
   reveal: { address: string; dressCode: string } | null;
   refundable: boolean;
-  queue: { position: number; total: number; passAhead: number; pass: boolean } | null;
+  queue: { position: number; total: number; passAhead: number; othersBehind: number; pass: boolean; seeded: number } | null;
 }
 
 const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
@@ -157,10 +157,13 @@ function Waitlist({ b, onTick }: { b: Booking; onTick: () => void }) {
       </div>
       <p className="mt-3 text-white/80">The party is full. Nothing has been charged. When a place opens for you, you get it automatically.</p>
       {b.form.pass ? (
-        <p className="mt-4 rounded-xl border border-hi/60 p-3 text-sm">Your Season Pass puts you ahead of everyone without one. {q && q.passAhead > 0 ? `Only ${q.passAhead} pass ${q.passAhead === 1 ? "holder is" : "holders are"} ahead of you.` : "Nobody is ahead of you."}</p>
+        <p className="mt-4 rounded-xl border border-hi/60 p-3 text-sm">
+          Your Season Pass puts you ahead of everyone without one. {q && q.passAhead > 0 ? `Ahead of you: ${q.passAhead} ${q.passAhead === 1 ? "pass holder who" : "pass holders who"} joined earlier.` : "Nobody is ahead of you."}
+          {q && q.othersBehind > 0 ? ` Behind you: ${q.othersBehind}, including guests without a pass who joined before you.` : ""}
+        </p>
       ) : (
         <p className="mt-4 rounded-xl border border-line p-3 text-sm">
-          Season Pass holders always go to the front, even if they join after you{q && q.passAhead > 0 ? `: ${q.passAhead} ${q.passAhead === 1 ? "is" : "are"} ahead of you now` : ""}. <Link href="/pass" className="font-semibold text-brand-2 hover:underline">Get a Season Pass</Link>
+          Ahead of you: {q ? `${q.passAhead} with a Season Pass and ${q.position - 1 - q.passAhead} without one who joined earlier` : "guests who joined earlier"}. Pass holders always go to the front, even if they join after you. <Link href="/pass" className="font-semibold text-brand-2 hover:underline">Get a Season Pass</Link> and you move ahead of everyone without one.
         </p>
       )}
       <Link href="/parties" className="btn btn-ghost mt-4 w-full sm:w-auto">Look at other parties</Link>
