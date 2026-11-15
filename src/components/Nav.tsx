@@ -15,7 +15,7 @@ export default function Nav() {
   return (
     <header className="sticky top-0 z-30 border-b border-line/60 bg-ink/90 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        <Link href="/" className="wordmark text-xl leading-none text-white sm:text-2xl">Nestly</Link>
+        <Link href="/" className="wordmark text-2xl leading-none text-white sm:text-[1.75rem]">Nestly</Link>
         <nav className="flex items-center gap-1 text-sm font-semibold">
           {links.map((l) => (
             <Link key={l.href} href={l.href}
