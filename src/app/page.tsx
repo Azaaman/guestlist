@@ -33,8 +33,8 @@ const how = [
 
 const tryIt = [
   { t: "Get verified and book", href: "/apply/tonight" },
-  { t: "Open the big screen", href: "/live/tonight" },
-  { t: "Join from a phone", href: "/play/tonight" },
+  { t: "Host view: the party screen", href: "/live/tonight" },
+  { t: "Guest view: check in", href: "/play/tonight" },
 ];
 
 export default function Home() {
