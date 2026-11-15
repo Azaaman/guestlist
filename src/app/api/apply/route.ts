@@ -33,12 +33,9 @@ export async function POST(req: Request) {
     let bookingStatus: string;
     let meta: BookingMeta | null = null;
     if (full) {
-      const waiting = bookings.filter((b) => b.status === "waitlist");
-      // Pass holders queue ahead of everyone without a pass.
-      const ahead = hasPass ? waiting.filter((b) => b.form.pass).length : waiting.length + party.waitlist;
+      // Position is worked out live when the booking is read (see lib/waitlist), so pass holders always come first.
       bookingStatus = "waitlist";
       meta = {
-        position: ahead + 1,
         reason: "The party is full.",
       };
     } else {

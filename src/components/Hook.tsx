@@ -121,7 +121,7 @@ export default function Hook({ parties }: { parties: HookParty[] }) {
               </div>
               <div className="display mt-1 text-2xl sm:text-4xl">{party.title}</div>
               <div className="mt-1 text-white/85">{party.place}, {party.left} spots left</div>
-              <div className="mt-2 mr-2 inline-block rounded-full bg-hi px-3 py-1 text-sm font-bold text-[#17103f]">Dress code: {party.dressCode}</div>
+              <div className="mt-2 mr-2 inline-block rounded-full bg-hi px-3 py-1 text-sm font-bold text-[#17103f]"><span aria-hidden>🤵👗 </span>Dress code: {party.dressCode}</div>
               <Countdown to={party.date} className="mt-2 inline-block rounded-full bg-black/40 px-3 py-1 text-sm font-semibold text-hi backdrop-blur" />
             </div>
             <div className="flex shrink-0 items-center gap-4">

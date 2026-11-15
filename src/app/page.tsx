@@ -61,10 +61,10 @@ export default function Home() {
             </div>
           </div>
           <div className="reveal card p-6 text-center">
-            <div className="text-5xl" aria-hidden>🌺</div>
-            <div className="display price mt-3 text-5xl">{SEASON.prizeCount} winners</div>
-            <div className="mt-2 text-lg">Each wins {SEASON.prize}</div>
-            <p className="mt-2 text-sm text-white/65">Drawn among Season Pass holders at the finale. Every winner brings a friend.</p>
+            <div className="text-5xl" aria-hidden>✈️</div>
+            <div className="display mt-3 text-3xl">A trip to Hawaii for two</div>
+            <div className="display price mt-2 text-4xl">× {SEASON.prizeCount} winners</div>
+            <p className="mt-3 text-sm text-white/70">Drawn among Season Pass holders at the end of the season, at the week {SEASON.weeks} finale. Every winner brings a friend.</p>
           </div>
         </div>
       </section>

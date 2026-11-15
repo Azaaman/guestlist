@@ -15,6 +15,7 @@ interface Booking {
   meta: { position?: number; reason?: string; price?: number; deposit?: number; settled?: string } | null;
   reveal: { address: string; dressCode: string } | null;
   refundable: boolean;
+  queue: { position: number; total: number; passAhead: number; pass: boolean } | null;
 }
 
 const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
@@ -45,7 +46,7 @@ export default function ApplicationFlow({ id, partyTitle, partyId, partyWhen, pa
     <div className="mt-6 space-y-6">
       {b.status === "approved" && <Ticket b={b} partyTitle={partyTitle} partyId={partyId} partyWhen={partyWhen} partyDate={partyDate} live={live} />}
       {b.status === "reviewed" && <PayStep id={id} ticket={b.meta?.price ?? price} deposit={b.meta?.deposit ?? DEPOSIT} onPaid={load} />}
-      {b.status === "waitlist" && <Waitlist b={b} />}
+      {b.status === "waitlist" && <Waitlist b={b} onTick={load} />}
       {b.status === "cancelled" && (
         <div className="card p-5">
           <h2 className="text-2xl">Booking cancelled</h2>
@@ -140,20 +141,27 @@ function CardForm({ id, price, onPaid }: { id: string; price: number; onPaid: ()
   );
 }
 
-function Waitlist({ b }: { b: Booking }) {
+function Waitlist({ b, onTick }: { b: Booking; onTick: () => void }) {
+  // The queue moves when pass holders join, so keep it fresh.
+  useEffect(() => {
+    const t = setInterval(onTick, 5000);
+    return () => clearInterval(t);
+  }, [onTick]);
+  const q = b.queue;
   return (
     <div className="card p-5">
       <h2 className="text-2xl">You are on the waitlist</h2>
       <div className="mt-3 flex items-baseline gap-3">
-        <span className="display price text-6xl">{b.meta?.position ?? 1}</span>
-        <span className="text-lg text-white/85">your place in the queue</span>
+        <span className="display price text-6xl">{q?.position ?? "–"}</span>
+        <span className="text-lg text-white/85">{q ? `of ${q.total} in the queue` : "your place in the queue"}</span>
       </div>
-      <p className="mt-3 text-white/80">{b.meta?.reason}</p>
-      <p className="mt-2 text-white/75">Nothing has been charged. When a place opens for you, you get it automatically{b.form.pass ? "." : " and are asked to pay."}</p>
+      <p className="mt-3 text-white/80">The party is full. Nothing has been charged. When a place opens for you, you get it automatically.</p>
       {b.form.pass ? (
-        <p className="mt-4 rounded-xl border border-line p-3 text-sm">Your Season Pass puts you ahead of everyone without one.</p>
+        <p className="mt-4 rounded-xl border border-hi/60 p-3 text-sm">Your Season Pass puts you ahead of everyone without one. {q && q.passAhead > 0 ? `Only ${q.passAhead} pass ${q.passAhead === 1 ? "holder is" : "holders are"} ahead of you.` : "Nobody is ahead of you."}</p>
       ) : (
-        <p className="mt-4 rounded-xl border border-line p-3 text-sm">Season Pass holders go to the front of every waitlist. <Link href="/pass" className="font-semibold text-brand-2 hover:underline">Get a Season Pass</Link></p>
+        <p className="mt-4 rounded-xl border border-line p-3 text-sm">
+          Season Pass holders always go to the front, even if they join after you{q && q.passAhead > 0 ? `: ${q.passAhead} ${q.passAhead === 1 ? "is" : "are"} ahead of you now` : ""}. <Link href="/pass" className="font-semibold text-brand-2 hover:underline">Get a Season Pass</Link>
+        </p>
       )}
       <Link href="/parties" className="btn btn-ghost mt-4 w-full sm:w-auto">Look at other parties</Link>
     </div>
@@ -175,7 +183,7 @@ function Ticket({ b, partyTitle, partyId, partyWhen, partyDate, live }: { b: Boo
         <Countdown to={partyDate} className="mt-2 inline-block rounded-full bg-paper-ink px-3 py-1 text-sm font-semibold text-hi" />
         <dl className="rule mt-4 space-y-3 pt-4">
           <div><dt className="label">Address, now unlocked</dt><dd className="text-lg font-bold">{b.reveal?.address}</dd></div>
-          <div className="rounded-xl bg-[#17103f] p-3 text-hi"><dt className="text-sm font-bold">Dress code</dt><dd className="display text-2xl">{b.reveal?.dressCode}</dd></div>
+          <div className="rounded-xl bg-[#17103f] p-3 text-hi"><dt className="text-sm font-bold"><span aria-hidden>🤵👗 </span>Dress code</dt><dd className="display text-2xl">{b.reveal?.dressCode}</dd></div>
           <div><dt className="label">Admit one</dt><dd>{b.form.name}. {b.meta?.settled ?? (b.form.pass ? `Covered by your Season Pass. $${b.meta?.deposit ?? DEPOSIT} deposit held.` : `$${b.meta?.price} ticket and $${b.meta?.deposit ?? DEPOSIT} deposit held on your card.`)}</dd></div>
         </dl>
         {live && <Link href={path} className="btn btn-paper mt-5 w-full sm:w-auto">Check in at the party</Link>}

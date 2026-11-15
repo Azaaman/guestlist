@@ -11,18 +11,21 @@ export default function Prizes() {
   return (
     <div className="glow">
       <div className="mx-auto max-w-5xl px-4 py-12">
-        <h1 className="text-4xl sm:text-6xl">{SEASON.prizeCount} trips to Hawaii</h1>
-        <p className="mt-4 max-w-xl text-lg text-white/80">{SEASON.name}. Hold a Season Pass and you are in the draw. {SEASON.prizeCount} winners, the same prize each: {SEASON.prize}.</p>
+        <h1 className="text-4xl sm:text-6xl">Win a trip to Hawaii</h1>
+        <p className="mt-4 max-w-xl text-lg text-white/80">{SEASON.name}. Every Season Pass holder is in the draw at the end of the season.</p>
 
-        <ul className="mt-10 grid gap-4 sm:grid-cols-3">
-          {Array.from({ length: SEASON.prizeCount }, (_, i) => (
-            <li key={i} className="reveal card p-6 text-center" style={{ transitionDelay: `${i * 90}ms` }}>
-              <div className="text-4xl" aria-hidden>🌺</div>
-              <div className="mt-3 font-semibold text-hi">Winner {i + 1}</div>
-              <div className="display mt-1 text-2xl">Hawaii for two</div>
-            </li>
-          ))}
-        </ul>
+        <div className="reveal card mt-10 flex flex-col items-center gap-2 p-8 text-center sm:flex-row sm:gap-8 sm:text-left">
+          <div className="text-6xl" aria-hidden>✈️</div>
+          <div className="flex-1">
+            <div className="display text-3xl">A trip to Hawaii for two</div>
+            <p className="mt-1 text-white/75">Flights and a week&apos;s stay. Each winner brings a friend.</p>
+          </div>
+          <div className="text-center">
+            <div className="display price text-6xl">{SEASON.prizeCount}</div>
+            <div className="text-sm font-semibold text-white/70">winners</div>
+          </div>
+        </div>
+        <p className="reveal mt-4 rounded-xl border border-line p-4 text-white/85"><span className="font-semibold text-hi">When:</span> the draw happens once, at the end of the season, during the week {SEASON.weeks} finale party.</p>
 
         <h2 className="reveal mt-14 text-3xl">How the draw works</h2>
         <ol className="mt-4">

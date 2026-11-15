@@ -42,7 +42,7 @@ export default function BigScreen({ sid, title }: { sid: string; title: string }
     <div className="glow min-h-screen px-6 pb-32 pt-6 lg:px-10">
       <div className="flex items-start justify-between gap-6">
         <div>
-          <Link href="/" className="wordmark text-3xl leading-none text-white/80">Nestly</Link>
+          <Link href="/" className="wordmark text-2xl leading-none text-white/80">Nestly</Link>
           <div className="mt-2 flex items-center gap-3">
             <span className="live-dot h-3 w-3 rounded-full bg-hot" />
             <h1 className="text-3xl lg:text-5xl">{title}</h1>

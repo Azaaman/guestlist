@@ -31,7 +31,7 @@ export default async function PartyPage({ params }: { params: Promise<{ id: stri
         </dl>
 
         <div className="mt-8 flex items-center gap-4 rounded-2xl bg-hi p-5 text-[#17103f]">
-          <span className="text-3xl" aria-hidden>👗</span>
+          <span className="shrink-0 text-3xl" aria-hidden>🤵👗</span>
           <div>
             <div className="text-sm font-bold">Dress code</div>
             <div className="display text-2xl">{p.dressCode}</div>

@@ -26,7 +26,7 @@ export default function Policy() {
     ]],
     [`4. Season Pass, $${SEASON.passPrice}`, [
       `One payment covers the ticket for all ${SEASON.weeks} parties of the season. You still book each party, and the damage deposit is still held.`,
-      "Pass holders go to the front of every waitlist, ahead of guests without a pass.",
+      "Pass holders go to the front of every waitlist. A pass holder who joins a waitlist is placed ahead of every guest without a pass, even those who joined earlier.",
       "Guarantee: if you could not get a place at 8 or more parties in the season despite trying, the difference is refunded in proportion.",
       `Every pass holder is entered in the end-of-season draw. ${SEASON.prizeCount} winners each get ${SEASON.prize}.`,
     ]],
