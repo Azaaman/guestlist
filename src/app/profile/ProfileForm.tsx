@@ -13,7 +13,7 @@ const SAMPLE = {
   instagram: "@alex.rivera.mia",
   inviteCode: "SARAH-K",
   into: "Food",
-  lookingFor: "New friends in Miami and maybe someone special — I miss having a crew for Friday nights.",
+  lookingFor: "New friends in Miami. I miss having a crew for Friday nights and weekend plans.",
   about: "Moved here from Denver for a job in renewable energy. I make a mean green-chile stew, run the Venetian Causeway on weekends, and I'm happiest hosting a long dinner for people who just met.",
 };
 
@@ -116,7 +116,7 @@ export default function ProfileForm() {
         </select>
       </label>
       <label className="reveal block"><span className="label">What are you looking for?</span>
-        <input className="input mt-1" value={f.lookingFor} onChange={set("lookingFor")} placeholder="New friends, a partner, a fun crew…" required />
+        <input className="input mt-1" value={f.lookingFor} onChange={set("lookingFor")} placeholder="New friends, a crew for weekends, people to explore Miami with…" required />
       </label>
       <label className="reveal block"><span className="label">About you (2–3 sentences)</span>
         <textarea className="input mt-1 min-h-28" value={f.about} onChange={set("about")} required />
@@ -163,6 +163,7 @@ function Verification({ profile, pass }: { profile: SavedProfile; pass: boolean 
         <div className="rule mt-3 flex flex-col gap-2 pt-3 sm:flex-row">
           <Link href="/parties" className="btn btn-paper">Choose a party</Link>
           {!pass && <Link href="/pass" className="btn border-paper-ink/30 text-paper-ink">Get a Season Pass</Link>}
+          <Link href="/host/apply" className="btn border-paper-ink/30 text-paper-ink">I want to become a host</Link>
         </div>
       )}
     </div>

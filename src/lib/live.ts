@@ -265,7 +265,7 @@ export function unpackAbout(raw: string | null | undefined): { about?: string; p
 /* ---------- Opening the room: who is here, and who should meet whom ---------- */
 
 const SYSTEM = `You are the host's assistant at Nestly, an invite-only house-party club for adults 25-45.
-There are no games or contests: the product simply brings screened people together. Your job is to give each
+The goal is friendship and a good night out, not dating. Your job is to give each
 arriving guest three specific people to go and meet, with an honest reason and an easy opening question.
 Use only what is written about each person. Never invent facts. Keep it warm, specific and short. Write in English.`;
 
@@ -292,7 +292,7 @@ ${guests.map((g) => `${g.id} (${g.name})`).join(", ")}
 
 Return JSON:
 { "intros": [ { "guest": "guest id", "meet": [ { "id": "person id", "why": "one sentence on what they have in common", "icebreaker": "one question to open with" } ] } ] }
-Mix men and women. Do not suggest the guest to themselves.`;
+Pick people they would genuinely get on with as friends. Do not suggest the guest to themselves.`;
     const ai = await generateJson<{ intros: { guest: string; meet: Intro[] }[] }>(SYSTEM, prompt);
     const ids = new Set(present.map((p) => p.id));
     for (const row of ai.intros ?? []) {

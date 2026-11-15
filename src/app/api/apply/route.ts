@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { dynamicPrice, genderCap, getParty } from "@/lib/data";
+import { dynamicPrice, getParty } from "@/lib/data";
 import { DEPOSIT } from "@/lib/room";
 import { PROFILE, profileStatus, type ApplicationRow, type BookingMeta } from "@/lib/types";
 
 // Book a place at a party with a verified profile.
-// Order of checks: verified → not already booked → room left overall → 60/40 balance for this guest's gender.
+// Order of checks: verified → not already booked → room left. There is no gender quota.
 // A Season Pass holder pays nothing for the ticket and goes to the front of any waitlist.
 export async function POST(req: Request) {
   try {
@@ -26,24 +26,20 @@ export async function POST(req: Request) {
     const mine = bookings.find((b) => b.form.profileId === prof.id);
     if (mine) return NextResponse.json({ id: mine.id });
 
-    const booked = bookings.filter((b) => b.status === "approved");
-    const men = party.men + booked.filter((b) => b.form.gender === "man").length;
-    const women = party.women + booked.filter((b) => b.form.gender === "woman").length;
-    const full = men + women >= party.spots;
-    const sameGender = f.gender === "man" ? men : women;
-    const balanceFull = sameGender >= genderCap(party);
+    const booked = bookings.filter((b) => b.status === "approved").length;
+    const full = party.men + party.women + booked >= party.spots;
 
     const form = { ...f, pass: hasPass, profileId: prof.id };
     let bookingStatus: string;
     let meta: BookingMeta | null = null;
-    if (full || balanceFull) {
-      const waiting = bookings.filter((b) => b.status === "waitlist" && (balanceFull && !full ? b.form.gender === f.gender : true));
+    if (full) {
+      const waiting = bookings.filter((b) => b.status === "waitlist");
       // Pass holders queue ahead of everyone without a pass.
       const ahead = hasPass ? waiting.filter((b) => b.form.pass).length : waiting.length + party.waitlist;
       bookingStatus = "waitlist";
       meta = {
         position: ahead + 1,
-        reason: full ? "The party is full." : `Places for ${f.gender === "man" ? "men" : "women"} are full: the 60/40 balance rule caps each at ${genderCap(party)} of ${party.spots}.`,
+        reason: "The party is full.",
       };
     } else {
       // Next step for everyone: one card hold. Ticket (free with a pass) plus the damage deposit.

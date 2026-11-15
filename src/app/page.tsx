@@ -14,8 +14,8 @@ function when(iso: string, live?: boolean) {
 
 const how = [
   { t: "Get verified once", d: "Create a profile. AI checks it in a few seconds. After that you never fill anything in again." },
-  { t: "Book a night", d: "Pick any party with a free place. Prices rise as it fills, and men and women are always kept within 60/40." },
-  { t: "Meet the right people", d: "When you check in, AI gives you three people to meet and a line to open with. After the party, mutual picks become matches." },
+  { t: "Book a night", d: "Pick any party with a free place. The fewer places left, the higher the price." },
+  { t: "Meet the right people", d: "When you check in, AI gives you three people to meet and a line to open with. After the party, people who both want to meet again can stay in touch." },
   { t: "Everyone stays accountable", d: "You rate the host and can report a guest. Three reports, or one the host confirms, removes them; a moderator decides on a permanent ban." },
 ];
 
@@ -28,9 +28,8 @@ const tryIt = [
 export default function Home() {
   const hook: HookParty[] = PARTIES.map((p) => ({
     id: p.id, title: p.title, date: p.date, when: when(p.date, p.live), place: p.neighborhood, price: dynamicPrice(p), left: spotsLeft(p),
-    photo: p.photo, venue: p.venue, vibes: p.vibes, live: !!p.live,
+    photo: p.photo, venue: p.venue, dressCode: p.dressCode, vibes: p.vibes, live: !!p.live,
   }));
-  const medal = ["text-gold", "text-silver", "text-bronze"];
   return (
     <div>
       <Hook parties={hook} />
@@ -55,20 +54,18 @@ export default function Home() {
           <div className="reveal">
             <h2 className="text-3xl sm:text-4xl">Season Pass</h2>
             <div className="display price mt-3 text-6xl">${SEASON.passPrice}</div>
-            <p className="mt-3 text-white/80">A seat at all {SEASON.weeks} parties, about ${Math.round(SEASON.passPrice / SEASON.weeks)} a night. Pass holders go to the front of every waitlist and are entered to win one of three trips.</p>
+            <p className="mt-3 text-white/80">A seat at all {SEASON.weeks} parties, about ${Math.round(SEASON.passPrice / SEASON.weeks)} a night. Pass holders go to the front of every waitlist and are entered to win a trip to Hawaii.</p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link href="/pass" className="btn btn-primary">Get the Season Pass</Link>
               <Link href="/season" className="btn btn-ghost">How the prizes work</Link>
             </div>
           </div>
-          <ul>
-            {SEASON.prizes.map((p, i) => (
-              <li key={p.place} className="reveal flex items-baseline gap-4 border-t border-line py-4 last:border-b">
-                <span className={`w-32 shrink-0 font-semibold ${medal[i]}`}>{p.title}</span>
-                <span className="text-lg">{p.prize}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="reveal card p-6 text-center">
+            <div className="text-5xl" aria-hidden>🌺</div>
+            <div className="display price mt-3 text-5xl">{SEASON.prizeCount} winners</div>
+            <div className="mt-2 text-lg">Each wins {SEASON.prize}</div>
+            <p className="mt-2 text-sm text-white/65">Drawn among Season Pass holders at the finale. Every winner brings a friend.</p>
+          </div>
         </div>
       </section>
 

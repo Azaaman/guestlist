@@ -13,6 +13,7 @@ export interface HookParty {
   left: number;
   photo: string;
   venue: string;
+  dressCode: string;
   vibes: string[];
   live: boolean;
 }
@@ -90,7 +91,7 @@ export default function Hook({ parties }: { parties: HookParty[] }) {
     <section ref={root} className="glow overflow-hidden pb-14 pt-10 sm:pt-16">
       <div className="mx-auto max-w-5xl px-4 text-center">
         <h1 className="text-5xl sm:text-7xl">Get on the list.</h1>
-        <p className="mx-auto mt-4 max-w-xl text-lg text-white/85">Secret house parties for adults in their thirties. Every guest is verified, and at the door you get three people to meet. Pick a place or a vibe to find your night.</p>
+        <p className="mx-auto mt-4 max-w-xl text-lg text-white/85">Make new friends at secret house parties in Miami. Every guest is verified, and at the door you get three people to meet. Pick a place or a vibe for your next night out.</p>
       </div>
 
       <div className="marquee mt-8 space-y-3" aria-label="Filter parties by place or vibe">
@@ -120,6 +121,7 @@ export default function Hook({ parties }: { parties: HookParty[] }) {
               </div>
               <div className="display mt-1 text-2xl sm:text-4xl">{party.title}</div>
               <div className="mt-1 text-white/85">{party.place}, {party.left} spots left</div>
+              <div className="mt-2 mr-2 inline-block rounded-full bg-hi px-3 py-1 text-sm font-bold text-[#17103f]">Dress code: {party.dressCode}</div>
               <Countdown to={party.date} className="mt-2 inline-block rounded-full bg-black/40 px-3 py-1 text-sm font-semibold text-hi backdrop-blur" />
             </div>
             <div className="flex shrink-0 items-center gap-4">

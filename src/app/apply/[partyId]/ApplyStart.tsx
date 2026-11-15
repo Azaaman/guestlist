@@ -7,7 +7,7 @@ import { fetchProfile, type SavedProfile } from "@/lib/profile";
 import { DEPOSIT } from "@/lib/room";
 
 // Booking is one tap for a verified guest: no form, no vote.
-export default function ApplyStart({ partyId, price, menLeft, womenLeft, left }: { partyId: string; price: number; menLeft: number; womenLeft: number; left: number }) {
+export default function ApplyStart({ partyId, price, left }: { partyId: string; price: number; left: number }) {
   const router = useRouter();
   const [profile, setProfile] = useState<SavedProfile | null>(null);
   const [busy, setBusy] = useState(false);
@@ -37,8 +37,7 @@ export default function ApplyStart({ partyId, price, menLeft, womenLeft, left }:
 
   if (!profile) return <p className="mt-8 text-white/60">Loading your profile…</p>;
   const f = profile.form;
-  const mine = f.gender === "man" ? menLeft : womenLeft;
-  const open = left > 0 && mine > 0;
+  const open = left > 0;
 
   if (profile.status !== "verified")
     return (
@@ -68,9 +67,7 @@ export default function ApplyStart({ partyId, price, menLeft, womenLeft, left }:
           ? profile.pass
             ? `A place is free and your Season Pass covers the ticket. Only the $${DEPOSIT} damage deposit is held on your card, and released after the party.`
             : `A place is free. The $${price} ticket and a $${DEPOSIT} damage deposit are held on your card. The address unlocks straight away.`
-          : left <= 0
-            ? `The party is full. You can join the waitlist${profile.pass ? " at the front, ahead of guests without a pass." : "."}`
-            : `Places for ${f.gender === "man" ? "men" : "women"} are full under the 60/40 balance rule. You can join the waitlist${profile.pass ? " at the front, ahead of guests without a pass." : "."}`}
+          : `The party is full. You can join the waitlist${profile.pass ? " at the front, ahead of guests without a pass." : "."}`}
       </p>
       {err && <div className="rounded-xl bg-hot/15 p-3 text-sm">{err}</div>}
       <button className="btn btn-primary w-full text-lg" onClick={book} disabled={busy}>

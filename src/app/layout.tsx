@@ -5,7 +5,7 @@ import Nav from "@/components/Nav";
 import ScrollReveal from "@/components/ScrollReveal";
 
 export const metadata: Metadata = {
-  title: "Nestly — Secret house parties in Miami",
+  title: "Nestly — Make friends at secret house parties in Miami",
   description:
     "Invite-only parties for adults 30–40. Every guest is verified. AI introduces you to three people. Bad behaviour gets you removed and can mean a permanent ban.",
 };

@@ -175,7 +175,7 @@ function Ticket({ b, partyTitle, partyId, partyWhen, partyDate, live }: { b: Boo
         <Countdown to={partyDate} className="mt-2 inline-block rounded-full bg-paper-ink px-3 py-1 text-sm font-semibold text-hi" />
         <dl className="rule mt-4 space-y-3 pt-4">
           <div><dt className="label">Address, now unlocked</dt><dd className="text-lg font-bold">{b.reveal?.address}</dd></div>
-          <div><dt className="label">Dress code</dt><dd>{b.reveal?.dressCode}</dd></div>
+          <div className="rounded-xl bg-[#17103f] p-3 text-hi"><dt className="text-sm font-bold">Dress code</dt><dd className="display text-2xl">{b.reveal?.dressCode}</dd></div>
           <div><dt className="label">Admit one</dt><dd>{b.form.name}. {b.meta?.settled ?? (b.form.pass ? `Covered by your Season Pass. $${b.meta?.deposit ?? DEPOSIT} deposit held.` : `$${b.meta?.price} ticket and $${b.meta?.deposit ?? DEPOSIT} deposit held on your card.`)}</dd></div>
         </dl>
         {live && <Link href={path} className="btn btn-paper mt-5 w-full sm:w-auto">Check in at the party</Link>}

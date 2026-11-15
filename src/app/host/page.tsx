@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { db } from "@/lib/db";
 import { HOSTS, dynamicPrice, getParty } from "@/lib/data";
 import { DEPOSIT, HOST_SHARE } from "@/lib/room";
@@ -6,7 +7,7 @@ import { Avatar, Superhost } from "@/components/ui";
 export const dynamic = "force-dynamic";
 
 const checks = [
-  ["Before the first party", "ID check, photos and video of the venue, capacity check, then a trial night with a mystery guest."],
+  ["Before the first party", "The host uploads their ID, proof they may host at the address and photos of the house. A Nestly moderator checks them, then a trial night with a mystery guest."],
   ["The same core every night", "Hosts tick off a checklist: food and drinks per guest, music, first-aid kit, exit plan. Guest screening and introductions come from Nestly."],
   ["While the party runs", "QR check-in shows who arrived and when. Guests rate the night live and can report another guest. The host reviews each report on the spot and can remove the person. Reports about the host go straight to Nestly."],
   ["If something gets broken", `Every booking carries a $${DEPOSIT} deposit hold. The host files a claim on the night; up to the deposit comes from the guest, and Nestly's host protection covers the rest.`],

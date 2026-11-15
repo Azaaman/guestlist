@@ -29,7 +29,7 @@ export interface Party {
   priceUsd: number;
   basePriceUsd: number;
   spots: number;
-  men: number; // seeded bookings so far
+  men: number; // seeded bookings so far (no gender quota: anyone can book)
   women: number;
   waitlist: number; // seeded guests already waiting (none of them pass holders)
   vibes: string[]; // what the night feels like, used as filters on the home page
@@ -56,11 +56,9 @@ export const SEASON = {
   name: "Season 1, Miami",
   weeks: 12,
   currentWeek: 5,
-  prizes: [
-    { place: 1, title: "Grand prize", prize: "Two-week tour of Europe for two", color: "gold" },
-    { place: 2, title: "Second prize", prize: "Hawaii getaway for two", color: "silver" },
-    { place: 3, title: "Third prize", prize: "Wild West camping trip for two", color: "bronze" },
-  ],
+  // Three equal prizes, drawn among Season Pass holders at the finale.
+  prize: "a trip to Hawaii for two",
+  prizeCount: 3,
   passPrice: 499,
 };
 
@@ -74,7 +72,7 @@ export const HOSTS: Host[] = [
     superhost: true,
     checklist: [
       { item: "Venue photos & capacity verified", done: true },
-      { item: "ID verified", done: true },
+      { item: "Verified", done: true },
       { item: "Food & drinks for 20 guests", done: true },
       { item: "Screen for the guest wall", done: true },
       { item: "First-aid kit & exit plan", done: true },
@@ -96,7 +94,7 @@ export const HOSTS: Host[] = [
     superhost: false,
     checklist: [
       { item: "Venue photos & capacity verified", done: true },
-      { item: "ID verified", done: true },
+      { item: "Verified", done: true },
       { item: "Food & drinks for 16 guests", done: false },
       { item: "Screen for the guest wall", done: true },
       { item: "First-aid kit & exit plan", done: true },
@@ -114,7 +112,7 @@ export const HOSTS: Host[] = [
     superhost: true,
     checklist: [
       { item: "Venue photos & capacity verified", done: true },
-      { item: "ID verified", done: true },
+      { item: "Verified", done: true },
       { item: "Food & drinks for 18 guests", done: true },
       { item: "Screen for the guest wall", done: true },
       { item: "First-aid kit & exit plan", done: true },
@@ -271,7 +269,7 @@ export const PARTIES: Party[] = [
     basePriceUsd: 55,
     spots: 20,
     men: 12,
-    women: 5,
+    women: 8,
     waitlist: 4,
     vibes: ["Dress-up", "Live music", "Late night"],
     week: 9,
@@ -300,16 +298,16 @@ export const PARTIES: Party[] = [
 
 // Season members — they vote on new applications and fill the demo party.
 export const MEMBERS: Member[] = [
-  { id: "m1", name: "Sarah K.", age: 32, gender: "woman", job: "UX designer", bio: "Moved from Chicago last year, runs on coffee and salsa classes.", personality: "warm but protective of the group vibe; dislikes arrogance", into: "Music", badges: ["ID verified", "8 parties"], rating: 4.9 },
-  { id: "m2", name: "Jessica L.", age: 35, gender: "woman", job: "Nurse practitioner", bio: "Night shifts, weekend hikes, competitive about trivia.", personality: "practical; wants people who will actually show up and be kind", into: "Games", badges: ["ID verified", "Background check", "6 parties"], rating: 4.8 },
-  { id: "m3", name: "Ana R.", age: 30, gender: "woman", job: "Marketing manager", bio: "Bakes sourdough, paints badly, laughs loudly.", personality: "fun-first; says yes to playful, creative people", into: "Art", badges: ["ID verified", "4 parties"], rating: 4.7 },
-  { id: "m4", name: "Rachel T.", age: 38, gender: "woman", job: "Attorney", bio: "Divorced, two dogs, finally has Friday nights free.", personality: "skeptical; red flags are an instant no", into: "Games", badges: ["ID verified", "Background check", "9 parties"], rating: 5.0 },
-  { id: "m5", name: "Emily W.", age: 33, gender: "woman", job: "Teacher", bio: "History nerd, karaoke regular.", personality: "values curiosity and good manners", into: "Games", badges: ["ID verified", "5 parties"], rating: 4.9 },
-  { id: "m6", name: "Jake M.", age: 33, gender: "man", job: "Software engineer", bio: "New in Miami, learning to cook a proper Cuban sandwich.", personality: "easygoing; likes people who bring energy", into: "Food", badges: ["ID verified", "3 parties"], rating: 4.6 },
-  { id: "m7", name: "Marcus D.", age: 36, gender: "man", job: "Firefighter", bio: "Swims every morning, terrible dancer, great teammate.", personality: "looks for respect and team spirit", into: "Outdoors", badges: ["ID verified", "Background check", "7 parties"], rating: 4.9 },
-  { id: "m8", name: "Daniel P.", age: 31, gender: "man", job: "Product manager", bio: "Board-game collector, escape-room record holder.", personality: "analytical; wants thoughtful answers, not one-liners", into: "Games", badges: ["ID verified", "5 parties"], rating: 4.7 },
-  { id: "m9", name: "Chris B.", age: 39, gender: "man", job: "Architect", bio: "Sketches everything, cooks Italian on Sundays.", personality: "relaxed but protective of the women in the group", into: "Art", badges: ["ID verified", "8 parties"], rating: 4.8 },
-  { id: "m10", name: "Tyler G.", age: 34, gender: "man", job: "Sales lead", bio: "Salsa champion of his office.", personality: "social; likes confident, friendly people", into: "Music", badges: ["ID verified", "4 parties"], rating: 4.6 },
+  { id: "m1", name: "Sarah K.", age: 32, gender: "woman", job: "UX designer", bio: "Moved from Chicago last year, runs on coffee and salsa classes.", personality: "warm but protective of the group vibe; dislikes arrogance", into: "Music", badges: ["Verified", "8 parties"], rating: 4.9 },
+  { id: "m2", name: "Jessica L.", age: 35, gender: "woman", job: "Nurse practitioner", bio: "Night shifts, weekend hikes, competitive about trivia.", personality: "practical; wants people who will actually show up and be kind", into: "Games", badges: ["Verified", "6 parties"], rating: 4.8 },
+  { id: "m3", name: "Ana R.", age: 30, gender: "woman", job: "Marketing manager", bio: "Bakes sourdough, paints badly, laughs loudly.", personality: "fun-first; says yes to playful, creative people", into: "Art", badges: ["Verified", "4 parties"], rating: 4.7 },
+  { id: "m4", name: "Rachel T.", age: 38, gender: "woman", job: "Attorney", bio: "Two dogs, a new job, and finally has Friday nights free.", personality: "skeptical; red flags are an instant no", into: "Games", badges: ["Verified", "9 parties"], rating: 5.0 },
+  { id: "m5", name: "Emily W.", age: 33, gender: "woman", job: "Teacher", bio: "History nerd, karaoke regular.", personality: "values curiosity and good manners", into: "Games", badges: ["Verified", "5 parties"], rating: 4.9 },
+  { id: "m6", name: "Jake M.", age: 33, gender: "man", job: "Software engineer", bio: "New in Miami, learning to cook a proper Cuban sandwich.", personality: "easygoing; likes people who bring energy", into: "Food", badges: ["Verified", "3 parties"], rating: 4.6 },
+  { id: "m7", name: "Marcus D.", age: 36, gender: "man", job: "Firefighter", bio: "Swims every morning, terrible dancer, great teammate.", personality: "looks for respect and team spirit", into: "Outdoors", badges: ["Verified", "7 parties"], rating: 4.9 },
+  { id: "m8", name: "Daniel P.", age: 31, gender: "man", job: "Product manager", bio: "Board-game collector, escape-room record holder.", personality: "analytical; wants thoughtful answers, not one-liners", into: "Games", badges: ["Verified", "5 parties"], rating: 4.7 },
+  { id: "m9", name: "Chris B.", age: 39, gender: "man", job: "Architect", bio: "Sketches everything, cooks Italian on Sundays.", personality: "relaxed but protective of the women in the group", into: "Art", badges: ["Verified", "8 parties"], rating: 4.8 },
+  { id: "m10", name: "Tyler G.", age: 34, gender: "man", job: "Sales lead", bio: "Salsa champion of his office.", personality: "social; likes confident, friendly people", into: "Music", badges: ["Verified", "4 parties"], rating: 4.6 },
 ];
 
 
@@ -329,8 +327,4 @@ export function spotsLeft(p: Party) {
 export function dynamicPrice(p: Party) {
   const fill = taken(p) / p.spots;
   return Math.round(p.basePriceUsd * (1 + Math.max(0, fill - 0.5) * 0.7));
-}
-// Balance rule: neither men nor women may take more than 60% of the places.
-export function genderCap(p: Party) {
-  return Math.floor(p.spots * 0.6);
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { dynamicPrice, genderCap, getHost, getParty, MEMBERS, spotsLeft } from "@/lib/data";
+import { dynamicPrice, getHost, getParty, MEMBERS, spotsLeft } from "@/lib/data";
 import { Avatar, Superhost, fmtDate } from "@/components/ui";
 import PartyPhoto from "@/components/PartyPhoto";
 import Countdown from "@/components/Countdown";
@@ -13,7 +13,6 @@ export default async function PartyPage({ params }: { params: Promise<{ id: stri
   const going = MEMBERS.slice(0, 8);
   const price = dynamicPrice(p);
   const left = spotsLeft(p);
-  const cap = genderCap(p);
   return (
     <div className="glow">
       <div className="mx-auto max-w-3xl px-4 pb-28 pt-8">
@@ -31,25 +30,19 @@ export default async function PartyPage({ params }: { params: Promise<{ id: stri
           <div><dt className="label">Address</dt><dd className="display mt-1 text-3xl">Hidden</dd><dd className="text-xs text-white/55">shown once you book</dd></div>
         </dl>
 
-        <h2 className="reveal mt-12 text-2xl">Balance of men and women</h2>
-        <p className="mt-1 text-sm text-white/65">Kept between 40/60 and 60/40: each group can take at most {cap} of the {p.spots} places.</p>
-        <div className="mt-4 space-y-3">
-          {([["Men", p.men], ["Women", p.women]] as const).map(([label, n]) => {
-            const free = Math.max(0, cap - n);
-            return (
-              <div key={label}>
-                <div className="flex justify-between text-sm font-semibold"><span>{label}: {n} booked</span><span className={free === 0 ? "text-hot" : "text-mint"}>{free === 0 ? "waitlist only" : `${Math.min(free, left)} ${Math.min(free, left) === 1 ? "place" : "places"} open`}</span></div>
-                <div className="mt-1.5 h-2 rounded-full bg-night"><div className={`h-2 rounded-full ${free === 0 ? "bg-hot" : "bg-brand"}`} style={{ width: `${Math.min(100, (n / cap) * 100)}%` }} /></div>
-              </div>
-            );
-          })}
+        <div className="mt-8 flex items-center gap-4 rounded-2xl bg-hi p-5 text-[#17103f]">
+          <span className="text-3xl" aria-hidden>👗</span>
+          <div>
+            <div className="text-sm font-bold">Dress code</div>
+            <div className="display text-2xl">{p.dressCode}</div>
+          </div>
         </div>
 
         <h2 className="reveal mt-12 text-2xl">The vibe</h2>
         <ul className="mt-3 flex flex-wrap gap-2">
           {p.vibes.map((c) => <li key={c} className="rounded-full border border-line px-4 py-2 font-semibold">{c}</li>)}
         </ul>
-        <p className="mt-3 text-sm text-white/60">When you check in, Nestly gives you three people to meet and a line to open with. Dress code: {p.dressCode.toLowerCase()}.</p>
+        <p className="mt-3 text-sm text-white/60">When you check in, Nestly gives you three people to meet and a line to open with.</p>
 
         <h2 className="reveal mt-12 text-2xl">Your host</h2>
         <div className="mt-3 flex gap-4">

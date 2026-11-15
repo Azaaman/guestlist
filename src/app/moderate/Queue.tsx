@@ -13,8 +13,16 @@ interface Case {
   outcome?: { pass: boolean; refund: number; fee: number };
 }
 
+interface HostApp {
+  id: string;
+  status: "pending" | "approved" | "rejected";
+  form: { name: string; email: string; phone: string; neighborhood: string; address: string; capacity: number; occupancy: string; theme: string; title: string; about: string };
+  files: { id: (string | null)[]; ownership: (string | null)[]; photos: (string | null)[] };
+}
+
 export default function Queue() {
   const [cases, setCases] = useState<Case[] | null>(null);
+  const [hosts, setHosts] = useState<HostApp[]>([]);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState("");
 
@@ -26,6 +34,7 @@ export default function Queue() {
       else {
         setErr("");
         setCases(d.cases ?? []);
+        setHosts(d.hosts ?? []);
       }
     } catch {
       setErr("No connection. Retrying…");
@@ -41,6 +50,15 @@ export default function Queue() {
   async function rule(caseId: string, decision: "ban" | "clear") {
     setBusy(caseId);
     const res = await fetch("/api/moderate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ caseId, decision }) });
+    if (!res.ok) setErr((await res.json()).error || "That didn't work. Try again.");
+    await load();
+    setBusy("");
+  }
+
+  async function decideHost(hostId: string, hostDecision: "approve" | "reject") {
+    const note = hostDecision === "reject" ? prompt("Reason for the host (optional)") ?? "" : "";
+    setBusy(hostId);
+    const res = await fetch("/api/moderate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ hostId, hostDecision, note }) });
     if (!res.ok) setErr((await res.json()).error || "That didn't work. Try again.");
     await load();
     setBusy("");

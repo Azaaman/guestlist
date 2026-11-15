@@ -2,24 +2,24 @@ import Link from "next/link";
 import { SEASON } from "@/lib/data";
 
 const steps = [
-  ["Buy a Season Pass", `One payment of $${SEASON.passPrice} covers all ${SEASON.weeks} parties of the season.`],
+  ["Buy a Season Pass", `One payment of $${SEASON.passPrice} covers the ticket for all ${SEASON.weeks} parties of the season.`],
   ["You are entered automatically", "Every pass holder gets one entry. There is nothing to collect and no points to track."],
-  ["Winners are drawn at the finale", "At the last party of the season, three pass holders are drawn live. Each winner brings a guest."],
+  ["Winners are drawn at the finale", `At the last party of the season, ${SEASON.prizeCount} pass holders are drawn live. Each wins ${SEASON.prize}: bring a friend.`],
 ];
 
 export default function Prizes() {
-  const medal = ["text-gold", "text-silver", "text-bronze"];
   return (
     <div className="glow">
       <div className="mx-auto max-w-5xl px-4 py-12">
-        <h1 className="text-4xl sm:text-6xl">Three trips for pass holders</h1>
-        <p className="mt-4 max-w-xl text-lg text-white/80">{SEASON.name}. Hold a Season Pass and you are in the draw for all three.</p>
+        <h1 className="text-4xl sm:text-6xl">{SEASON.prizeCount} trips to Hawaii</h1>
+        <p className="mt-4 max-w-xl text-lg text-white/80">{SEASON.name}. Hold a Season Pass and you are in the draw. {SEASON.prizeCount} winners, the same prize each: {SEASON.prize}.</p>
 
         <ul className="mt-10 grid gap-4 sm:grid-cols-3">
-          {SEASON.prizes.map((p, i) => (
-            <li key={p.place} className="reveal card p-6" style={{ transitionDelay: `${i * 90}ms` }}>
-              <div className={`font-semibold ${medal[i]}`}>{p.title}</div>
-              <div className="display mt-2 text-2xl">{p.prize}</div>
+          {Array.from({ length: SEASON.prizeCount }, (_, i) => (
+            <li key={i} className="reveal card p-6 text-center" style={{ transitionDelay: `${i * 90}ms` }}>
+              <div className="text-4xl" aria-hidden>🌺</div>
+              <div className="mt-3 font-semibold text-hi">Winner {i + 1}</div>
+              <div className="display mt-1 text-2xl">Hawaii for two</div>
             </li>
           ))}
         </ul>
@@ -38,7 +38,7 @@ export default function Prizes() {
         </ol>
 
         <div className="reveal mt-8 flex flex-col gap-3 border-t border-line pt-8 sm:flex-row sm:items-center">
-          <Link href="/pass" className="btn btn-primary">Get the Season Pass, <span className="ml-1">${SEASON.passPrice}</span></Link>
+          <Link href="/pass" className="btn btn-primary">Get the Season Pass, ${SEASON.passPrice}</Link>
           <span className="text-sm text-white/65">One entry per pass holder.</span>
         </div>
       </div>

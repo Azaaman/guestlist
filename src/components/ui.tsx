@@ -49,6 +49,7 @@ export function PartyRow({ p }: { p: Party }) {
         </div>
         <h3 className="display mt-1 text-2xl group-hover:text-brand-2 sm:text-3xl">{p.title}</h3>
         <p className="mt-1 text-white/75">{p.neighborhood}, host rated {host.rating}{host.superhost && <Superhost />}</p>
+        <p className="mt-2 inline-block rounded-full bg-hi px-3 py-1 text-sm font-bold text-[#17103f]">Dress code: {p.dressCode}</p>
         <ul className="mt-3 flex flex-wrap gap-1.5">
           {p.vibes.map((c) => <li key={c} className="rounded-full bg-white/12 px-3 py-1 text-sm font-medium">{c}</li>)}
         </ul>
