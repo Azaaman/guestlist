@@ -120,7 +120,7 @@ export default function Hook({ parties }: { parties: HookParty[] }) {
                 {party.live && <span className="inline-flex items-center gap-1.5 text-hot"><span className="live-dot h-2 w-2 rounded-full bg-hot" />Live</span>}
               </div>
               <div className="display mt-1 text-2xl sm:text-4xl">{party.title}</div>
-              <div className="mt-1 text-white/85">{party.place}, {party.left} spots left</div>
+              <div className="mt-1 text-white/85">{party.place}, {party.left === 0 ? "full, waitlist open" : `${party.left} spots left`}</div>
               <div className="mt-2 mr-2 inline-block rounded-full bg-hi px-3 py-1 text-sm font-bold text-[#17103f]"><span aria-hidden>🤵👗 </span>Dress code: {party.dressCode}</div>
               <Countdown to={party.date} className="mt-2 inline-block rounded-full bg-black/40 px-3 py-1 text-sm font-semibold text-hi backdrop-blur" />
             </div>

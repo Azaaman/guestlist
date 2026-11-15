@@ -362,8 +362,8 @@ function After({ data, playerId, hostName, act }: { data: LiveData; playerId: st
 
       {me && me.matches.length > 0 && (
         <div className="paper pop mt-6 p-5">
-          <div className="display text-2xl">It&apos;s mutual</div>
-          <p className="mt-1 text-paper-ink/80">You and {me.matches.map((m) => m.name).join(", ")} both want to meet again. You can now message each other.</p>
+          <div className="display text-2xl">New friends</div>
+          <p className="mt-1 text-paper-ink/80">You and {me.matches.map((m) => m.name).join(", ")} both want to meet again. Nestly shares your contacts with each other.</p>
           {me.matches.some((m) => m.demo) && <p className="mt-2 text-xs text-paper-ink/60">Club members are simulated in this demo. With two real phones, both people must pick each other.</p>}
         </div>
       )}

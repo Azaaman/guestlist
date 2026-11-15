@@ -84,7 +84,7 @@ Return JSON exactly in this shape:
         { label: "AI screening", ok: redFlags.length === 0 },
         { label: "Invited by a member", ok: !!clean.inviteCode },
         { label: "Social profile linked", ok: !!clean.instagram },
-        { label: "Government ID", ok: false, note: "checked before the first party" },
+        { label: "Government ID", ok: false, note: "not part of this MVP" },
         { label: "House rules accepted", ok: true },
       ],
     };

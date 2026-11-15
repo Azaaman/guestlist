@@ -141,7 +141,7 @@ export default function HostApplyForm() {
           </label>
           <label className="block"><span className="label">Guests, max</span><input className="input mt-1" type="number" min={8} max={60} value={f.capacity} onChange={set("capacity")} required /></label>
         </div>
-        <label className="block"><span className="label">Full address (only approved guests ever see it)</span><input className="input mt-1" value={f.address} onChange={set("address")} required /></label>
+        <label className="block"><span className="label">Full address (only guests with a ticket ever see it)</span><input className="input mt-1" value={f.address} onChange={set("address")} required /></label>
         <div>
           <span className="label">I am the</span>
           <div className="mt-1 grid grid-cols-2 gap-2">

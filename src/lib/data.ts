@@ -1,5 +1,5 @@
 // Seed data for the demo city (Miami, FL). Static content: hosts, parties,
-// and the members who vote on applications.
+// and the club members who fill the demo party.
 // Everything dynamic (applications, live parties, votes) lives in Supabase.
 
 export type Gender = "man" | "woman";
@@ -296,7 +296,7 @@ export const PARTIES: Party[] = [
   },
 ];
 
-// Season members — they vote on new applications and fill the demo party.
+// Club members who fill the demo party.
 export const MEMBERS: Member[] = [
   { id: "m1", name: "Sarah K.", age: 32, gender: "woman", job: "UX designer", bio: "Moved from Chicago last year, runs on coffee and salsa classes.", personality: "warm but protective of the group vibe; dislikes arrogance", into: "Music", badges: ["Verified", "8 parties"], rating: 4.9 },
   { id: "m2", name: "Jessica L.", age: 35, gender: "woman", job: "Nurse practitioner", bio: "Night shifts, weekend hikes, competitive about trivia.", personality: "practical; wants people who will actually show up and be kind", into: "Games", badges: ["Verified", "6 parties"], rating: 4.8 },

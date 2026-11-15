@@ -26,7 +26,7 @@ export default async function PartyPage({ params }: { params: Promise<{ id: stri
 
         <dl className="mt-8 grid grid-cols-3 divide-x divide-line border-y border-line py-4 text-center">
           <div><dt className="label">Price right now</dt><dd className="display price mt-1 text-3xl">${price}</dd><dd className="text-xs text-white/55">from ${p.basePriceUsd}, rises as it fills</dd></div>
-          <div><dt className="label">Places left</dt><dd className={`display mt-1 text-3xl ${left <= 3 ? "text-hot" : ""}`}>{left}</dd><dd className="text-xs text-white/55">of {p.spots}</dd></div>
+          <div><dt className="label">Places left</dt><dd className={`display mt-1 text-3xl ${left <= 3 ? "text-hot" : ""}`}>{left === 0 ? "Full" : left}</dd><dd className="text-xs text-white/55">{left === 0 ? "waitlist open" : `of ${p.spots}`}</dd></div>
           <div><dt className="label">Address</dt><dd className="display mt-1 text-3xl">Hidden</dd><dd className="text-xs text-white/55">shown once you book</dd></div>
         </dl>
 
@@ -51,7 +51,7 @@ export default async function PartyPage({ params }: { params: Promise<{ id: stri
             <div className="font-bold">{host.name}{host.superhost && <Superhost />}</div>
             <div className="text-sm text-white/65">Rated {host.rating} over {host.parties} parties</div>
             <p className="mt-1 text-white/75">{host.bio}</p>
-            <p className="mt-1 text-sm text-white/55">ID verified, venue inspected, paid only after guests rate the night.</p>
+            <p className="mt-1 text-sm text-white/55">ID and house checked by a Nestly moderator. Paid only after guests rate the night.</p>
           </div>
         </div>
 
@@ -71,8 +71,8 @@ export default async function PartyPage({ params }: { params: Promise<{ id: stri
 
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-ink/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-3">
-          <p className="hidden text-sm text-white/65 sm:block">Verified guests book in one tap. Season Pass holders pay nothing.</p>
-          <Link href={`/apply/${p.id}`} className="btn btn-primary w-full sm:w-auto">Book a place, ${price}</Link>
+          <p className="hidden text-sm text-white/65 sm:block">{left === 0 ? "This party is full. Season Pass holders go to the front of the waitlist." : "Verified guests book in one tap. A Season Pass covers the ticket."}</p>
+          <Link href={`/apply/${p.id}`} className="btn btn-primary w-full sm:w-auto">{left === 0 ? "Join the waitlist" : `Book a place, $${price}`}</Link>
         </div>
       </div>
     </div>

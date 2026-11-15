@@ -56,7 +56,7 @@ export function PartyRow({ p }: { p: Party }) {
       </div>
       <div className="flex items-baseline gap-3 sm:block sm:text-right">
         <div className="display price text-3xl">${dynamicPrice(p)}</div>
-        <div className={`text-sm ${left <= 3 ? "font-semibold text-hot" : "text-white/60"}`}>{left} of {p.spots} spots left</div>
+        <div className={`text-sm ${left <= 3 ? "font-semibold text-hot" : "text-white/60"}`}>{left === 0 ? "Full, waitlist open" : `${left} of ${p.spots} spots left`}</div>
       </div>
     </Link>
   );
